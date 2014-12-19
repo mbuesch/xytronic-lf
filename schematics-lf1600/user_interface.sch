@@ -1,0 +1,489 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:lf1600-cache
+EELAYER 27 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 3 5
+Title "Xytronic LF-1600 - User interface"
+Date "19 dec 2014"
+Rev "1.0"
+Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+Text HLabel 1750 2100 0    60   Input ~ 0
+anode_big_left
+Text HLabel 1750 2300 0    60   Input ~ 0
+anode_big_center
+Text HLabel 1750 2500 0    60   Input ~ 0
+anode_big_right
+Text HLabel 1750 2700 0    60   Input ~ 0
+anode_small
+Text HLabel 1750 3600 0    60   Input ~ 0
+dp/e
+Text HLabel 1750 3000 0    60   Input ~ 0
+b/f
+Text HLabel 1750 3200 0    60   Input ~ 0
+g/a
+Text HLabel 1750 3400 0    60   Input ~ 0
+c/d
+Text HLabel 1750 3800 0    60   Input ~ 0
+d/c
+Text HLabel 1750 4000 0    60   Input ~ 0
+e/dp
+Text HLabel 1750 4200 0    60   Input ~ 0
+f/b
+Text HLabel 1750 4400 0    60   Input ~ 0
+a/g
+Text HLabel 1750 1000 0    60   Input ~ 0
+sw_set
+Text HLabel 1750 1350 0    60   Input ~ 0
+sw_minus
+Text HLabel 1750 1700 0    60   Input ~ 0
+sw_plus
+$Comp
+L SW_PUSH DS1
+U 1 1 54945BF2
+P 3250 1700
+F 0 "DS1" H 3400 1810 50  0000 C CNN
+F 1 "PLUS" H 3250 1620 50  0000 C CNN
+F 2 "~" H 3250 1700 60  0000 C CNN
+F 3 "~" H 3250 1700 60  0000 C CNN
+	1    3250 1700
+	1    0    0    -1  
+$EndComp
+$Comp
+L SW_PUSH DS2
+U 1 1 54945BF8
+P 3250 1350
+F 0 "DS2" H 3400 1460 50  0000 C CNN
+F 1 "MINUS" H 3250 1270 50  0000 C CNN
+F 2 "~" H 3250 1350 60  0000 C CNN
+F 3 "~" H 3250 1350 60  0000 C CNN
+	1    3250 1350
+	1    0    0    -1  
+$EndComp
+$Comp
+L SW_PUSH DS3
+U 1 1 54945BFE
+P 3250 1000
+F 0 "DS3" H 3400 1110 50  0000 C CNN
+F 1 "SET" H 3250 920 50  0000 C CNN
+F 2 "~" H 3250 1000 60  0000 C CNN
+F 3 "~" H 3250 1000 60  0000 C CNN
+	1    3250 1000
+	1    0    0    -1  
+$EndComp
+Text GLabel 3700 1000 2    60   Input ~ 0
+GND
+Text GLabel 3700 1350 2    60   Input ~ 0
+GND
+Text GLabel 3700 1700 2    60   Input ~ 0
+GND
+Wire Wire Line
+	3700 1000 3550 1000
+Wire Wire Line
+	3700 1350 3550 1350
+Wire Wire Line
+	3700 1700 3550 1700
+Wire Wire Line
+	1750 1700 2950 1700
+Wire Wire Line
+	1750 1350 2950 1350
+Wire Wire Line
+	1750 1000 2950 1000
+$Comp
+L R R0
+U 1 1 5495563A
+P 3250 3600
+F 0 "R0" V 3330 3600 40  0000 C CNN
+F 1 "120" V 3257 3601 40  0000 C CNN
+F 2 "~" V 3180 3600 30  0000 C CNN
+F 3 "~" H 3250 3600 30  0000 C CNN
+	1    3250 3600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R1
+U 1 1 54955640
+P 3250 3000
+F 0 "R1" V 3330 3000 40  0000 C CNN
+F 1 "120" V 3257 3001 40  0000 C CNN
+F 2 "~" V 3180 3000 30  0000 C CNN
+F 3 "~" H 3250 3000 30  0000 C CNN
+	1    3250 3000
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R2
+U 1 1 54955646
+P 3250 3200
+F 0 "R2" V 3330 3200 40  0000 C CNN
+F 1 "120" V 3257 3201 40  0000 C CNN
+F 2 "~" V 3180 3200 30  0000 C CNN
+F 3 "~" H 3250 3200 30  0000 C CNN
+	1    3250 3200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R3
+U 1 1 5495564C
+P 3250 3400
+F 0 "R3" V 3330 3400 40  0000 C CNN
+F 1 "120" V 3257 3401 40  0000 C CNN
+F 2 "~" V 3180 3400 30  0000 C CNN
+F 3 "~" H 3250 3400 30  0000 C CNN
+	1    3250 3400
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R4
+U 1 1 54955652
+P 3250 3800
+F 0 "R4" V 3330 3800 40  0000 C CNN
+F 1 "120" V 3257 3801 40  0000 C CNN
+F 2 "~" V 3180 3800 30  0000 C CNN
+F 3 "~" H 3250 3800 30  0000 C CNN
+	1    3250 3800
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R5
+U 1 1 54955658
+P 3250 4000
+F 0 "R5" V 3330 4000 40  0000 C CNN
+F 1 "120" V 3257 4001 40  0000 C CNN
+F 2 "~" V 3180 4000 30  0000 C CNN
+F 3 "~" H 3250 4000 30  0000 C CNN
+	1    3250 4000
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R6
+U 1 1 5495565E
+P 3250 4200
+F 0 "R6" V 3330 4200 40  0000 C CNN
+F 1 "120" V 3257 4201 40  0000 C CNN
+F 2 "~" V 3180 4200 30  0000 C CNN
+F 3 "~" H 3250 4200 30  0000 C CNN
+	1    3250 4200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R7
+U 1 1 54955664
+P 3250 4400
+F 0 "R7" V 3330 4400 40  0000 C CNN
+F 1 "120" V 3257 4401 40  0000 C CNN
+F 2 "~" V 3180 4400 30  0000 C CNN
+F 3 "~" H 3250 4400 30  0000 C CNN
+	1    3250 4400
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	1750 3000 3000 3000
+Wire Wire Line
+	1750 3200 3000 3200
+Wire Wire Line
+	1750 3400 3000 3400
+Wire Wire Line
+	1750 3600 3000 3600
+Wire Wire Line
+	1750 3800 3000 3800
+Wire Wire Line
+	1750 4000 3000 4000
+Wire Wire Line
+	1750 4200 3000 4200
+Wire Wire Line
+	1750 4400 3000 4400
+$Comp
+L 7SEGMENTS LED0a
+U 1 1 54963B4D
+P 3050 6300
+F 0 "LED0a" H 3050 6850 60  0000 C CNN
+F 1 "BIG_LEFT" H 3050 5850 60  0000 C CNN
+F 2 "~" H 3050 6300 60  0000 C CNN
+F 3 "~" H 3050 6300 60  0000 C CNN
+	1    3050 6300
+	1    0    0    -1  
+$EndComp
+$Comp
+L 7SEGMENTS LED0b
+U 1 1 54963B53
+P 4950 6300
+F 0 "LED0b" H 4950 6850 60  0000 C CNN
+F 1 "BIG_CENTER" H 4950 5850 60  0000 C CNN
+F 2 "~" H 4950 6300 60  0000 C CNN
+F 3 "~" H 4950 6300 60  0000 C CNN
+	1    4950 6300
+	1    0    0    -1  
+$EndComp
+$Comp
+L 7SEGMENTS LED0c
+U 1 1 54963B59
+P 6850 6300
+F 0 "LED0c" H 6850 6850 60  0000 C CNN
+F 1 "BIG_RIGHT" H 6850 5850 60  0000 C CNN
+F 2 "~" H 6850 6300 60  0000 C CNN
+F 3 "~" H 6850 6300 60  0000 C CNN
+	1    6850 6300
+	1    0    0    -1  
+$EndComp
+$Comp
+L 7SEGMENTS LED1
+U 1 1 54963B78
+P 8750 6200
+F 0 "LED1" H 8750 6750 60  0000 C CNN
+F 1 "SMALL" H 8750 5750 60  0000 C CNN
+F 2 "~" H 8750 6200 60  0000 C CNN
+F 3 "~" H 8750 6200 60  0000 C CNN
+	1    8750 6200
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	2450 5600 9350 5600
+Wire Wire Line
+	2450 5600 2450 5900
+Wire Wire Line
+	4300 3000 4300 6000
+Wire Wire Line
+	4300 6000 4350 6000
+Wire Wire Line
+	2400 5500 9400 5500
+Wire Wire Line
+	2400 5500 2400 6000
+Wire Wire Line
+	2400 6000 2450 6000
+Wire Wire Line
+	4250 6100 4350 6100
+Wire Wire Line
+	4250 3400 4250 6100
+Wire Wire Line
+	4200 6200 4350 6200
+Wire Wire Line
+	4200 3800 4200 6200
+Wire Wire Line
+	4150 6300 4350 6300
+Wire Wire Line
+	4150 4000 4150 6300
+Wire Wire Line
+	4100 6400 4350 6400
+Wire Wire Line
+	4100 4200 4100 6400
+Wire Wire Line
+	4050 6500 4350 6500
+Wire Wire Line
+	4050 3200 4050 6500
+Wire Wire Line
+	2350 5400 9500 5400
+Wire Wire Line
+	2350 5400 2350 6100
+Wire Wire Line
+	2350 6100 2450 6100
+Wire Wire Line
+	2300 5300 9550 5300
+Wire Wire Line
+	2300 5300 2300 6200
+Wire Wire Line
+	2300 6200 2450 6200
+Wire Wire Line
+	2250 5200 8050 5200
+Wire Wire Line
+	2250 5200 2250 6300
+Wire Wire Line
+	2250 6300 2450 6300
+Wire Wire Line
+	2200 5100 9600 5100
+Wire Wire Line
+	2200 5100 2200 6400
+Wire Wire Line
+	2200 6400 2450 6400
+Wire Wire Line
+	2150 5000 9650 5000
+Wire Wire Line
+	2150 5000 2150 6500
+Wire Wire Line
+	2150 6500 2450 6500
+Wire Wire Line
+	6250 5600 6250 5900
+Connection ~ 4350 5600
+Wire Wire Line
+	6200 5500 6200 6000
+Wire Wire Line
+	6200 6000 6250 6000
+Connection ~ 4300 5500
+Wire Wire Line
+	6150 5400 6150 6100
+Wire Wire Line
+	6150 6100 6250 6100
+Connection ~ 4250 5400
+Wire Wire Line
+	6100 5300 6100 6200
+Wire Wire Line
+	6100 6200 6250 6200
+Connection ~ 4200 5300
+Wire Wire Line
+	6050 5200 6050 6300
+Wire Wire Line
+	6050 6300 6250 6300
+Connection ~ 4150 5200
+Wire Wire Line
+	6000 5100 6000 6400
+Wire Wire Line
+	6000 6400 6250 6400
+Connection ~ 4100 5100
+Wire Wire Line
+	5950 5000 5950 6500
+Wire Wire Line
+	5950 6500 6250 6500
+Connection ~ 4050 5000
+Wire Wire Line
+	3750 5950 3650 5950
+Wire Wire Line
+	3750 4700 3750 5950
+Wire Wire Line
+	3750 5850 3650 5850
+Connection ~ 3750 5850
+Wire Wire Line
+	5650 5950 5550 5950
+Wire Wire Line
+	5650 2300 5650 5950
+Wire Wire Line
+	5650 5850 5550 5850
+Connection ~ 5650 5850
+Wire Wire Line
+	7550 5950 7450 5950
+Wire Wire Line
+	7550 2500 7550 5950
+Wire Wire Line
+	7550 5850 7450 5850
+Connection ~ 7550 5850
+Wire Wire Line
+	7950 6550 8150 6550
+Wire Wire Line
+	7950 2700 7950 6650
+Wire Wire Line
+	7950 6650 8150 6650
+Connection ~ 7950 6550
+Wire Wire Line
+	3650 6550 3850 6550
+Wire Wire Line
+	3850 6550 3850 4900
+Wire Wire Line
+	5550 6550 5750 6550
+Wire Wire Line
+	5750 6550 5750 4900
+Wire Wire Line
+	3850 4900 9450 4900
+Wire Wire Line
+	7450 6550 7650 6550
+Wire Wire Line
+	7650 6550 7650 4900
+Connection ~ 5750 4900
+Wire Wire Line
+	8150 5950 8050 5950
+Wire Wire Line
+	3500 3200 4050 3200
+Wire Wire Line
+	3500 3400 4250 3400
+Wire Wire Line
+	3500 3600 4000 3600
+Wire Wire Line
+	4000 3600 4000 4900
+Connection ~ 4000 4900
+Wire Wire Line
+	3500 3800 4200 3800
+Wire Wire Line
+	3500 4000 4150 4000
+Wire Wire Line
+	3500 4200 4100 4200
+Wire Wire Line
+	4350 4400 4350 5900
+Wire Wire Line
+	3500 4400 4350 4400
+Wire Wire Line
+	3500 3000 4300 3000
+Wire Wire Line
+	3750 4700 4700 4700
+Wire Wire Line
+	4700 4700 4700 2100
+Wire Wire Line
+	4700 2100 1750 2100
+Wire Wire Line
+	1750 2300 5650 2300
+Wire Wire Line
+	1750 2500 7550 2500
+Wire Wire Line
+	7950 2700 1750 2700
+Wire Wire Line
+	9350 5600 9350 6000
+Connection ~ 6250 5600
+Wire Wire Line
+	9350 6100 9400 6100
+Wire Wire Line
+	9400 6100 9400 5500
+Connection ~ 6200 5500
+Wire Wire Line
+	9350 6200 9450 6200
+Wire Wire Line
+	9450 6200 9450 4900
+Connection ~ 7650 4900
+Wire Wire Line
+	9350 6300 9500 6300
+Wire Wire Line
+	9500 6300 9500 5400
+Connection ~ 6150 5400
+Wire Wire Line
+	9350 6400 9550 6400
+Wire Wire Line
+	9550 6400 9550 5300
+Connection ~ 6100 5300
+Wire Wire Line
+	9350 6500 9600 6500
+Wire Wire Line
+	9600 6500 9600 5100
+Connection ~ 6000 5100
+Wire Wire Line
+	9350 6600 9650 6600
+Wire Wire Line
+	9650 6600 9650 5000
+Connection ~ 5950 5000
+Wire Wire Line
+	8050 5950 8050 5200
+Connection ~ 6050 5200
+Text Notes 8050 6900 0    60   ~ 0
+(this 7seg LED is upside down)
+$EndSCHEMATC

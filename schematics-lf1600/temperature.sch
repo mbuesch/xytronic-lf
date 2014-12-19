@@ -1,0 +1,475 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:lf1600-cache
+EELAYER 27 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 5 5
+Title "Xytronic LF-1600 - Temperature sensor"
+Date "19 dec 2014"
+Rev "1.0"
+Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L CONN_3 J3
+U 1 1 549557D4
+P 2150 1450
+F 0 "J3" V 2100 1450 50  0000 C CNN
+F 1 "SENS" V 2200 1450 40  0000 C CNN
+F 2 "" H 2150 1450 60  0000 C CNN
+F 3 "" H 2150 1450 60  0000 C CNN
+	1    2150 1450
+	-1   0    0    1   
+$EndComp
+$Comp
+L LM6161 U2
+U 1 1 54956736
+P 6300 4500
+F 0 "U2" H 6450 4800 60  0000 C CNN
+F 1 "OP07DP" H 6450 4700 60  0000 C CNN
+F 2 "" H 6300 4500 60  0000 C CNN
+F 3 "" H 6300 4500 60  0000 C CNN
+	1    6300 4500
+	-1   0    0    1   
+$EndComp
+NoConn ~ 6200 4100
+NoConn ~ 6300 4100
+Text GLabel 6400 5050 3    60   Input ~ 0
++5V
+Text GLabel 6400 3950 1    60   Input ~ 0
+-5V
+Wire Wire Line
+	6400 3950 6400 4100
+Wire Wire Line
+	6400 5050 6400 4900
+Text GLabel 6050 3000 3    60   Input ~ 0
++5V
+NoConn ~ 6050 2250
+Wire Wire Line
+	6050 3000 6050 2750
+$Comp
+L POT VR2
+U 1 1 54956921
+P 6050 2500
+F 0 "VR2" H 6050 2400 50  0000 C CNN
+F 1 "10 k" H 6050 2500 50  0000 C CNN
+F 2 "~" H 6050 2500 60  0000 C CNN
+F 3 "~" H 6050 2500 60  0000 C CNN
+	1    6050 2500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L POT VR1
+U 1 1 54956927
+P 5250 5600
+F 0 "VR1" H 5250 5500 50  0000 C CNN
+F 1 "10 k" H 5250 5600 50  0000 C CNN
+F 2 "~" H 5250 5600 60  0000 C CNN
+F 3 "~" H 5250 5600 60  0000 C CNN
+	1    5250 5600
+	0    1    1    0   
+$EndComp
+NoConn ~ 5250 5850
+$Comp
+L R R12
+U 1 1 54958872
+P 3850 4500
+F 0 "R12" V 3930 4500 40  0000 C CNN
+F 1 "10 k" V 3857 4501 40  0000 C CNN
+F 2 "~" V 3780 4500 30  0000 C CNN
+F 3 "~" H 3850 4500 30  0000 C CNN
+	1    3850 4500
+	0    1    1    0   
+$EndComp
+Text HLabel 2350 4500 0    60   Input ~ 0
+temp_measure
+Wire Wire Line
+	3600 4500 2350 4500
+Text HLabel 2350 2450 0    60   Input ~ 0
+iron_switch
+$Comp
+L R R18
+U 1 1 549616C5
+P 2700 2000
+F 0 "R18" V 2780 2000 40  0000 C CNN
+F 1 "1 k" V 2707 2001 40  0000 C CNN
+F 2 "~" V 2630 2000 30  0000 C CNN
+F 3 "~" H 2700 2000 30  0000 C CNN
+	1    2700 2000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2500 1550 2700 1550
+Wire Wire Line
+	2700 1550 2700 1750
+Wire Wire Line
+	2700 2450 2700 2250
+Wire Wire Line
+	2350 2450 2700 2450
+Text GLabel 3050 1450 2    60   Input ~ 0
+GND
+Wire Wire Line
+	2500 1450 3050 1450
+Text Label 2550 1550 0    39   ~ 0
+SW
+Text Label 2550 1450 0    39   ~ 0
+-
+Text Label 2550 1350 0    39   ~ 0
++
+$Comp
+L INDUCTOR L5
+U 1 1 549634F8
+P 4150 1350
+F 0 "L5" V 4100 1350 40  0000 C CNN
+F 1 "1500 µH / 10 %" V 4250 1350 40  0000 C CNN
+F 2 "~" H 4150 1350 60  0000 C CNN
+F 3 "~" H 4150 1350 60  0000 C CNN
+	1    4150 1350
+	0    1    1    0   
+$EndComp
+$Comp
+L C C4
+U 1 1 5496366E
+P 3700 1700
+F 0 "C4" H 3700 1800 40  0000 L CNN
+F 1 "22 µF / 63 V" H 3706 1615 40  0000 L CNN
+F 2 "~" H 3738 1550 30  0000 C CNN
+F 3 "~" H 3700 1700 60  0000 C CNN
+	1    3700 1700
+	1    0    0    -1  
+$EndComp
+Text GLabel 3700 2050 3    60   Input ~ 0
+GND
+Wire Wire Line
+	2500 1350 3850 1350
+Wire Wire Line
+	3700 1350 3700 1500
+Connection ~ 3700 1350
+Wire Wire Line
+	3700 1900 3700 2050
+$Comp
+L C C3
+U 1 1 54963922
+P 4600 1700
+F 0 "C3" H 4600 1800 40  0000 L CNN
+F 1 "22 µF / 63 V" H 4606 1615 40  0000 L CNN
+F 2 "~" H 4638 1550 30  0000 C CNN
+F 3 "~" H 4600 1700 60  0000 C CNN
+	1    4600 1700
+	1    0    0    -1  
+$EndComp
+Text GLabel 4600 2050 3    60   Input ~ 0
+GND
+Wire Wire Line
+	4600 1900 4600 2050
+Wire Wire Line
+	4450 1350 6250 1350
+Wire Wire Line
+	4600 1350 4600 1500
+Connection ~ 4600 1350
+$Comp
+L R R17
+U 1 1 54963BC9
+P 5350 1700
+F 0 "R17" V 5430 1700 40  0000 C CNN
+F 1 "R" V 5357 1701 40  0000 C CNN
+F 2 "~" V 5280 1700 30  0000 C CNN
+F 3 "~" H 5350 1700 30  0000 C CNN
+	1    5350 1700
+	1    0    0    -1  
+$EndComp
+Text GLabel 5350 2050 3    60   Input ~ 0
++5V
+Wire Wire Line
+	5350 1350 5350 1450
+Connection ~ 5350 1350
+Wire Wire Line
+	5350 1950 5350 2050
+$Comp
+L R R19
+U 1 1 54963EA1
+P 5800 1700
+F 0 "R19" V 5880 1700 40  0000 C CNN
+F 1 "43 k" V 5807 1701 40  0000 C CNN
+F 2 "~" V 5730 1700 30  0000 C CNN
+F 3 "~" H 5800 1700 30  0000 C CNN
+	1    5800 1700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5800 1350 5800 1450
+Connection ~ 5800 1350
+Wire Wire Line
+	5800 1950 5800 2500
+Wire Wire Line
+	5800 2500 5900 2500
+$Comp
+L R R16
+U 1 1 5496404D
+P 6500 1350
+F 0 "R16" V 6580 1350 40  0000 C CNN
+F 1 "10 k" V 6507 1351 40  0000 C CNN
+F 2 "~" V 6430 1350 30  0000 C CNN
+F 3 "~" H 6500 1350 30  0000 C CNN
+	1    6500 1350
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R L3
+U 1 1 5496432E
+P 8350 4850
+F 0 "L3" V 8430 4850 40  0000 C CNN
+F 1 "0" V 8357 4851 40  0000 C CNN
+F 2 "~" V 8280 4850 30  0000 C CNN
+F 3 "~" H 8350 4850 30  0000 C CNN
+	1    8350 4850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L C C17
+U 1 1 54964481
+P 7350 1350
+F 0 "C17" H 7350 1450 40  0000 L CNN
+F 1 "47 µF / 16 V" H 7356 1265 40  0000 L CNN
+F 2 "~" H 7388 1200 30  0000 C CNN
+F 3 "~" H 7350 1350 60  0000 C CNN
+	1    7350 1350
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6750 1350 7150 1350
+Text GLabel 7750 1350 2    60   Input ~ 0
+GND
+Wire Wire Line
+	7550 1350 7750 1350
+Wire Wire Line
+	6950 1350 6950 2850
+Connection ~ 6950 1350
+$Comp
+L C C15
+U 1 1 5496476E
+P 7950 4500
+F 0 "C15" H 7950 4600 40  0000 L CNN
+F 1 "330 pF" H 7956 4415 40  0000 L CNN
+F 2 "~" H 7988 4350 30  0000 C CNN
+F 3 "~" H 7950 4500 60  0000 C CNN
+	1    7950 4500
+	1    0    0    -1  
+$EndComp
+$Comp
+L R L1
+U 1 1 5496477B
+P 7550 4850
+F 0 "L1" V 7630 4850 40  0000 C CNN
+F 1 "0" V 7557 4851 40  0000 C CNN
+F 2 "~" V 7480 4850 30  0000 C CNN
+F 3 "~" H 7550 4850 30  0000 C CNN
+	1    7550 4850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L C C16
+U 1 1 54964A38
+P 7150 4500
+F 0 "C16" H 7150 4600 40  0000 L CNN
+F 1 "330 pF" H 7156 4415 40  0000 L CNN
+F 2 "~" H 7188 4350 30  0000 C CNN
+F 3 "~" H 7150 4500 60  0000 C CNN
+	1    7150 4500
+	1    0    0    -1  
+$EndComp
+$Comp
+L R L2
+U 1 1 54964A81
+P 7550 4150
+F 0 "L2" V 7630 4150 40  0000 C CNN
+F 1 "0" V 7557 4151 40  0000 C CNN
+F 2 "~" V 7480 4150 30  0000 C CNN
+F 3 "~" H 7550 4150 30  0000 C CNN
+	1    7550 4150
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6950 4600 6800 4600
+$Comp
+L R L4
+U 1 1 54965035
+P 8350 4150
+F 0 "L4" V 8430 4150 40  0000 C CNN
+F 1 "0" V 8357 4151 40  0000 C CNN
+F 2 "~" V 8280 4150 30  0000 C CNN
+F 3 "~" H 8350 4150 30  0000 C CNN
+	1    8350 4150
+	0    -1   -1   0   
+$EndComp
+$Comp
+L DIODE D5
+U 1 1 54965466
+P 9100 3750
+F 0 "D5" H 9100 3850 40  0000 C CNN
+F 1 "DIODE" H 9100 3650 40  0000 C CNN
+F 2 "~" H 9100 3750 60  0000 C CNN
+F 3 "~" H 9100 3750 60  0000 C CNN
+	1    9100 3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L DIODE D6
+U 1 1 54965473
+P 9100 4150
+F 0 "D6" H 9100 4250 40  0000 C CNN
+F 1 "DIODE" H 9100 4050 40  0000 C CNN
+F 2 "~" H 9100 4150 60  0000 C CNN
+F 3 "~" H 9100 4150 60  0000 C CNN
+	1    9100 4150
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	9300 3750 9400 3750
+Wire Wire Line
+	9400 3750 9400 4150
+Wire Wire Line
+	9400 4150 9300 4150
+Wire Wire Line
+	8900 3750 8750 3750
+Wire Wire Line
+	8600 4150 8900 4150
+Connection ~ 8750 4150
+Text Notes 9450 4000 0    60   ~ 0
+WTF!?
+$Comp
+L R R15
+U 1 1 54965A0B
+P 8750 6000
+F 0 "R15" V 8830 6000 40  0000 C CNN
+F 1 "470" V 8757 6001 40  0000 C CNN
+F 2 "~" V 8680 6000 30  0000 C CNN
+F 3 "~" H 8750 6000 30  0000 C CNN
+	1    8750 6000
+	1    0    0    -1  
+$EndComp
+Text GLabel 8750 6400 3    60   Input ~ 0
+GND
+Wire Wire Line
+	8750 6250 8750 6400
+$Comp
+L R R14
+U 1 1 54965E3E
+P 5250 4950
+F 0 "R14" V 5330 4950 40  0000 C CNN
+F 1 "10 k" V 5257 4951 40  0000 C CNN
+F 2 "~" V 5180 4950 30  0000 C CNN
+F 3 "~" H 5250 4950 30  0000 C CNN
+	1    5250 4950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5250 4700 5250 4500
+Wire Wire Line
+	5000 4500 5800 4500
+Connection ~ 5250 4500
+Wire Wire Line
+	5250 5350 5250 5200
+$Comp
+L R R13
+U 1 1 549665E7
+P 4750 4500
+F 0 "R13" V 4830 4500 40  0000 C CNN
+F 1 "10 k" V 4757 4501 40  0000 C CNN
+F 2 "~" V 4680 4500 30  0000 C CNN
+F 3 "~" H 4750 4500 30  0000 C CNN
+	1    4750 4500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L C C?
+U 1 1 54966746
+P 4300 4100
+F 0 "C?" H 4300 4200 40  0000 L CNN
+F 1 "47 µF / 16 V" H 4306 4015 40  0000 L CNN
+F 2 "~" H 4338 3950 30  0000 C CNN
+F 3 "~" H 4300 4100 60  0000 C CNN
+	1    4300 4100
+	1    0    0    -1  
+$EndComp
+Text GLabel 4300 3700 1    60   Input ~ 0
+GND
+Wire Wire Line
+	4300 3700 4300 3900
+Wire Wire Line
+	4100 4500 4500 4500
+Wire Wire Line
+	4300 4300 4300 4500
+Connection ~ 4300 4500
+Wire Wire Line
+	6800 4400 6950 4400
+Wire Wire Line
+	6950 4400 6950 4150
+Wire Wire Line
+	6950 4150 7300 4150
+Wire Wire Line
+	7150 4150 7150 4300
+Connection ~ 7150 4150
+Wire Wire Line
+	6950 4600 6950 4850
+Wire Wire Line
+	6950 4850 7300 4850
+Wire Wire Line
+	7150 4700 7150 4850
+Connection ~ 7150 4850
+Wire Wire Line
+	7950 4150 7950 4300
+Wire Wire Line
+	7950 4850 7950 4700
+Connection ~ 7950 4150
+Connection ~ 7950 4850
+Wire Wire Line
+	8600 4850 10050 4850
+Wire Wire Line
+	7800 4150 8100 4150
+Wire Wire Line
+	7800 4850 8100 4850
+Wire Wire Line
+	8750 3750 8750 5750
+Wire Wire Line
+	10050 4850 10050 2850
+Wire Wire Line
+	10050 2850 6950 2850
+Wire Wire Line
+	8750 5600 5400 5600
+Connection ~ 8750 5600
+$EndSCHEMATC

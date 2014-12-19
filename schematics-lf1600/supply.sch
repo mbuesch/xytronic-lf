@@ -34,11 +34,11 @@ EELAYER 27 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 2 2
+Sheet 2 5
 Title "Xytronic LF-1600 - Power supply"
-Date "18 dec 2014"
+Date "19 dec 2014"
 Rev "1.0"
-Comp ""
+Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
 Comment2 ""
 Comment3 ""
@@ -67,7 +67,7 @@ F 3 "" H 6100 4150 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 Text GLabel 5950 2150 2    60   Input ~ 0
-31Veff
+24Veff
 Text GLabel 6300 2050 2    60   Input ~ 0
 19Veff
 Text GLabel 5950 1950 2    60   Input ~ 0
@@ -79,7 +79,7 @@ Text GLabel 5050 1750 2    60   Input ~ 0
 Text Notes 5050 1650 0    60   ~ 0
 Control voltage
 Text Notes 5950 2350 0    60   ~ 0
-Supply voltage\n19Veff is NC\n31Veff is labled as "24V"
+Supply voltage\n19Veff is not connected\n24Veff is labled as "24V", but actually is 31 V (eff)
 $Comp
 L DIODE D2
 U 1 1 54933622
