@@ -1,6 +1,6 @@
 /*
  * Xytronic LF-1600
- * Open Source firmware
+ * Current measurement routines
  *
  * Copyright (c) 2015 Michael Buesch <m@bues.ch>
  *
@@ -19,35 +19,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "main.h"
-#include "measure.h"
 #include "measure_current.h"
-#include "measure_temp.h"
-#include "util.h"
-
-#include <avr/io.h>
-#include <avr/wdt.h>
+#include "measure.h"
 
 
-int main(void) _mainfunc;
-int main(void)
+void meascurr_work(void)
 {
-	irq_disable();
-	wdt_enable(WDTO_2S);
+}
 
-	timer_init();
-	measure_init();
-	meascurr_init();
-	meastemp_init();
-	//TODO
-
-	wdt_enable(WDTO_250MS);
-	irq_enable();
-	while (1) {
-		wdt_reset();
-
-		meascurr_work();
-		meastemp_work();
-		//TODO
-	}
+void meascurr_init(void)
+{
 }
