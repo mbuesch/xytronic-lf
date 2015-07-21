@@ -23,6 +23,7 @@
 #include "measure.h"
 #include "measure_current.h"
 #include "measure_temp.h"
+#include "timer.h"
 #include "util.h"
 
 #include <avr/io.h>
