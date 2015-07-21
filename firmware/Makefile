@@ -6,6 +6,7 @@ SRCS			:= main.c \
 			   measure.c \
 			   measure_current.c \
 			   measure_temp.c \
+			   pid.c \
 			   timer.c \
 			   util.c
 
