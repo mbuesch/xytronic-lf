@@ -4,20 +4,22 @@ LDFLAGS		:=
 
 TESTS		:= test_pid
 
-all: $(TESTS)
-	./test_pid
-	@echo
-	@echo "All test succeeded"
+TEST_BINS	:= $(foreach t,$(TESTS),$(t).run)
 
-%.o: %.c
+%.o: %.c test.h
 	$(CC) -o $@ -c $(CPPFLAGS) $(CFLAGS) $<
 
-test_%: test_%.o fake/fake.o
+test_%.run: test_%.o fake/fake.o
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^
+
+all: $(TEST_BINS)
+	./test_pid.run
+	@echo
+	@echo "All test succeeded"
 
 clean:
 	rm -f *.o
 	rm -f fake/*.o
-	rm -f $(TESTS)
+	rm -f $(TEST_BINS)
 
-.PHONY: clean
+.PHONY: all clean
