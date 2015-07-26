@@ -1,34 +1,310 @@
 #include "test.h"
 #include "pid.c"
 
-int main(void)
+
+static void check_common(void)
 {
 	struct pid pid;
 	pidval_t ret;
 
+	/* Check conversion functions */
+
+	CHECK(float_to_pidval(1.0) == int_to_pidval(1));
+	CHECK(float_to_pidval(5.0) == int_to_pidval(5));
+	CHECK(float_to_pidval(10.0) == int_to_pidval(10));
+	CHECK(float_to_pidval(1023.0) == int_to_pidval(1023));
+	CHECK(float_to_pidval(-1.0) == int_to_pidval(-1));
+	CHECK(float_to_pidval(-99.0) == int_to_pidval(-99));
+	CHECK(float_to_pidval(-1023.0) == int_to_pidval(-1023));
+	CHECK(pidval_to_int(int_to_pidval(6)) == 6);
+	CHECK(pidval_to_float(float_to_pidval(6.0)) == 6.0);
+	CHECK(pidval_to_float(float_to_pidval(6.5)) == 6.5);
+	CHECK(pidval_to_float(float_to_pidval(6.5)) != 6.0);
+	CHECK(pidval_to_float(float_to_pidval(-6.0)) == -6.0);
+
+	/* Check get/set setpoint */
 
 	memset(&pid, 0xFF, sizeof(pid));
 	pid_init(&pid,
-		 FLOAT_TO_PIDVAL(1.0),		// kp
-		 FLOAT_TO_PIDVAL(0.0),		// ki
-		 FLOAT_TO_PIDVAL(0.0),		// kd
-		 FLOAT_TO_PIDVAL(15.0));	// lim
-	pid_set_setpoint(&pid, INT_TO_PIDVAL(10));
-	CHECK(pid_get_setpoint(&pid) == FLOAT_TO_PIDVAL(10.0));
+		 float_to_pidval(1.0),		// kp
+		 float_to_pidval(0.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	CHECK(pid_get_setpoint(&pid) == float_to_pidval(10.0));
+}
 
+static void check_P(void)
+{
+	struct pid pid;
+	pidval_t ret;
+
+	/* Check P-term with KP=1 */
 
 	memset(&pid, 0xFF, sizeof(pid));
 	pid_init(&pid,
-		 FLOAT_TO_PIDVAL(1.0),		// kp
-		 FLOAT_TO_PIDVAL(0.0),		// ki
-		 FLOAT_TO_PIDVAL(0.0),		// kd
-		 FLOAT_TO_PIDVAL(15.0));	// lim
-	pid_set_setpoint(&pid, INT_TO_PIDVAL(10));
+		 float_to_pidval(1.0),		// kp
+		 float_to_pidval(0.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
 	ret = pid_run(&pid,
-		      FLOAT_TO_PIDVAL(1.0),	// dt
-		      FLOAT_TO_PIDVAL(5.0));	// r
-//	CHECK(ret == 99);
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(1.0));	// r
+	CHECK(ret == float_to_pidval(9.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(2.0));	// r
+	CHECK(ret == float_to_pidval(8.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(5.0));	// r
+	CHECK(ret == float_to_pidval(5.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(5.0));	// r
+	CHECK(ret == float_to_pidval(5.0));
+
+	/* Check P-term with KP=3 */
+
+	memset(&pid, 0xFF, sizeof(pid));
+	pid_init(&pid,
+		 float_to_pidval(3.0),		// kp
+		 float_to_pidval(0.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(1.0));	// r
+	CHECK(ret == float_to_pidval(15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.5),	// dt
+		      float_to_pidval(2.0));	// r
+	CHECK(ret == float_to_pidval(15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(2.0),	// dt
+		      float_to_pidval(5.0));	// r
+	CHECK(ret == float_to_pidval(15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(7.0));	// r
+	CHECK(ret == float_to_pidval(9.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(7.5));	// r
+	CHECK(ret == float_to_pidval(7.5));
+
+	/* Check P-term with KP=2.5 */
+
+	memset(&pid, 0xFF, sizeof(pid));
+	pid_init(&pid,
+		 float_to_pidval(2.5),		// kp
+		 float_to_pidval(0.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(1.0));	// r
+	CHECK(ret == float_to_pidval(15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(2.0));	// r
+	CHECK(ret == float_to_pidval(15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(5.0));	// r
+	CHECK(ret == float_to_pidval(12.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(7.0));	// r
+	CHECK(ret == float_to_pidval(7.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(7.5));	// r
+	CHECK(ret == float_to_pidval(6.25));
+
+	/* Check P-term with KP=-2.5 */
+
+	memset(&pid, 0xFF, sizeof(pid));
+	pid_init(&pid,
+		 float_to_pidval(-2.5),		// kp
+		 float_to_pidval(0.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(1.0));	// r
+	CHECK(ret == float_to_pidval(-15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(2.0));	// r
+	CHECK(ret == float_to_pidval(-15.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(5.0));	// r
+	CHECK(ret == float_to_pidval(-12.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(7.0));	// r
+	CHECK(ret == float_to_pidval(-7.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(7.5));	// r
+	CHECK(ret == float_to_pidval(-6.25));
+}
+
+static void check_I(void)
+{
+	struct pid pid;
+	pidval_t ret;
+
+	/* Check I-term with KI=1 */
+
+	memset(&pid, 0xFF, sizeof(pid));
+	pid_init(&pid,
+		 float_to_pidval(0.0),		// kp
+		 float_to_pidval(1.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(1.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(2.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(3.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(10.0));	// r
+	CHECK(ret == float_to_pidval(3.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(2.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(3.0),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-1.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(0.5),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-1.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(0.5),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-2.0));
+
+	/* Check I-term with KI=-1 */
+
+	memset(&pid, 0xFF, sizeof(pid));
+	pid_init(&pid,
+		 float_to_pidval(0.0),		// kp
+		 float_to_pidval(-1.0),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(-1.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(-2.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(-3.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(10.0));	// r
+	CHECK(ret == float_to_pidval(-3.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-2.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(3.0),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(1.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(0.5),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(1.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(0.5),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(2.0));
+
+	/* Check I-term with KI=1.5 */
+
+	memset(&pid, 0xFF, sizeof(pid));
+	pid_init(&pid,
+		 float_to_pidval(0.0),		// kp
+		 float_to_pidval(1.5),		// ki
+		 float_to_pidval(0.0),		// kd
+		 float_to_pidval(15.0));	// lim
+	pid_set_setpoint(&pid, int_to_pidval(10));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(1.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(3.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(9.0));	// r
+	CHECK(ret == float_to_pidval(4.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(10.0));	// r
+	CHECK(ret == float_to_pidval(4.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(1.0),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(3.0));
+	ret = pid_run(&pid,
+		      float_to_pidval(3.0),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-1.5));
+	ret = pid_run(&pid,
+		      float_to_pidval(0.5),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-2.25));
+	ret = pid_run(&pid,
+		      float_to_pidval(0.5),	// dt
+		      float_to_pidval(11.0));	// r
+	CHECK(ret == float_to_pidval(-3.0));
+}
+
+static void check_D(void)
+{
 	//TODO
+}
+
+static void check_PID(void)
+{
+	//TODO
+}
+
+int main(void)
+{
+	check_common();
+	check_P();
+	check_I();
+	check_D();
+	check_PID();
 
 	return 0;
 }
