@@ -35,7 +35,7 @@ typedef int64_t pidval_dbl_t;
 #endif
 
 #define PIDVAL_MAX	((pidval_t)((1ULL << (PIDVAL_SIZE - 1U)) - 1U))
-#define PIDVAL_MIN	((pidval_t)((-PIDVAL_MAX) - 1LL))
+#define PIDVAL_MIN	((pidval_t)(-PIDVAL_MAX))
 
 
 static inline pidval_t pidval_add(pidval_t a, pidval_t b)
