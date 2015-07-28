@@ -37,3 +37,10 @@ DISTCLEAN_FILES		:=
 
 
 include avrmakelib.mk
+
+
+tests: all
+	$(MAKE) -C tests clean
+	$(MAKE) -C tests all
+
+.PHONY: tests
