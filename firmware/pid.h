@@ -4,11 +4,15 @@
 #include <stdint.h>
 
 
-/* Q10.5 */
-#define PIDVAL_SIZE	16
-#define PIDVAL_SHIFT	5
+#ifndef PIDVAL_SIZE
+  /* Q10.5 */
+# define PIDVAL_SIZE	16
+# define PIDVAL_SHIFT	5
+#endif
 
-#define PIDFLOAT_SIZE	32
+#ifndef PIDFLOAT_SIZE
+# define PIDFLOAT_SIZE	32
+#endif
 
 
 #if PIDVAL_SIZE == 8
