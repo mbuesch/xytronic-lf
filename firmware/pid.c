@@ -38,67 +38,58 @@ typedef int64_t pidval_dbl_t;
 #define PIDVAL_MIN	((pidval_t)(-PIDVAL_MAX))
 
 
+static inline pidval_t pidval_double_to_single(pidval_dbl_t a)
+{
+	if (a >= PIDVAL_MAX)
+		return PIDVAL_MAX;
+	if (a <= PIDVAL_MIN)
+		return PIDVAL_MIN;
+
+	return (pidval_t)a;
+}
+
+/* Calculate: a + b
+ */
 static inline pidval_t pidval_add(pidval_t a, pidval_t b)
 {
 	pidval_dbl_t tmp;
 
 	tmp = (pidval_dbl_t)a + (pidval_dbl_t)b;
 
-	if (tmp >= PIDVAL_MAX)
-		return PIDVAL_MAX;
-	if (tmp <= PIDVAL_MIN)
-		return PIDVAL_MIN;
-
-	return (pidval_t)tmp;
+	return pidval_double_to_single(tmp);
 }
 
+/* Calculate: a - b
+ */
 static inline pidval_t pidval_sub(pidval_t a, pidval_t b)
 {
 	pidval_dbl_t tmp;
 
 	tmp = (pidval_dbl_t)a - (pidval_dbl_t)b;
 
-	if (tmp >= PIDVAL_MAX)
-		return PIDVAL_MAX;
-	if (tmp <= PIDVAL_MIN)
-		return PIDVAL_MIN;
-
-	return (pidval_t)tmp;
+	return pidval_double_to_single(tmp);
 }
 
-static inline pidval_t pidval_mul(pidval_t a, pidval_t b)
+static inline pidval_dbl_t pidval_dbl_mul(pidval_dbl_t a, pidval_dbl_t b)
 {
 	pidval_dbl_t tmp;
 
 	/* Multiply */
-	tmp = (pidval_dbl_t)a * (pidval_dbl_t)b;
+	tmp = a * b;
 	/* Round */
 	tmp += 1L << (PIDVAL_SHIFT - 1);
 	/* Scale */
 	tmp >>= PIDVAL_SHIFT;
 
-	if (tmp >= PIDVAL_MAX)
-		return PIDVAL_MAX;
-	if (tmp <= PIDVAL_MIN)
-		return PIDVAL_MIN;
-
-	return (pidval_t)tmp;
+	return tmp;
 }
 
-static inline pidval_t pidval_neg(pidval_t v)
-{
-	if (v <= PIDVAL_MIN)
-		return PIDVAL_MAX;
-
-	return -v;
-}
-
-static inline pidval_t pidval_div(pidval_t a, pidval_t b)
+static inline pidval_dbl_t pidval_dbl_div(pidval_dbl_t a, pidval_t b)
 {
 	pidval_dbl_t tmp;
 
 	/* Scale */
-	tmp = (pidval_dbl_t)a << PIDVAL_SHIFT;
+	tmp = a << PIDVAL_SHIFT;
 	/* Round */
 	if (tmp >= 0)
 		tmp += b / 2;
@@ -107,7 +98,51 @@ static inline pidval_t pidval_div(pidval_t a, pidval_t b)
 	/* Divide */
 	tmp /= b;
 
-	return (pidval_t)tmp;
+	return tmp;
+}
+
+/* Calculate: a * b
+ */
+static inline pidval_t pidval_mul(pidval_t a, pidval_t b)
+{
+	pidval_dbl_t tmp;
+
+	tmp = pidval_dbl_mul((pidval_dbl_t)a, (pidval_dbl_t)b);
+
+	return pidval_double_to_single(tmp);
+}
+
+/* Calculate: a / b
+ */
+static inline pidval_t pidval_div(pidval_t a, pidval_t b)
+{
+	pidval_dbl_t tmp;
+
+	tmp = pidval_dbl_div((pidval_dbl_t)a, b);
+
+	return pidval_double_to_single(tmp);
+}
+
+/* Calculate: (a * b) / c
+ */
+static inline pidval_t pidval_mul_div(pidval_t a, pidval_t b, pidval_t c)
+{
+	pidval_dbl_t tmp;
+
+	tmp = pidval_dbl_mul((pidval_dbl_t)a, (pidval_dbl_t)b);
+	tmp = pidval_dbl_div(tmp, c);
+
+	return pidval_double_to_single(tmp);
+}
+
+/* Calculate: -a
+ */
+static inline pidval_t pidval_neg(pidval_t a)
+{
+	if (a <= PIDVAL_MIN)
+		return PIDVAL_MAX;
+
+	return -a;
 }
 
 pidval_t pid_run(struct pid *pid, pidval_t dt, pidval_t r)
@@ -131,7 +166,7 @@ pidval_t pid_run(struct pid *pid, pidval_t dt, pidval_t r)
 	/* D term */
 	de = pidval_sub(e, pid->prev_e);
 	if (dt) {
-		d = pidval_div(pidval_mul(de, pid->kd), dt);
+		d = pidval_mul_div(de, pid->kd, dt);
 	} else {
 		if (de < 0)
 			d = y_lim_neg;
