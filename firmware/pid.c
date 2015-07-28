@@ -72,7 +72,7 @@ static inline pidval_t pidval_mul(pidval_t a, pidval_t b)
 
 	/* Multiply */
 	tmp = (pidval_dbl_t)a * (pidval_dbl_t)b;
-	/* Round */ //FIXME?
+	/* Round */
 	tmp += 1L << (PIDVAL_SHIFT - 1);
 	/* Scale */
 	tmp >>= PIDVAL_SHIFT;
@@ -100,7 +100,10 @@ static inline pidval_t pidval_div(pidval_t a, pidval_t b)
 	/* Scale */
 	tmp = (pidval_dbl_t)a << PIDVAL_SHIFT;
 	/* Round */
-	tmp += b / 2;
+	if (tmp >= 0)
+		tmp += b / 2;
+	else
+		tmp -= b / 2;
 	/* Divide */
 	tmp /= b;
 
@@ -128,7 +131,7 @@ pidval_t pid_run(struct pid *pid, pidval_t dt, pidval_t r)
 	/* D term */
 	de = pidval_sub(e, pid->prev_e);
 	if (dt) {
-		d = pidval_mul(pid->kd, pidval_div(de, dt));
+		d = pidval_div(pidval_mul(de, pid->kd), dt);
 	} else {
 		if (de < 0)
 			d = y_lim_neg;
