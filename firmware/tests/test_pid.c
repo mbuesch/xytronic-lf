@@ -1,3 +1,7 @@
+#define PIDVAL_SIZE	16
+#define PIDVAL_SHIFT	5
+#define PIDFLOAT_SIZE	32
+
 #include "test.h"
 #include "pid.c"
 
