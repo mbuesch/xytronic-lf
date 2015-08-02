@@ -15,17 +15,17 @@
 
 
 /* Return the smaller value of 'a' and 'b'. */
-#define min(a, b)	({				\
-		__typeof__(a) __amin = (a);		\
-		__typeof__(b) __bmin = (b);		\
-		__amin < __bmin ? __amin : __bmin;	\
+#define min(a, b)	({						\
+		__typeof__(a) __amin = (a);				\
+		__typeof__(b) __bmin = (b);				\
+		(__typeof__(a))(__amin < __bmin ? __amin : __bmin);	\
 	})
 
 /* Return the bigger value of 'a' and 'b'. */
-#define max(a, b)	({				\
-		__typeof__(a) __amax = (a);		\
-		__typeof__(b) __bmax = (b);		\
-		__amax > __bmax ? __amax : __bmax;	\
+#define max(a, b)	({						\
+		__typeof__(a) __amax = (a);				\
+		__typeof__(b) __bmax = (b);				\
+		(__typeof__(a))(__amax > __bmax ? __amax : __bmax);	\
 	})
 
 /* Return 'value' clamped inbetween 'min_val' and 'max_val'. */

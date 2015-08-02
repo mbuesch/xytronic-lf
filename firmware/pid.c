@@ -24,149 +24,28 @@
 #include <string.h>
 
 
-#if PIDVAL_SIZE == 8
-typedef int16_t pidval_dbl_t;
-#elif PIDVAL_SIZE == 16
-typedef int32_t pidval_dbl_t;
-#elif PIDVAL_SIZE == 32
-typedef int64_t pidval_dbl_t;
-#else
-# error "Invalid PIDVAL_SIZE"
-#endif
-
-#define PIDVAL_MAX	((pidval_t)((1ULL << (PIDVAL_SIZE - 1U)) - 1U))
-#define PIDVAL_MIN	((pidval_t)(-PIDVAL_MAX))
-
-
-static inline pidval_t pidval_double_to_single(pidval_dbl_t a)
+fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 {
-	if (a >= PIDVAL_MAX)
-		return PIDVAL_MAX;
-	if (a <= PIDVAL_MIN)
-		return PIDVAL_MIN;
-
-	return (pidval_t)a;
-}
-
-/* Calculate: a + b
- */
-static inline pidval_t pidval_add(pidval_t a, pidval_t b)
-{
-	pidval_dbl_t tmp;
-
-	tmp = (pidval_dbl_t)a + (pidval_dbl_t)b;
-
-	return pidval_double_to_single(tmp);
-}
-
-/* Calculate: a - b
- */
-static inline pidval_t pidval_sub(pidval_t a, pidval_t b)
-{
-	pidval_dbl_t tmp;
-
-	tmp = (pidval_dbl_t)a - (pidval_dbl_t)b;
-
-	return pidval_double_to_single(tmp);
-}
-
-static inline pidval_dbl_t pidval_dbl_mul(pidval_dbl_t a, pidval_dbl_t b)
-{
-	pidval_dbl_t tmp;
-
-	/* Multiply */
-	tmp = a * b;
-	/* Round */
-	tmp += 1L << (PIDVAL_SHIFT - 1);
-	/* Scale */
-	tmp >>= PIDVAL_SHIFT;
-
-	return tmp;
-}
-
-static inline pidval_dbl_t pidval_dbl_div(pidval_dbl_t a, pidval_t b)
-{
-	pidval_dbl_t tmp;
-
-	/* Scale */
-	tmp = a << PIDVAL_SHIFT;
-	/* Round */
-	if (tmp >= 0)
-		tmp += b / 2;
-	else
-		tmp -= b / 2;
-	/* Divide */
-	tmp /= b;
-
-	return tmp;
-}
-
-/* Calculate: a * b
- */
-static inline pidval_t pidval_mul(pidval_t a, pidval_t b)
-{
-	pidval_dbl_t tmp;
-
-	tmp = pidval_dbl_mul((pidval_dbl_t)a, (pidval_dbl_t)b);
-
-	return pidval_double_to_single(tmp);
-}
-
-/* Calculate: a / b
- */
-static inline pidval_t pidval_div(pidval_t a, pidval_t b)
-{
-	pidval_dbl_t tmp;
-
-	tmp = pidval_dbl_div((pidval_dbl_t)a, b);
-
-	return pidval_double_to_single(tmp);
-}
-
-/* Calculate: (a * b) / c
- */
-static inline pidval_t pidval_mul_div(pidval_t a, pidval_t b, pidval_t c)
-{
-	pidval_dbl_t tmp;
-
-	tmp = pidval_dbl_mul((pidval_dbl_t)a, (pidval_dbl_t)b);
-	tmp = pidval_dbl_div(tmp, c);
-
-	return pidval_double_to_single(tmp);
-}
-
-/* Calculate: -a
- */
-static inline pidval_t pidval_neg(pidval_t a)
-{
-	if (a <= PIDVAL_MIN)
-		return PIDVAL_MAX;
-
-	return -a;
-}
-
-pidval_t pid_run(struct pid *pid, pidval_t dt, pidval_t r)
-{
-	pidval_t e, de;
-	pidval_t p, i, d, pid_result;
-	pidval_t y_lim_pos = pid->y_lim;
-	pidval_t y_lim_neg = pidval_neg(y_lim_pos);
+	fixpt_t e, de;
+	fixpt_t p, i, d, pid_result;
+	fixpt_t y_lim_pos = pid->y_lim;
+	fixpt_t y_lim_neg = fixpt_neg(y_lim_pos);
 
 	/* Calculate the deviation. */
-	e = pidval_sub(pid->setpoint, r);
+	e = fixpt_sub(pid->setpoint, r);
 
 	/* P term */
-	p = pidval_mul(pid->kp, e);
+	p = fixpt_mul(pid->kp, e);
 
 	/* I term */
-	i = pidval_add(pid->integr, pidval_mul(pidval_mul(pid->ki, e), dt));
+	i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(pid->ki, e), dt));
 	i = clamp(i, y_lim_neg, y_lim_pos);
 	pid->integr = i;
 
 	/* D term */
-	de = pidval_sub(e, pid->prev_e);
+	de = fixpt_sub(e, pid->prev_e);
 	if (dt) {
-		d = pidval_mul_div(de, pid->kd, dt);
+		d = fixpt_mul_div(de, pid->kd, dt);
 	} else {
 		if (de < 0)
 			d = y_lim_neg;
@@ -176,15 +55,15 @@ pidval_t pid_run(struct pid *pid, pidval_t dt, pidval_t r)
 	pid->prev_e = e;
 
 	/* Add P, I and D terms */
-	pid_result = pidval_add(pidval_add(p, i), d);
+	pid_result = fixpt_add(fixpt_add(p, i), d);
 	pid_result = clamp(pid_result, y_lim_neg, y_lim_pos);
 
 	return pid_result;
 }
 
 void pid_init(struct pid *pid,
-	      pidval_t kp, pidval_t ki, pidval_t kd,
-	      pidval_t y_lim)
+	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
+	      fixpt_t y_lim)
 {
 	memset(pid, 0, sizeof(*pid));
 	pid->kp = kp;

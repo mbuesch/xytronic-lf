@@ -23,6 +23,7 @@
 #include "measure.h"
 #include "measure_current.h"
 #include "measure_temp.h"
+#include "controller_current.h"
 #include "timer.h"
 #include "util.h"
 
@@ -40,6 +41,7 @@ int main(void)
 	measure_init();
 	meascurr_init();
 	meastemp_init();
+	contrcurr_init();
 	//TODO
 
 	wdt_enable(WDTO_250MS);
@@ -49,6 +51,7 @@ int main(void)
 
 		meascurr_work();
 		meastemp_work();
+		contrcurr_work();
 		//TODO
 	}
 }
