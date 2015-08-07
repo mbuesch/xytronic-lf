@@ -21,12 +21,42 @@
 
 #include "measure_temp.h"
 #include "measure.h"
+#include "timer.h"
+#include "scale.h"
+#include "controller_temp.h"
 
+
+#define MEASTEMP_PERIOD_MS	100 /* ms */
+#define MEASTEMP_CHANNEL	MEASCHAN_ADC1
+
+
+static struct timer meastemp_timer;
+
+
+/* This runs in IRQ context. */
+static void meastemp_meas_callback(void *context, uint16_t raw_adc)
+{
+	fixpt_t phys;
+
+	phys = scale((int16_t)raw_adc, 0, MEASURE_MAX_RESULT,
+		     float_to_fixpt(CONTRTEMP_NEGLIM), //FIXME limits are not ok
+		     float_to_fixpt(CONTRTEMP_POSLIM));
+	contrtemp_set_feedback(phys);
+}
 
 void meastemp_work(void)
 {
+	bool scheduled;
+
+	if (timer_expired(&meastemp_timer)) {
+		scheduled = measure_schedule(MEASTEMP_CHANNEL,
+					     meastemp_meas_callback, NULL);
+		if (scheduled)
+			timer_add(&meastemp_timer, MEASTEMP_PERIOD_MS);
+	}
 }
 
 void meastemp_init(void)
 {
+	timer_arm(&meastemp_timer, 0);
 }

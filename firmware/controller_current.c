@@ -22,30 +22,29 @@
 #include "controller_current.h"
 #include "pid.h"
 #include "timer.h"
+#include "pwm_current.h"
 
 
 /* Current controller PID parameters */
 #define CONTRCURR_PID_KP	1.0
-#define CONTRCURR_PID_KI	0.2
-#define CONTRCURR_PID_KD	0.05
-#define CONTRCURR_LIM		10.0
+#define CONTRCURR_PID_KI	0.1
+#define CONTRCURR_PID_KD	0.0
 #define CONTRCURR_PERIOD_MS	100	/* milliseconds */
 
 
 static struct pid current_pid;
 static fixpt_t current_feedback;
-static fixpt_t current_controlvar;
 static struct timer current_timer;
 
-
-fixpt_t contrcurr_get_controlvar(void)
-{
-	return current_controlvar;
-}
 
 void contrcurr_set_feedback(fixpt_t r)
 {
 	current_feedback = r;
+}
+
+void contrcurr_set_setpoint(fixpt_t w)
+{
+	pid_set_setpoint(&current_pid, w);
 }
 
 void contrcurr_work(void)
@@ -59,17 +58,15 @@ void contrcurr_work(void)
 	/* Get the feedback (r) */
 	r = current_feedback;
 
-	//TODO scale r
-
-	/* Get delta-t, in seconds */
+	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRCURR_PERIOD_MS / 1000.0f);
 
+	/* Run the PID controller */
 	y = pid_run(&current_pid, dt, r);
 
-	//TODO scale y
-
-	/* Set the control variable (y) */
-	current_controlvar = y;
+	/* Reconfigure the PWM unit to output the
+	 * requested heater current (y). */
+	pwmcurr_set(y);
 }
 
 void contrcurr_init(void)
@@ -78,6 +75,7 @@ void contrcurr_init(void)
 		 float_to_fixpt(CONTRCURR_PID_KP),
 		 float_to_fixpt(CONTRCURR_PID_KI),
 		 float_to_fixpt(CONTRCURR_PID_KD),
-		 float_to_fixpt(CONTRCURR_LIM));
+		 float_to_fixpt(CONTRCURR_NEGLIM),
+		 float_to_fixpt(CONTRCURR_POSLIM));
 	timer_arm(&current_timer, 0);
 }

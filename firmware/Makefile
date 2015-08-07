@@ -3,11 +3,13 @@ NAME			:= xylf
 
 # Project source files
 SRCS			:= controller_current.c \
+			   controller_temp.c \
 			   main.c \
 			   measure.c \
 			   measure_current.c \
 			   measure_temp.c \
 			   pid.c \
+			   pwm_current.c \
 			   scale.c \
 			   timer.c \
 			   util.c

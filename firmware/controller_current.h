@@ -4,8 +4,12 @@
 #include "fixpt.h"
 
 
-fixpt_t contrcurr_get_controlvar(void);
+#define CONTRCURR_NEGLIM	0.0
+#define CONTRCURR_POSLIM	5.0
+
+
 void contrcurr_set_feedback(fixpt_t r);
+void contrcurr_set_setpoint(fixpt_t w);
 
 void contrcurr_work(void);
 void contrcurr_init(void);

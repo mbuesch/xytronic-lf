@@ -23,10 +23,22 @@
 #include <avr/io.h>
 
 
+#define SYSTIMER_NR	0
+
+
+#if SYSTIMER_NR == 0
+# define SYSTIMER_ISR		TIMER0_COMPA_vect
+# define SYSTIMER_CNTMAX	0xFFul
+#elif SYSTIMER_NR == 1
+# define SYSTIMER_ISR		TIMER1_COMPA_vect
+# define SYSTIMER_CNTMAX	0xFFFFul
+#else
+# error "Wrong SYSTIMER_NR"
+#endif
+
 _timcnt_t _timer_count_now;
 
-
-ISR(TIMER1_COMPA_vect)
+ISR(SYSTIMER_ISR)
 {
 	_timer_count_now++;
 	mb();
@@ -34,20 +46,33 @@ ISR(TIMER1_COMPA_vect)
 
 #define CALCOCR(ps)	((uint32_t)F_CPU / ((uint32_t)(ps) * (uint32_t)TIMER_CPS))
 
-#define CALCPS()	(((uint32_t)F_CPU / 1UL <= 0xFFFFUL) ? 1UL : \
-			 (((uint32_t)F_CPU / 8UL <= 0xFFFFUL) ? 8UL : \
-			  (((uint32_t)F_CPU / 64UL <= 0xFFFFUL) ? 64UL : \
-			   (((uint32_t)F_CPU / 256UL <= 0xFFFFUL) ? 256UL : \
-			    (((uint32_t)F_CPU / 1024UL <= 0xFFFFUL) ? 1024UL : \
-			     0)))))
+//FIXME this is not good
+#define CALCPS()	(((uint32_t)F_CPU / 1UL <= SYSTIMER_CNTMAX) ? 1UL : \
+			 (((uint32_t)F_CPU / 8UL <= SYSTIMER_CNTMAX) ? 8UL : \
+			  (((uint32_t)F_CPU / 64UL <= SYSTIMER_CNTMAX) ? 64UL : \
+			   (((uint32_t)F_CPU / 256UL <= SYSTIMER_CNTMAX) ? 256UL : \
+			    (((uint32_t)F_CPU / 1024UL <= SYSTIMER_CNTMAX) ? 1024UL : \
+			     1024UL)))))
 
-#define CALCCS(ps)	((ps) == 1UL ? ((0 << CS12) | (0 << CS11) | (1 << CS10)) : \
+#if SYSTIMER_NR == 0
+# define CALCCS(ps)	((ps) == 1UL ? ((0 << CS02) | (0 << CS01) | (1 << CS00)) : \
+			 ((ps) == 8UL ? ((0 << CS02) | (1 << CS01) | (0 << CS00)) : \
+			  ((ps) == 64UL ? ((0 << CS02) | (1 << CS01) | (1 << CS00)) : \
+			   ((ps) == 256UL ? ((1 << CS02) | (0 << CS01) | (0 << CS00)) : \
+			    ((ps) == 1024UL ? ((1 << CS02) | (0 << CS01) | (1 << CS00)) : \
+			     0)))))
+#elif SYSTIMER_NR == 1
+# define CALCCS(ps)	((ps) == 1UL ? ((0 << CS12) | (0 << CS11) | (1 << CS10)) : \
 			 ((ps) == 8UL ? ((0 << CS12) | (1 << CS11) | (0 << CS10)) : \
 			  ((ps) == 64UL ? ((0 << CS12) | (1 << CS11) | (1 << CS10)) : \
 			   ((ps) == 256UL ? ((1 << CS12) | (0 << CS11) | (0 << CS10)) : \
 			    ((ps) == 1024UL ? ((1 << CS12) | (0 << CS11) | (1 << CS10)) : \
 			     0)))))
+#else
+# error
+#endif
 
+//FIXME use timer 0
 void timer_init(void)
 {
 	const uint16_t ps = CALCPS();

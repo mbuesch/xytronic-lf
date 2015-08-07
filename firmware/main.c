@@ -24,6 +24,8 @@
 #include "measure_current.h"
 #include "measure_temp.h"
 #include "controller_current.h"
+#include "controller_temp.h"
+#include "pwm_current.h"
 #include "timer.h"
 #include "util.h"
 
@@ -42,6 +44,8 @@ int main(void)
 	meascurr_init();
 	meastemp_init();
 	contrcurr_init();
+	contrtemp_init();
+	pwmcurr_init();
 	//TODO
 
 	wdt_enable(WDTO_250MS);
@@ -49,9 +53,12 @@ int main(void)
 	while (1) {
 		wdt_reset();
 
-		meascurr_work();
 		meastemp_work();
+		contrtemp_work();
+
+		meascurr_work();
 		contrcurr_work();
-		//TODO
+
+		pwmcurr_work();
 	}
 }

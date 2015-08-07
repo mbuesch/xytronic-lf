@@ -28,8 +28,8 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 {
 	fixpt_t e, de;
 	fixpt_t p, i, d, pid_result;
-	fixpt_t y_lim_pos = pid->y_lim;
-	fixpt_t y_lim_neg = fixpt_neg(y_lim_pos);
+	fixpt_t y_neglim = pid->y_neglim;
+	fixpt_t y_poslim = pid->y_poslim;
 
 	/* Calculate the deviation. */
 	e = fixpt_sub(pid->setpoint, r);
@@ -39,7 +39,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 
 	/* I term */
 	i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(pid->ki, e), dt));
-	i = clamp(i, y_lim_neg, y_lim_pos);
+	i = clamp(i, y_neglim, y_poslim);
 	pid->integr = i;
 
 	/* D term */
@@ -48,26 +48,27 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 		d = fixpt_mul_div(de, pid->kd, dt);
 	} else {
 		if (de < 0)
-			d = y_lim_neg;
+			d = y_neglim;
 		else
-			d = y_lim_pos;
+			d = y_poslim;
 	}
 	pid->prev_e = e;
 
 	/* Add P, I and D terms */
 	pid_result = fixpt_add(fixpt_add(p, i), d);
-	pid_result = clamp(pid_result, y_lim_neg, y_lim_pos);
+	pid_result = clamp(pid_result, y_neglim, y_poslim);
 
 	return pid_result;
 }
 
 void pid_init(struct pid *pid,
 	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
-	      fixpt_t y_lim)
+	      fixpt_t y_neglim, fixpt_t y_poslim)
 {
 	memset(pid, 0, sizeof(*pid));
 	pid->kp = kp;
 	pid->ki = ki;
 	pid->kd = kd;
-	pid->y_lim = y_lim;
+	pid->y_neglim = y_neglim;
+	pid->y_poslim = y_poslim;
 }

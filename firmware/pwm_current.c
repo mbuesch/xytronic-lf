@@ -1,6 +1,6 @@
 /*
  * Xytronic LF-1600
- * Current measurement routines
+ * Current PWM
  *
  * Copyright (c) 2015 Michael Buesch <m@bues.ch>
  *
@@ -19,44 +19,32 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "measure_current.h"
-#include "measure.h"
-#include "timer.h"
+#include "pwm_current.h"
 #include "scale.h"
 #include "controller_current.h"
 
 
-#define MEASCURR_PERIOD_MS	100 /* ms */
-#define MEASCURR_CHANNEL	MEASCHAN_ADC2
+#define PWMCURR_MAX_DUTY	0x3FF
 
 
-static struct timer meascurr_timer;
-
-
-/* This runs in IRQ context. */
-static void meascurr_meas_callback(void *context, uint16_t raw_adc)
+void pwmcurr_set(fixpt_t current_amps)
 {
-	fixpt_t phys;
+	int16_t duty;
 
-	phys = scale((int16_t)raw_adc, 0, MEASURE_MAX_RESULT,
-		     float_to_fixpt(CONTRCURR_NEGLIM), //FIXME limits are not ok
-		     float_to_fixpt(CONTRCURR_POSLIM));
-	contrcurr_set_feedback(phys);
+	duty = unscale(current_amps,
+		       float_to_fixpt(CONTRCURR_NEGLIM),
+		       float_to_fixpt(CONTRCURR_POSLIM),
+		       0, PWMCURR_MAX_DUTY);
+
+	//TODO
 }
 
-void meascurr_work(void)
+void pwmcurr_work(void)
 {
-	bool scheduled;
-
-	if (timer_expired(&meascurr_timer)) {
-		scheduled = measure_schedule(MEASCURR_CHANNEL,
-					     meascurr_meas_callback, NULL);
-		if (scheduled)
-			timer_add(&meascurr_timer, MEASCURR_PERIOD_MS);
-	}
+	//TODO
 }
 
-void meascurr_init(void)
+void pwmcurr_init(void)
 {
-	timer_arm(&meascurr_timer, 0);
+	//TODO
 }

@@ -22,6 +22,7 @@
 #include "measure.h"
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 
 /* Multiplexer selections */
@@ -49,13 +50,39 @@
 
 
 static uint8_t active_mux;
+static measure_cb_t active_cb;
+static void *active_cb_context;
 
 
-static void adc_trigger(uint8_t mux, uint8_t ps)
+ISR(ADC_vect)
+{
+	uint16_t raw_adc;
+
+	mb();
+	raw_adc = ADC;
+	if (active_cb) {
+		active_cb(active_cb_context, raw_adc);
+		active_cb = NULL;
+		active_cb_context = NULL;
+	}
+	active_mux = MUX_NONE;
+	mb();
+}
+
+static void adc_trigger(uint8_t mux, uint8_t ps, bool irq)
 {
 	active_mux = mux;
+	mb();
+
+	//FIXME refs is wrong
 	ADMUX = (1 << REFS0) | mux;
-	ADCSRA = (1 << ADEN) | (0 << ADIE) | (1 << ADSC) | (0 << ADATE) | ps;
+	if (irq) {
+		ADCSRA = (1 << ADEN) | (1 << ADSC) |
+			 (1 << ADIE) | (0 << ADATE) | ps;
+	} else {
+		ADCSRA = (1 << ADEN) | (1 << ADSC) |
+			 (0 << ADIE) | (0 << ADATE) | ps;
+	}
 }
 
 static void adc_busywait(void)
@@ -64,10 +91,58 @@ static void adc_busywait(void)
 	ADCSRA |= (1 << ADIF); /* Clear IRQ flag */
 }
 
+bool measure_schedule(enum measure_chan chan,
+		      measure_cb_t callback, void *context)
+{
+	uint8_t sreg;
+	bool success;
+	uint8_t mux;
+	uint8_t ps;
+
+	switch (chan) {
+	case MEASCHAN_ADC0:
+		mux = MUX_ADC0;
+		break;
+	case MEASCHAN_ADC1:
+		mux = MUX_ADC1;
+		break;
+	case MEASCHAN_ADC2:
+		mux = MUX_ADC2;
+		break;
+	case MEASCHAN_ADC3:
+		mux = MUX_ADC3;
+		break;
+	case MEASCHAN_ADC4:
+		mux = MUX_ADC4;
+		break;
+	case MEASCHAN_ADC5:
+		mux = MUX_ADC5;
+		break;
+	default:
+		return false;
+	}
+
+	ps = PS_128;
+
+	sreg = irq_disable_save();
+	if (active_mux == MUX_NONE) {
+		active_cb = callback;
+		active_cb_context = context;
+		adc_trigger(mux, ps, true);
+
+		success = true;
+	} else {
+		success = false;
+	}
+	irq_restore(sreg);
+
+	return success;
+}
+
 void measure_init(void)
 {
 	/* Discard the first measurement. */
-	adc_trigger(MUX_GND, PS_8);
+	adc_trigger(MUX_GND, PS_128, false);
 	adc_busywait();
 	(void)ADC;
 	active_mux = MUX_NONE;

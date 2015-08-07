@@ -10,7 +10,8 @@ struct pid {
 	fixpt_t kd;
 
 	fixpt_t setpoint;
-	fixpt_t y_lim;
+	fixpt_t y_neglim;
+	fixpt_t y_poslim;
 
 	fixpt_t prev_e;
 	fixpt_t integr;
@@ -18,7 +19,7 @@ struct pid {
 
 void pid_init(struct pid *pid,
 	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
-	      fixpt_t y_lim);
+	      fixpt_t y_neglim, fixpt_t y_poslim);
 
 static inline void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)
 {
