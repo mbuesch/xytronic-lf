@@ -13,7 +13,8 @@ static void check_common(void)
 		 float_to_fixpt(1.0),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	CHECK(pid_get_setpoint(&pid) == float_to_fixpt(10.0));
 }
@@ -30,7 +31,8 @@ static void check_P(void)
 		 float_to_fixpt(1.0),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -56,7 +58,8 @@ static void check_P(void)
 		 float_to_fixpt(3.0),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -86,7 +89,8 @@ static void check_P(void)
 		 float_to_fixpt(2.5),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -116,7 +120,8 @@ static void check_P(void)
 		 float_to_fixpt(-2.5),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -152,7 +157,8 @@ static void check_I(void)
 		 float_to_fixpt(0.0),		// kp
 		 float_to_fixpt(1.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -194,7 +200,8 @@ static void check_I(void)
 		 float_to_fixpt(0.0),		// kp
 		 float_to_fixpt(-1.0),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -236,7 +243,8 @@ static void check_I(void)
 		 float_to_fixpt(0.0),		// kp
 		 float_to_fixpt(1.5),		// ki
 		 float_to_fixpt(0.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -284,7 +292,8 @@ static void check_D(void)
 		 float_to_fixpt(0.0),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(1.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -318,7 +327,8 @@ static void check_D(void)
 		 float_to_fixpt(0.0),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(-1.0),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -353,7 +363,8 @@ static void check_D(void)
 		 float_to_fixpt(0.0),		// kp
 		 float_to_fixpt(0.0),		// ki
 		 float_to_fixpt(1.5),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt
@@ -393,7 +404,8 @@ static void check_PID(void)
 		 float_to_fixpt(1.5),		// kp
 		 float_to_fixpt(1.5),		// ki
 		 float_to_fixpt(1.5),		// kd
-		 float_to_fixpt(15.0));	// lim
+		 float_to_fixpt(-15.0),		// -lim
+		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
 	ret = pid_run(&pid,
 		      float_to_fixpt(1.0),	// dt

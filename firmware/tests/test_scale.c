@@ -218,11 +218,17 @@ static void test_scale_unscale(void)
 	CHECK(fix == float_to_fixpt(-0.1));
 }
 
+static void test_rescale(void)
+{
+	//TODO
+}
+
 int main(void)
 {
 	test_scale();
 	test_unscale();
 	test_scale_unscale();
+	test_rescale();
 
 	return 0;
 }
