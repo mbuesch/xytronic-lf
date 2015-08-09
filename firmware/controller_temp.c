@@ -23,6 +23,7 @@
 #include "controller_current.h"
 #include "pid.h"
 #include "timer.h"
+#include "scale.h"
 
 
 /* Temperature controller PID parameters */
@@ -47,10 +48,13 @@ void contrtemp_set_setpoint(fixpt_t w)
 	pid_set_setpoint(&temp_pid, w);
 }
 
-static fixpt_t temp_to_amps(fixpt_t amps)
+static fixpt_t temp_to_amps(fixpt_t temp)
 {
-	//TODO
-	return amps;
+	return rescale(temp,
+		       float_to_fixpt(CONTRTEMP_NEGLIM),
+		       float_to_fixpt(CONTRTEMP_POSLIM),
+		       float_to_fixpt(CONTRCURR_NEGLIM),
+		       float_to_fixpt(CONTRCURR_POSLIM));
 }
 
 void contrtemp_work(void)
