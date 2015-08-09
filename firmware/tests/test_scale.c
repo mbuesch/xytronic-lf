@@ -220,7 +220,105 @@ static void test_scale_unscale(void)
 
 static void test_rescale(void)
 {
-	//TODO
+	fixpt_t ret;
+
+	ret = rescale(float_to_fixpt(5.0), float_to_fixpt(-10.0), float_to_fixpt(10.0),
+		      float_to_fixpt(-10.0), float_to_fixpt(10.0));
+	CHECK(ret == float_to_fixpt(5.0));
+
+	ret = rescale(float_to_fixpt(5.0), float_to_fixpt(10.0), float_to_fixpt(-10.0),
+		      float_to_fixpt(10.0), float_to_fixpt(-10.0));
+	CHECK(ret == float_to_fixpt(5.0));
+
+	ret = rescale(float_to_fixpt(5.0), float_to_fixpt(-10.0), float_to_fixpt(10.0),
+		      float_to_fixpt(-1.0), float_to_fixpt(1.0));
+	CHECK(ret == float_to_fixpt(0.5));
+
+	ret = rescale(float_to_fixpt(5.0), float_to_fixpt(10.0), float_to_fixpt(-10.0),
+		      float_to_fixpt(1.0), float_to_fixpt(-1.0));
+	CHECK(ret == float_to_fixpt(0.5));
+
+	ret = rescale(float_to_fixpt(-1.0), float_to_fixpt(10.0), float_to_fixpt(-10.0),
+		      float_to_fixpt(1.0), float_to_fixpt(-1.0));
+	CHECK(ret == float_to_fixpt(-0.1));
+
+	ret = rescale(float_to_fixpt(1.0), float_to_fixpt(10.0), float_to_fixpt(-10.0),
+		      float_to_fixpt(1.0), float_to_fixpt(-1.0));
+	CHECK(ret == float_to_fixpt(0.1));
+
+	ret = rescale(float_to_fixpt(100.0), float_to_fixpt(0.0), float_to_fixpt(200.0),
+		      float_to_fixpt(0.0), float_to_fixpt(10.0));
+	CHECK(ret == float_to_fixpt(5.0));
+
+	ret = rescale(float_to_fixpt(100.0), float_to_fixpt(0.0), float_to_fixpt(200.0),
+		      float_to_fixpt(0.0), float_to_fixpt(500.0));
+	CHECK(ret == float_to_fixpt(250.0));
+
+	ret = rescale(float_to_fixpt(50.0), float_to_fixpt(0.0), float_to_fixpt(200.0),
+		      float_to_fixpt(0.0), float_to_fixpt(500.0));
+	CHECK(ret == float_to_fixpt(125.0));
+
+	ret = rescale(float_to_fixpt(100.0), float_to_fixpt(0.0), float_to_fixpt(200.0),
+		      float_to_fixpt(500.0), float_to_fixpt(0.0));
+	CHECK(ret == float_to_fixpt(250.0));
+
+	ret = rescale(float_to_fixpt(50.0), float_to_fixpt(0.0), float_to_fixpt(200.0),
+		      float_to_fixpt(500.0), float_to_fixpt(0.0));
+	CHECK(ret == float_to_fixpt(375.0));
+
+	ret = rescale(float_to_fixpt(12.8), float_to_fixpt(-100.0), float_to_fixpt(100.0),
+		      float_to_fixpt(-10.0), float_to_fixpt(10.0));
+	CHECK(ret == float_to_fixpt(1.28));
+
+	ret = rescale(float_to_fixpt(-12.8), float_to_fixpt(-100.0), float_to_fixpt(100.0),
+		      float_to_fixpt(-10.0), float_to_fixpt(10.0));
+	CHECK(ret == float_to_fixpt(-1.28));
+
+	ret = rescale(int_to_fixpt(0), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(480.0));
+	CHECK(ret == float_to_fixpt(0.0));
+
+	ret = rescale(int_to_fixpt(0x3FF), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(480.0));
+	CHECK(ret == float_to_fixpt(480.0));
+
+	ret = rescale(int_to_fixpt(0x100), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(480.0));
+	CHECK(ret >= float_to_fixpt(120.1) &&
+	      ret <= float_to_fixpt(120.2));
+
+	ret = rescale(int_to_fixpt(0x200), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(480.0));
+	CHECK(ret >= float_to_fixpt(240.2) &&
+	      ret <= float_to_fixpt(240.3));
+
+	ret = rescale(int_to_fixpt(0x300), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(480.0));
+	CHECK(ret >= float_to_fixpt(360.3) &&
+	      ret <= float_to_fixpt(360.4));
+
+	ret = rescale(int_to_fixpt(0), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(5.0));
+	CHECK(ret == float_to_fixpt(0.0));
+
+	ret = rescale(int_to_fixpt(0x3FF), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(5.0));
+	CHECK(ret == float_to_fixpt(5.0));
+
+	ret = rescale(int_to_fixpt(0x100), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(5.0));
+	CHECK(ret >= float_to_fixpt(1.245) &&
+	      ret <= float_to_fixpt(1.255));
+
+	ret = rescale(int_to_fixpt(0x200), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(5.0));
+	CHECK(ret >= float_to_fixpt(2.495) &&
+	      ret <= float_to_fixpt(2.505));
+
+	ret = rescale(int_to_fixpt(0x300), int_to_fixpt(0), int_to_fixpt(0x3FF),
+		      float_to_fixpt(0.0), float_to_fixpt(5.0));
+	CHECK(ret >= float_to_fixpt(3.745) &&
+	      ret <= float_to_fixpt(3.755));
 }
 
 int main(void)
