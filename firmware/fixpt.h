@@ -102,6 +102,8 @@ static inline fixptfloat_t fixpt_to_float(fixpt_t p)
 	return fixpt_big_to_float(fixpt_inflate(p));
 }
 
+/* Calculate: a + b
+ */
 static inline fixpt_big_t fixpt_big_add(fixpt_big_t a, fixpt_big_t b)
 {
 	fixpt_big_t tmp;
@@ -111,6 +113,8 @@ static inline fixpt_big_t fixpt_big_add(fixpt_big_t a, fixpt_big_t b)
 	return tmp;
 }
 
+/* Calculate: a - b
+ */
 static inline fixpt_big_t fixpt_big_sub(fixpt_big_t a, fixpt_big_t b)
 {
 	fixpt_big_t tmp;
@@ -120,6 +124,8 @@ static inline fixpt_big_t fixpt_big_sub(fixpt_big_t a, fixpt_big_t b)
 	return tmp;
 }
 
+/* Calculate: a * b
+ */
 static inline fixpt_big_t fixpt_big_mul(fixpt_big_t a, fixpt_big_t b)
 {
 	fixpt_big_t tmp;
@@ -134,6 +140,8 @@ static inline fixpt_big_t fixpt_big_mul(fixpt_big_t a, fixpt_big_t b)
 	return tmp;
 }
 
+/* Calculate: a / b
+ */
 static inline fixpt_big_t fixpt_big_div(fixpt_big_t a, fixpt_big_t b)
 {
 	fixpt_big_t tmp;
@@ -147,6 +155,18 @@ static inline fixpt_big_t fixpt_big_div(fixpt_big_t a, fixpt_big_t b)
 		tmp -= b / 2;
 	/* Divide */
 	tmp /= b;
+
+	return tmp;
+}
+
+/* Calculate: (a * b) / c
+ */
+static inline fixpt_big_t fixpt_big_mul_div(fixpt_big_t a, fixpt_big_t b, fixpt_big_t c)
+{
+	fixpt_big_t tmp;
+
+	tmp = fixpt_big_mul(a, b);
+	tmp = fixpt_big_div(tmp, c);
 
 	return tmp;
 }
@@ -201,8 +221,9 @@ static inline fixpt_t fixpt_mul_div(fixpt_t a, fixpt_t b, fixpt_t c)
 {
 	fixpt_big_t tmp;
 
-	tmp = fixpt_big_mul(fixpt_inflate(a), fixpt_inflate(b));
-	tmp = fixpt_big_div(tmp, c);
+	tmp = fixpt_big_mul_div(fixpt_inflate(a),
+				fixpt_inflate(b),
+				fixpt_inflate(c));
 
 	return fixpt_deflate(tmp);
 }
