@@ -46,7 +46,6 @@ int main(void)
 	contrcurr_init();
 	contrtemp_init();
 	pwmcurr_init();
-	//TODO
 
 	wdt_enable(WDTO_250MS);
 	irq_enable();
@@ -58,7 +57,5 @@ int main(void)
 
 		meascurr_work();
 		contrcurr_work();
-
-		pwmcurr_work();
 	}
 }
