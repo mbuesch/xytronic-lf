@@ -7,44 +7,54 @@
 typedef uint32_t _timcnt_t;
 typedef int32_t _signed_timcnt_t;
 
-#define TIMER_CPS	((_timcnt_t)100)
+#ifndef TIMER_CPS
+# define TIMER_CPS	100
+#endif
 
-extern _timcnt_t _timer_count_now;
+#define TIMERCPS	((_timcnt_t)(TIMER_CPS))
 
 struct timer {
 	_timcnt_t count;
 };
 
-static inline _timcnt_t _timer_ms_to_count(uint32_t millisec)
+
+_timcnt_t _timer_get_now(void);
+
+static inline _signed_timcnt_t _timer_ms_to_count(int32_t millisec)
 {
-	return (_timcnt_t)div_round_up(TIMER_CPS * millisec, 1000UL);
+	return (_signed_timcnt_t)sdiv_round_up((int32_t)TIMERCPS * millisec,
+					       (int32_t)1000);
 }
 
-static inline _timcnt_t _timer_get_now(void)
+static inline int32_t _timer_count_to_ms(_signed_timcnt_t count)
 {
-	_timcnt_t count;
-	uint8_t sreg;
+	return sdiv_round((int32_t)count * (int32_t)1000,
+			  (int32_t)TIMERCPS);
+}
 
-	sreg = irq_disable_save();
-	count = _timer_count_now;
-	irq_restore(sreg);
+static inline _signed_timcnt_t _timer_count_since(const struct timer *timer)
+{
+	return (_signed_timcnt_t)(_timer_get_now() - timer->count);
+}
 
-	return count;
+static inline int32_t timer_ms_since(const struct timer *timer)
+{
+	return _timer_count_to_ms(_timer_count_since(timer));
 }
 
 static inline bool timer_expired(const struct timer *timer)
 {
-	return (_signed_timcnt_t)(_timer_get_now() - timer->count) >= 0;
+	return _timer_count_since(timer) >= 0;
 }
 
-static inline void timer_arm(struct timer *timer, uint32_t millisec)
+static inline void timer_arm(struct timer *timer, int32_t millisec)
 {
-	timer->count = _timer_get_now() + _timer_ms_to_count(millisec);
+	timer->count = _timer_get_now() + (_timcnt_t)_timer_ms_to_count(millisec);
 }
 
-static inline void timer_add(struct timer *timer, uint32_t millisec)
+static inline void timer_add(struct timer *timer, int32_t millisec)
 {
-	timer->count += _timer_ms_to_count(millisec);
+	timer->count += (_timcnt_t)_timer_ms_to_count(millisec);
 }
 
 void timer_init(void);
