@@ -15,12 +15,13 @@ SRCS			:= controller_current.c \
 			   util.c
 
 # Project fuse bits
-LFUSE			:= 0x62
-HFUSE			:= 0xDF
+# 8 MHz, BOD 2.7 V
+LFUSE			:= 0xE2
+HFUSE			:= 0xDD
 EFUSE			:= 0xF9
 
 # CPU speed, in Hz
-F_CPU			:= 1000000UL
+F_CPU			:= 8000000UL
 
 # Architecture configuration
 GCC_ARCH		:= atmega88
