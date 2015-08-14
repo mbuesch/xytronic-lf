@@ -59,23 +59,41 @@ ISR(ADC_vect)
 	uint16_t raw_adc;
 
 	mb();
+
+	/* Read the raw ADC value. */
 	raw_adc = ADC;
+
+	/* If a callback is defined, call it. */
 	if (active_cb) {
 		active_cb(active_cb_context, raw_adc);
 		active_cb = NULL;
 		active_cb_context = NULL;
 	}
+
+	/* Mark the ADC resource as unused. */
 	active_mux = MUX_NONE;
+
 	mb();
 }
 
 static void adc_trigger(uint8_t mux, uint8_t ps, bool irq)
 {
+	uint8_t ref;
+
+	/* Mask the multiplexer bits. */
+	mux &= (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0);
+	/* Mask the prescaler bits. */
+	ps &= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+
+	/* Mark the ADC resource as used. */
 	active_mux = mux;
 	mb();
 
-	//FIXME refs is wrong
-	ADMUX = (1 << REFS0) | mux;
+	/* REF = AREF pin */
+	ref = (0 << REFS1) | (0 << REFS0);
+
+	/* Set multiplexer and start conversion. */
+	ADMUX = ref | (0 << ADLAR) | mux;
 	if (irq) {
 		ADCSRA = (1 << ADEN) | (1 << ADSC) |
 			 (1 << ADIE) | (0 << ADATE) | ps;
@@ -141,9 +159,14 @@ bool measure_schedule(enum measure_chan chan,
 
 void measure_init(void)
 {
+	active_cb = NULL;
+	active_cb_context = NULL;
+
 	/* Discard the first measurement. */
 	adc_trigger(MUX_GND, PS_128, false);
 	adc_busywait();
 	(void)ADC;
+
+	/* Mark the ADC resource as unused. */
 	active_mux = MUX_NONE;
 }
