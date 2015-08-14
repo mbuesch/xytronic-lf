@@ -39,19 +39,44 @@
 		__val >= 0 ? __val : -__val;	\
 	})
 
-/* Round an integer 'n' up to a multiple of 's'. */
+/* Round an unsigned integer 'n' up to a multiple of 's'. */
 #define round_up(n, s)          ((((n) + (s) - 1) / (s)) * (s))
 
-/* Perform a ceiling division of 'x' / 'd'. */
-#define div_round_up(x, d)		({	\
+/* Perform a signed ceiling division of 'x' / 'd'. */
+#define sdiv_round_up(x, d)		({		\
+		__typeof__(x) __r, __x = (x);		\
+		__typeof__(d) __d = (d);		\
+		if ((__x < 0) ^ (__d < 0))		\
+			__r = __x / __d;		\
+		else if ((__x < 0) && (__d < 0))	\
+			__r = (__x + __d + 1) / __d;	\
+		else					\
+			__r = (__x + __d - 1) / __d;	\
+		__r;					\
+	})
+
+/* Perform an unsigned ceiling division of 'x' / 'd'. */
+#define udiv_round_up(x, d)		({	\
 		__typeof__(x) __x = (x);	\
 		__typeof__(d) __d = (d);	\
 		(__x + __d - 1) / __d;		\
 	})
 
+/* Divide signed integer x by signed integer d and
+ * round to the closest result. */
+#define sdiv_round(x, d)	({			\
+		__typeof__(x) __r, __x = (x);		\
+		__typeof__(d) __d = (d);		\
+		if ((__x < 0) ^ (__d < 0))		\
+			__r = (__x - (__d / 2)) / __d;	\
+		else					\
+			__r = (__x + (__d / 2)) / __d;	\
+		__r;					\
+	})
+
 /* Divide unsigned integer x by unsigned integer d and
  * round to the closest result. */
-#define div_round(x, d)	({			\
+#define udiv_round(x, d)	({		\
 		__typeof__(x) __x = (x);	\
 		__typeof__(d) __d = (d);	\
 		(__x + (__d / 2)) / __d;	\
