@@ -1,4 +1,4 @@
-CPPFLAGS	:= -I.. -Ifake -DF_CPU=1000000UL \
+CPPFLAGS	:= -I.. -Ifake -DF_CPU=8000000UL \
 		   -DTESTSUITE=1 \
 		   -DFIXPT_SIZE=16 -DFIXPT_SHIFT=5 -DFIXPTFLOAT_SIZE=64
 CFLAGS		:= -std=c11 -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
@@ -6,9 +6,11 @@ CFLAGS		:= -std=c11 -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 		   -Wcast-qual -Wlogical-op -Wshadow -Wconversion
 LDFLAGS		:=
 
-TESTS		:= test_fixpt \
+TESTS		:= test_common \
+		   test_fixpt \
 		   test_pid \
-		   test_scale
+		   test_scale \
+		   test_timer
 
 TEST_BINS	:= $(foreach t,$(TESTS),$(t).run)
 
@@ -19,6 +21,8 @@ test_%.run: test_%.o fake/fake.o
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^
 
 all: $(TEST_BINS)
+	./test_common.run
+	./test_timer.run
 	./test_fixpt.run
 	./test_pid.run
 	./test_scale.run
