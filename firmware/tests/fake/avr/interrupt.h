@@ -2,3 +2,5 @@
 
 #define cli()	__asm__ __volatile__("" : : : "memory")
 #define sei()	__asm__ __volatile__("" : : : "memory")
+
+#define ISR(name)	void name(void)
