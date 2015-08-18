@@ -98,18 +98,15 @@
  * Resolves at compile-time, if bitnr is a compile-time constant.
  * Uses an efficient table lookup otherwise.
  */
-extern const uint8_t PROGMEM _bit_to_mask8[8];
+extern const uint8_t __flash _bit_to_mask8[8];
 #define BITMASK8(bitnr)		(			\
-		__builtin_constant_p(bitnr) ?		\
-		(1 << (bitnr)) :			\
-		pgm_read_byte(&_bit_to_mask8[(bitnr)])	\
+		(uint8_t)(__builtin_constant_p(bitnr) ?	\
+			  (1u << (bitnr)) :		\
+			  _bit_to_mask8[(bitnr)])	\
 	)
 
 /* Return the number of elements in a C array. */
 #define ARRAY_SIZE(x)		(sizeof(x) / sizeof((x)[0]))
-
-/* Progmem pointer annotation. */
-#define PROGPTR			/* progmem pointer */
 
 /* Memory barrier. */
 #define mb()			__asm__ __volatile__("" : : : "memory")
@@ -192,5 +189,10 @@ static inline bool irqs_enabled(void)
 {
 	return __irqs_enabled(SREG);
 }
+
+/* Indirect special function register access. */
+typedef uint16_t sfr_addr_t;
+#define SFR_ADDR(sfr)		_SFR_ADDR(sfr)
+#define SFR_BYTE(sfr_addr)	_MMIO_BYTE(sfr_addr)
 
 #endif /* MY_UTIL_H_ */

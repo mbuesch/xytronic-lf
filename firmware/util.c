@@ -25,7 +25,7 @@
 
 
 /* Bitnumber to bitmask lookup table. */
-const uint8_t PROGMEM _bit_to_mask8[8] = {
+const uint8_t __flash _bit_to_mask8[8] = {
 	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
 };
 
