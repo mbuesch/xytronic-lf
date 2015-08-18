@@ -57,7 +57,7 @@ WARN_CFLAGS		:= -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 			   -Wcast-qual -Wlogical-op -Wshadow \
 			   -Wconversion
 
-CFLAGS			+= -mmcu=$(GCC_ARCH) -std=c11 -g -O$(O) $(WARN_CFLAGS) \
+CFLAGS			+= -mmcu=$(GCC_ARCH) -std=gnu11 -g -O$(O) $(WARN_CFLAGS) \
 			  "-Dinline=inline __attribute__((__always_inline__))" \
 			  -fshort-enums -DF_CPU=$(F_CPU) \
 			  -flto
