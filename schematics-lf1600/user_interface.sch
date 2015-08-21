@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 3 5
 Title "Xytronic LF-1600 - User interface"
-Date "19 dec 2014"
+Date "21 aug 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""

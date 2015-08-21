@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 4 5
 Title "Xytronic LF-1600 - Heater power supply"
-Date "19 dec 2014"
+Date "21 aug 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -132,26 +132,26 @@ Text GLabel 6500 1800 1    60   Input ~ 0
 $Comp
 L C C6
 U 1 1 54970334
-P 7150 4150
-F 0 "C6" H 7150 4250 40  0000 L CNN
-F 1 "0.1 µF / 100 V" H 7156 4065 40  0000 L CNN
-F 2 "~" H 7188 4000 30  0000 C CNN
-F 3 "~" H 7150 4150 60  0000 C CNN
-	1    7150 4150
-	0    -1   -1   0   
+P 7250 3250
+F 0 "C6" H 7250 3350 40  0000 L CNN
+F 1 "0.1 µF / 100 V" H 7256 3165 40  0000 L CNN
+F 2 "~" H 7288 3100 30  0000 C CNN
+F 3 "~" H 7250 3250 60  0000 C CNN
+	1    7250 3250
+	-1   0    0    1   
 $EndComp
 $Comp
 L R R22
 U 1 1 5497035D
-P 7850 4150
-F 0 "R22" V 7930 4150 40  0000 C CNN
-F 1 "100" V 7857 4151 40  0000 C CNN
-F 2 "~" V 7780 4150 30  0000 C CNN
-F 3 "~" H 7850 4150 30  0000 C CNN
-	1    7850 4150
-	0    -1   -1   0   
+P 7250 2300
+F 0 "R22" V 7330 2300 40  0000 C CNN
+F 1 "100" V 7257 2301 40  0000 C CNN
+F 2 "~" V 7180 2300 30  0000 C CNN
+F 3 "~" H 7250 2300 30  0000 C CNN
+	1    7250 2300
+	-1   0    0    1   
 $EndComp
-Text GLabel 8350 4150 2    60   Input ~ 0
+Text GLabel 7250 1800 1    60   Input ~ 0
 24V
 $Comp
 L R R?
@@ -221,14 +221,14 @@ Wire Wire Line
 Wire Wire Line
 	6500 1800 6500 2250
 Wire Wire Line
-	3050 4150 6950 4150
+	3050 4150 7250 4150
 Wire Wire Line
 	6500 4150 6500 2900
 Connection ~ 6500 4150
 Wire Wire Line
-	7350 4150 7600 4150
+	7250 2550 7250 3050
 Wire Wire Line
-	8100 4150 8350 4150
+	7250 2050 7250 1800
 Wire Wire Line
 	4200 2850 4600 2850
 Wire Wire Line
@@ -292,4 +292,8 @@ Wire Wire Line
 	7550 5650 8700 5650
 Wire Wire Line
 	5200 5100 5200 5000
+Text Notes 950  4300 0    60   ~ 0
+Heater elem. R 3.5 Ohms @ 20 °C
+Wire Wire Line
+	7250 4150 7250 3450
 $EndSCHEMATC

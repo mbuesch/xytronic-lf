@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 5
 Title "Xytronic LF-1600"
-Date "19 dec 2014"
+Date "21 aug 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -98,17 +98,14 @@ Wire Wire Line
 	7150 5100 7350 5100
 Text GLabel 7350 4400 2    60   Input ~ 0
 GND
-Text GLabel 3650 5900 0    60   Input ~ 0
+Text GLabel 3650 5950 0    60   Input ~ 0
 GND
 Wire Wire Line
-	3650 5900 3750 5900
-Wire Wire Line
-	3750 5850 3750 5950
+	3750 5850 3750 6350
 Wire Wire Line
 	3750 5850 3850 5850
 Wire Wire Line
-	3750 5950 3850 5950
-Connection ~ 3750 5900
+	3650 5950 3850 5950
 $Comp
 L R R12
 U 1 1 54935CDD
@@ -333,4 +330,24 @@ Wire Wire Line
 	6150 3650 6150 2300
 Wire Wire Line
 	6150 2300 5300 2300
+Text Notes 4550 6250 0    60   ~ 0
+marked as 'HS-K67121'
+$Comp
+L C C1b
+U 1 1 54A1FCC7
+P 3750 6550
+F 0 "C1b" H 3750 6650 40  0000 L CNN
+F 1 "10 nF" H 3756 6465 40  0000 L CNN
+F 2 "~" H 3788 6400 30  0000 C CNN
+F 3 "~" H 3750 6550 60  0000 C CNN
+	1    3750 6550
+	1    0    0    -1  
+$EndComp
+Connection ~ 3750 5950
+Text GLabel 3750 6850 3    60   Input ~ 0
++5V
+Wire Wire Line
+	3750 6750 3750 6850
+Text Notes 3800 6750 0    60   ~ 0
+added, because C1 is far\naway from VCC/GND pins
 $EndSCHEMATC

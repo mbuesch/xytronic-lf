@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 5
 Title "Xytronic LF-1600 - Power supply"
-Date "19 dec 2014"
+Date "21 aug 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -305,4 +305,8 @@ Text Label 4650 4200 1    60   ~ 0
 -
 Text Label 4150 5400 1    60   ~ 0
 -
+Text Notes 7350 4550 0    118  ~ 0
+XXXX
+Text Notes 7350 4700 0    60   ~ 0
+replaced by: 100nF/63V film cap
 $EndSCHEMATC
