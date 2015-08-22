@@ -22,7 +22,7 @@ SRCS			:= buttons.c \
 # 8 MHz, BOD 2.7 V
 LFUSE			:= 0xE2
 HFUSE			:= 0xDD
-EFUSE			:= 0xF9
+EFUSE			:= 0x01
 
 # CPU speed, in Hz
 F_CPU			:= 8000000UL
