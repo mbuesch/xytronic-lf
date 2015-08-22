@@ -26,7 +26,7 @@
 #include <string.h>
 
 
-#define DISPLAY_MUX_PERIOD_MS	10
+#define DISPLAY_MUX_PERIOD_MS	1
 
 
 static const struct sseg_iomap __flash digit_iomaps[] = {
