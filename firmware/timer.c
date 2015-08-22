@@ -49,11 +49,11 @@ void timer_init(void)
 	build_assert(F_CPU == 8000000ul);
 
 	/* Initialize timer-0 as system timer. */
-	OCR0A = 78;
+	OCR0A = 125;
 	TCNT0 = 0;
-	/* CTC mode; PS 1024 */
+	/* CTC mode; PS 64 */
 	TCCR0A = (1 << WGM01) | (0 << WGM00);
-	TCCR0B = (0 << WGM02) | (1 << CS02) | (1 << CS01) | (1 << CS00);
+	TCCR0B = (0 << WGM02) | (0 << CS02) | (1 << CS01) | (1 << CS00);
 	/* Enable OC interrupt. */
 	TIFR0 = (1 << OCF0A);
 	TIMSK0 |= (1 << OCIE0A);

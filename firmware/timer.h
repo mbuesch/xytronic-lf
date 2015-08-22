@@ -8,7 +8,7 @@ typedef uint32_t _timcnt_t;
 typedef int32_t _signed_timcnt_t;
 
 #ifndef TIMER_CPS
-# define TIMER_CPS	100
+# define TIMER_CPS	1000
 #endif
 
 #define TIMERCPS	((_timcnt_t)(TIMER_CPS))
