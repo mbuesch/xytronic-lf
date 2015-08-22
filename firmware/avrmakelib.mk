@@ -71,7 +71,7 @@ EEP			:= $(NAME).eep.hex
 
 # Programmer parameters
 AVRDUDE_SPEED		?= 1
-AVRDUDE_SLOW_SPEED	?= 100
+AVRDUDE_SLOW_SPEED	?= 200
 
 ifeq ($(PROGRAMMER),mysmartusb)
 AVRDUDE_PROGRAMMER	:= avr910
