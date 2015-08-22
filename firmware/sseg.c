@@ -22,37 +22,36 @@
 #include "sseg.h"
 
 
-//TODO correctly define the segments
 static const uint8_t __flash digit_to_segment_map[] = {
 	['0' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
 			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
-			  (1 << SSEG_G),
-	['1' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
-			  (1 << SSEG_G),
-	['2' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (0 << SSEG_G),
+	['1' - '0']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (0 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
+			  (0 << SSEG_G),
+	['2' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (0 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (0 << SSEG_F) |
 			  (1 << SSEG_G),
 	['3' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
 			  (1 << SSEG_G),
-	['4' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+	['4' - '0']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (0 << SSEG_D) | (0 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
-	['5' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+	['5' - '0']	= (1 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
+			  (1 << SSEG_D) | (0 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
-	['6' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+	['6' - '0']	= (1 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
 			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
 	['7' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
-			  (1 << SSEG_G),
+			  (0 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
+			  (0 << SSEG_G),
 	['8' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
 			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
 	['9' - '0']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
-			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_D) | (0 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
 };
 
