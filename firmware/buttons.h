@@ -13,7 +13,14 @@ enum button_id {
 	NR_BUTTONS,
 };
 
-typedef void (*button_handler_t)(enum button_id button, bool pos_edge);
+enum button_state {
+	BSTATE_POSEDGE,
+	BSTATE_NEGEDGE,
+	BSTATE_PRESSED,
+};
+
+typedef void (*button_handler_t)(enum button_id button,
+				 enum button_state state);
 
 void buttons_register_handler(enum button_id button,
 			      button_handler_t handler);

@@ -38,6 +38,7 @@
 					   (1 << BUTTON_BIT_PLUS)))
 
 #define BUTTONS_DEBOUNCE_MS	10
+#define BUTTONS_ACTIVE_LOW	1
 
 
 struct buttons_context {
@@ -57,8 +58,15 @@ static const uint8_t __flash button_id_to_port_mask[] = {
 
 static inline uint8_t buttons_get(void)
 {
+	uint8_t state;
+
 	mb();
-	return (((uint8_t)~BUTTONS_PIN) & BUTTONS_MASK);
+	state = BUTTONS_PIN;
+	if (BUTTONS_ACTIVE_LOW)
+		state = (uint8_t)~state;
+	state = (uint8_t)(state & BUTTONS_MASK);
+
+	return state;
 }
 
 void buttons_register_handler(enum button_id button,
@@ -69,6 +77,7 @@ void buttons_register_handler(enum button_id button,
 
 bool buttons_debug_requested(void)
 {
+//FIXME
 	return (buttons_get() & BUTTONS_MASK) == BUTTONS_MASK;
 }
 
@@ -93,9 +102,11 @@ void buttons_work(void)
 
 		if (handler) {
 			if (pos_edge & mask)
-				handler((enum button_id)i, 1);
-			if (neg_edge & mask)
-				handler((enum button_id)i, 0);
+				handler((enum button_id)i, BSTATE_POSEDGE);
+			else if (neg_edge & mask)
+				handler((enum button_id)i, BSTATE_NEGEDGE);
+			else if (state & mask)
+				handler((enum button_id)i, BSTATE_PRESSED);
 		}
 	}
 }
