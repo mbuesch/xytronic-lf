@@ -9,7 +9,10 @@
 
 
 void contrtemp_set_feedback(fixpt_t r);
+fixpt_t contrtemp_get_feedback(void);
+
 void contrtemp_set_setpoint(fixpt_t w);
+fixpt_t contrtemp_get_setpoint(void);
 
 void contrtemp_work(void);
 void contrtemp_init(void);

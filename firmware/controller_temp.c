@@ -24,6 +24,7 @@
 #include "pid.h"
 #include "timer.h"
 #include "scale.h"
+#include "debug_uart.h"
 
 
 /* Temperature controller PID parameters */
@@ -35,6 +36,7 @@
 
 static struct pid temp_pid;
 static fixpt_t temp_feedback;
+static struct report_int16_context temp_feedback_report;
 static struct timer temp_timer;
 
 
@@ -43,9 +45,19 @@ void contrtemp_set_feedback(fixpt_t r)
 	temp_feedback = r;
 }
 
+fixpt_t contrtemp_get_feedback(void)
+{
+	return temp_feedback;
+}
+
 void contrtemp_set_setpoint(fixpt_t w)
 {
 	pid_set_setpoint(&temp_pid, w);
+}
+
+fixpt_t contrtemp_get_setpoint(void)
+{
+	return pid_get_setpoint(&temp_pid);
 }
 
 static fixpt_t temp_to_amps(fixpt_t temp)
@@ -67,6 +79,9 @@ void contrtemp_work(void)
 
 	/* Get the feedback (r) */
 	r = temp_feedback;
+	debug_report_int16(&temp_feedback_report,
+			   PSTR("temp-r"),
+			   (int16_t)fixpt_to_int(r));
 
 	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRTEMP_PERIOD_MS / 1000.0f);
