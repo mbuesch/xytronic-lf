@@ -11,6 +11,7 @@ SRCS			:= buttons.c \
 			   measure.c \
 			   measure_current.c \
 			   measure_temp.c \
+			   menu.c \
 			   pid.c \
 			   pwm_current.c \
 			   scale.c \
