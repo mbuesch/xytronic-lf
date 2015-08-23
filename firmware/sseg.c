@@ -55,6 +55,26 @@ static const uint8_t __flash digit_to_segment_map[] = {
 			  (1 << SSEG_G),
 };
 
+static const uint8_t __flash char_to_segment_map[] = {
+	['A' - 'A']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+	['B' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+	['C' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (0 << SSEG_G),
+	['D' - 'A']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (0 << SSEG_F) |
+			  (1 << SSEG_G),
+	['E' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+	['F' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+};
 
 static void mux_write(const struct sseg_digit_data *ddata,
 		      bool enable)
@@ -101,10 +121,14 @@ void sseg_digit_set(struct sseg_digit_data *ddata,
 	digit &= (char)~SSEG_DIGIT_DP;
 
 	/* Get the generic segment mask for the digit. */
+	if (digit >= 'a' && digit <= 'z')
+		digit = (char)(digit - ('a' - 'A'));
 	if (digit >= '0' && digit <= '9')
 		segment_mask = digit_to_segment_map[digit - '0'];
+	else if (digit >= 'A' && digit <= 'F')
+		segment_mask = char_to_segment_map[digit - 'A'];
 	else
-		segment_mask = digit_to_segment_map['0' - '0'];
+		segment_mask = 0;
 	if (dp)
 		segment_mask |= (1 << SSEG_DP);
 
