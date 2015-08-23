@@ -28,6 +28,10 @@
 #include "pwm_current.h"
 #include "timer.h"
 #include "util.h"
+#include "debug_uart.h"
+#include "display.h"
+#include "buttons.h"
+#include "menu.h"
 
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -40,12 +44,21 @@ int main(void)
 	wdt_enable(WDTO_2S);
 
 	timer_init();
+	buttons_init();
+	debug_uart_init();
+
+	display_init();
+
 	measure_init();
 	meascurr_init();
 	meastemp_init();
+
 	contrcurr_init();
 	contrtemp_init();
+
 	pwmcurr_init();
+
+	menu_init();
 
 	wdt_enable(WDTO_250MS);
 	irq_enable();
@@ -57,5 +70,9 @@ int main(void)
 
 		meascurr_work();
 		contrcurr_work();
+
+		menu_work();
+		display_work();
+		buttons_work();
 	}
 }
