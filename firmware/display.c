@@ -101,8 +101,10 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 	},
 };
 
+#define DISPLAY_NR_DIGITS	ARRAY_SIZE(digit_iomaps)
+
 struct display_context {
-	struct sseg_digit_data digit_data[ARRAY_SIZE(digit_iomaps)];
+	struct sseg_digit_data digit_data[DISPLAY_NR_DIGITS];
 
 	uint8_t dp_force_enable;
 	uint8_t dp_force_mask;
@@ -133,7 +135,7 @@ void display_force_dp(int8_t dp, bool force, bool enable)
 void display_show(const char *digits)
 {
 	char c;
-	int8_t i = 0;
+	uint8_t i = 0;
 	uint8_t mask;
 
 	while (1) {
@@ -157,6 +159,8 @@ void display_show(const char *digits)
 		i++;
 		digits++;
 	}
+	for ( ; i < DISPLAY_NR_DIGITS; i++)
+		sseg_digit_set(&display.digit_data[i], ' ');
 }
 
 void display_work(void)
@@ -169,7 +173,7 @@ void display_work(void)
 
 	cur_mux = display.digit_mux_count;
 	next_mux = (uint8_t)(cur_mux + 1u);
-	if (next_mux >= ARRAY_SIZE(display.digit_data))
+	if (next_mux >= DISPLAY_NR_DIGITS)
 		next_mux = 0;
 	display.digit_mux_count = next_mux;
 
@@ -183,7 +187,7 @@ void display_init(void)
 	uint8_t i;
 
 	memset(&display, 0, sizeof(display));
-	for (i = 0; i < ARRAY_SIZE(display.digit_data); i++) {
+	for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
 		ddata = &(display.digit_data[i]);
 
 		ddata->iomap = &digit_iomaps[i];
