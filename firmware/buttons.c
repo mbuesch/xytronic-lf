@@ -57,6 +57,7 @@ static const uint8_t __flash button_id_to_port_mask[] = {
 
 static inline uint8_t buttons_get(void)
 {
+	mb();
 	return (((uint8_t)~BUTTONS_PIN) & BUTTONS_MASK);
 }
 
@@ -101,10 +102,15 @@ void buttons_work(void)
 
 void buttons_init(void)
 {
+	int8_t i;
+
 	memset(&buttons, 0, sizeof(buttons));
-	timer_arm(&buttons.debounce_timer, 0);
+	for (i = 0; i < NR_BUTTONS; i++)
+		buttons_register_handler((enum button_id)i, NULL);
 
 	BUTTONS_DDR &= (uint8_t)~BUTTONS_MASK;
 	BUTTONS_PORT |= BUTTONS_MASK;
 	_delay_ms(50);
+
+	timer_arm(&buttons.debounce_timer, 0);
 }
