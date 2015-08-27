@@ -75,12 +75,6 @@ void buttons_register_handler(enum button_id button,
 	buttons.handlers[button] = handler;
 }
 
-bool buttons_debug_requested(void)
-{
-//FIXME
-	return (buttons_get() & BUTTONS_MASK) == BUTTONS_MASK;
-}
-
 void buttons_work(void)
 {
 	uint8_t state, pos_edge, neg_edge, mask;

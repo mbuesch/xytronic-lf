@@ -75,6 +75,9 @@ static const uint8_t __flash char_to_segment_map[] = {
 	['F' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
 			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
+	['G' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
 };
 
 static void mux_write(const struct sseg_digit_data *ddata,
@@ -126,7 +129,7 @@ void sseg_digit_set(struct sseg_digit_data *ddata,
 		digit = (char)(digit - ('a' - 'A'));
 	if (digit >= '0' && digit <= '9')
 		segment_mask = digit_to_segment_map[digit - '0'];
-	else if (digit >= 'A' && digit <= 'F')
+	else if (digit >= 'A' && digit <= 'G')
 		segment_mask = char_to_segment_map[digit - 'A'];
 	else
 		segment_mask = 0;
@@ -177,4 +180,18 @@ void sseg_init(struct sseg_digit_data *ddata)
 	/* Configure the multiplexer port. */
 	mux_write(ddata, 0);
 	SFR_BYTE(iomap->mux_ddr) |= mux_mask;
+}
+
+void sseg_exit(struct sseg_digit_data *ddata)
+{
+	const struct sseg_iomap __flash *iomap = ddata->iomap;
+	uint8_t segment_mask, mux_mask;
+
+	mux_mask = iomap->mux_mask;
+	segment_mask = ddata->segment_enable_mask;
+
+	SFR_BYTE(iomap->segment_port) &= (uint8_t)~segment_mask;
+	SFR_BYTE(iomap->segment_ddr) &= (uint8_t)~segment_mask;
+	SFR_BYTE(iomap->mux_port) &= (uint8_t)~mux_mask;
+	SFR_BYTE(iomap->mux_ddr) &= (uint8_t)~mux_mask;
 }

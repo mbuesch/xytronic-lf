@@ -24,6 +24,7 @@
 #include "buttons.h"
 #include "timer.h"
 #include "controller_temp.h"
+#include "debug_uart.h"
 
 #include <string.h>
 
@@ -34,6 +35,7 @@
 enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
+	MENU_DEBUG,		/* Debug enable. */
 };
 
 enum ramp_state {
@@ -94,9 +96,7 @@ void menu_update_display(void)
 					 temp_int,
 					 (int16_t)CONTRTEMP_NEGLIM,
 					 (int16_t)CONTRTEMP_POSLIM);
-		disp[3] = 'C';
-		disp[4] = '.';
-		disp[5] = '\0';
+		strcpy(disp + 3, "C.");
 		break;
 	case MENU_SETTEMP:
 		temp_fixpt = contrtemp_get_setpoint();
@@ -105,12 +105,20 @@ void menu_update_display(void)
 					 temp_int,
 					 (int16_t)CONTRTEMP_NEGLIM,
 					 (int16_t)CONTRTEMP_POSLIM);
-		disp[3] = 'S';
-		disp[4] = '\0';
+		strcpy(disp + 3, "S");
+		break;
+	case MENU_DEBUG:
+		strcpy(disp, "DBG");
 		break;
 	}
 
 	display_show(disp);
+}
+
+static void menu_set_state(enum menu_state new_state)
+{
+	menu.state = new_state;
+	menu_update_display();
 }
 
 static void settemp_ramp_handler(bool up)
@@ -156,9 +164,12 @@ static void menu_button_handler(enum button_id button,
 				start_ramping(RAMP_DOWN, settemp_ramp_handler);
 			if (button == BUTTON_PLUS)
 				start_ramping(RAMP_UP, settemp_ramp_handler);
-			menu.state = MENU_SETTEMP;
+			if (button == BUTTON_SET) {
+				menu_set_state(MENU_DEBUG);
+				break;
+			}
+			menu_set_state(MENU_SETTEMP);
 			timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
-			menu_update_display();
 		}
 		break;
 	case MENU_SETTEMP:
@@ -172,6 +183,20 @@ static void menu_button_handler(enum button_id button,
 		if (bstate == BSTATE_NEGEDGE)
 			stop_ramping();
 		break;
+	case MENU_DEBUG:
+		if (bstate == BSTATE_POSEDGE) {
+			if (button == BUTTON_PLUS)
+				debug_enable(true);
+			if (button == BUTTON_MINUS) {
+				debug_enable(false);
+				menu_update_display();
+			}
+			if (!debug_is_enabled()) {
+				if (button == BUTTON_SET)
+					menu_set_state(MENU_CURTEMP);
+			}
+		}
+		break;
 	}
 }
 
@@ -183,10 +208,10 @@ void menu_work(void)
 	case MENU_CURTEMP:
 		break;
 	case MENU_SETTEMP:
+	case MENU_DEBUG:
 		if (timer_expired(&menu.timeout)) {
-			menu.state = MENU_CURTEMP;
+			menu_set_state(MENU_CURTEMP);
 			stop_ramping();
-			menu_update_display();
 			break;
 		}
 		break;
@@ -206,11 +231,10 @@ void menu_work(void)
 void menu_init(void)
 {
 	memset(&menu, 0, sizeof(menu));
-	menu.state = MENU_CURTEMP;
 
 	buttons_register_handler(BUTTON_SET, menu_button_handler);
 	buttons_register_handler(BUTTON_PLUS, menu_button_handler);
 	buttons_register_handler(BUTTON_MINUS, menu_button_handler);
 
-	menu_update_display();
+	menu_set_state(MENU_CURTEMP);
 }

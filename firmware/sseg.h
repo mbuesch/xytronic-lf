@@ -43,5 +43,6 @@ void sseg_multiplex(const struct sseg_digit_data *ddata_from,
 		    const struct sseg_digit_data *ddata_to);
 
 void sseg_init(struct sseg_digit_data *ddata);
+void sseg_exit(struct sseg_digit_data *ddata);
 
 #endif /* SEVENSEGMENT_H_ */

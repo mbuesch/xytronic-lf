@@ -105,6 +105,8 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 #define DISPLAY_NR_DIGITS	ARRAY_SIZE(digit_iomaps)
 
 struct display_context {
+	bool enabled;
+
 	struct sseg_digit_data digit_data[DISPLAY_NR_DIGITS];
 
 	uint8_t dp_force_enable;
@@ -168,6 +170,9 @@ void display_work(void)
 {
 	uint8_t cur_mux, next_mux;
 
+	if (!display.enabled)
+		return;
+
 	if (!timer_expired(&display.mux_timer))
 		return;
 	timer_add(&display.mux_timer, DISPLAY_MUX_PERIOD_MS);
@@ -182,18 +187,34 @@ void display_work(void)
 		       &display.digit_data[next_mux]);
 }
 
+void display_enable(bool enable)
+{
+	uint8_t i;
+	struct sseg_digit_data *ddata;
+
+	if (enable == display.enabled)
+		return;
+
+	display.enabled = enable;
+	if (enable) {
+		for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
+			ddata = &(display.digit_data[i]);
+
+			ddata->iomap = &digit_iomaps[i];
+			sseg_init(ddata);
+		}
+		timer_arm(&display.mux_timer, 0);
+	} else {
+		for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
+			ddata = &(display.digit_data[i]);
+
+			sseg_exit(ddata);
+		}
+	}
+}
+
 void display_init(void)
 {
-	struct sseg_digit_data *ddata;
-	uint8_t i;
-
 	memset(&display, 0, sizeof(display));
-	for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
-		ddata = &(display.digit_data[i]);
-
-		ddata->iomap = &digit_iomaps[i];
-		sseg_init(ddata);
-		sseg_digit_set(ddata, '8' | SSEG_DIGIT_DP);
-		timer_arm(&display.mux_timer, 0);
-	}
+	display_enable(true);
 }

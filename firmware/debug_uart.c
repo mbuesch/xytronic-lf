@@ -21,59 +21,24 @@
 #include "debug_uart.h"
 #include "util.h"
 #include "timer.h"
-#include "buttons.h"
+#include "display.h"
 
 #include <avr/io.h>
-
-
-enum {
-	OLDSTATE_TXDDR	= 1 << 0,
-	OLDSTATE_TXPORT	= 1 << 1,
-};
-
-#define TX_DDR		DDRD
-#define TX_DDRBIT	DDD1
-#define TX_PORT		PORTD
-#define TX_PORTBIT	PD1
 
 
 static bool debug_enabled;
 
 
-static uint8_t debug_uart_enable(void)
+static void debug_uart_enable(void)
 {
-	uint8_t old_state = 0;
-
-	/* Save TX pin DDR and PORT settings. */
-	if (TX_DDR & (1 << TX_DDRBIT))
-		old_state |= OLDSTATE_TXDDR;
-	if (TX_PORT & (1 << TX_PORTBIT))
-		old_state |= OLDSTATE_TXPORT;
-
-	/* Set TX pin as output */
-	TX_PORT &= (uint8_t)~(1 << TX_PORTBIT);
-	TX_DDR |= (1 << TX_DDRBIT);
-
 	/* Enable UART transmitter. */
 	UCSR0B |= (1 << TXEN0);
-
-	return old_state;
 }
 
-static void debug_uart_disable(uint8_t old_state)
+static void debug_uart_disable(void)
 {
 	/* Disable UART transmitter. */
 	UCSR0B &= (uint8_t)~(1 << TXEN0);
-
-	/* Restore TX pin DDR and PORT settings. */
-	if (old_state & OLDSTATE_TXDDR)
-		TX_DDR |= (1 << TX_DDRBIT);
-	else
-		TX_DDR &= (uint8_t)~(1 << TX_DDRBIT);
-	if (old_state & OLDSTATE_TXPORT)
-		TX_PORT |= (1 << TX_PORTBIT);
-	else
-		TX_PORT &= (uint8_t)~(1 << TX_PORTBIT);
 }
 
 static void debug_uart_tx(uint8_t byte)
@@ -111,33 +76,28 @@ static void debug_uart_print_timestamp(void)
 void debug_print(const char __memx *str)
 {
 	uint8_t sreg;
-	uint8_t old_state;
 
 	if (!debug_enabled)
 		return;
 
 	sreg = irq_disable_save();
-	old_state = debug_uart_enable();
 
 	debug_uart_print_timestamp();
 	debug_uart_tx_string(str);
 	debug_uart_tx((uint8_t)'\n');
 
-	debug_uart_disable(old_state);
 	irq_restore(sreg);
 }
 
 void debug_print_int16(const char __memx *prefix, int16_t value)
 {
 	uint8_t sreg;
-	uint8_t old_state;
 	char buf[5 + 1 + 1];
 
 	if (!debug_enabled)
 		return;
 
 	sreg = irq_disable_save();
-	old_state = debug_uart_enable();
 
 	debug_uart_print_timestamp();
 	debug_uart_tx_string(prefix);
@@ -147,7 +107,6 @@ void debug_print_int16(const char __memx *prefix, int16_t value)
 	debug_uart_tx_string(buf);
 	debug_uart_tx((uint8_t)'\n');
 
-	debug_uart_disable(old_state);
 	irq_restore(sreg);
 }
 
@@ -159,6 +118,21 @@ void debug_report_int16(struct report_int16_context *ctx,
 		ctx->old_value = new_value;
 		debug_print_int16(prefix, new_value);
 	}
+}
+
+void debug_enable(bool enable)
+{
+	debug_enabled = enable;
+	display_enable(!enable);
+	if (enable)
+		debug_uart_enable();
+	else
+		debug_uart_disable();
+}
+
+bool debug_is_enabled(void)
+{
+	return debug_enabled;
 }
 
 void debug_uart_init(void)
@@ -175,10 +149,5 @@ void debug_uart_init(void)
 		 (0 << UPM01) | (0 << UPM00) |
 		 (1 << USBS0) |
 		 (1 << UCSZ01) | (1 << UCSZ00);
-
-	/* Enable debugging, if requested via input pins. */
-	if (buttons_debug_requested())
-		debug_enabled = 1;
-	else
-		debug_enabled = 0;
+	debug_enable(false);
 }
