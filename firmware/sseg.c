@@ -20,6 +20,7 @@
  */
 
 #include "sseg.h"
+#include "bitmap.h"
 
 
 static const uint8_t __flash digit_to_segment_map[] = {

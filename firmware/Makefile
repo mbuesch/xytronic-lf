@@ -2,7 +2,8 @@
 NAME			:= xylf
 
 # Project source files
-SRCS			:= buttons.c \
+SRCS			:= bitmap.c \
+			   buttons.c \
 			   controller_current.c \
 			   controller_temp.c \
 			   debug_uart.c \
@@ -14,6 +15,7 @@ SRCS			:= buttons.c \
 			   menu.c \
 			   pid.c \
 			   pwm_current.c \
+			   settings.c \
 			   scale.c \
 			   sseg.c \
 			   timer.c \

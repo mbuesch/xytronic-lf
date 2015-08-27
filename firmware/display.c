@@ -22,6 +22,7 @@
 #include "display.h"
 #include "sseg.h"
 #include "timer.h"
+#include "bitmap.h"
 
 #include <string.h>
 

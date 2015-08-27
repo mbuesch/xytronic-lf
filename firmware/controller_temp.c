@@ -24,6 +24,7 @@
 #include "pid.h"
 #include "timer.h"
 #include "scale.h"
+#include "settings.h"
 #include "debug_uart.h"
 
 
@@ -52,7 +53,13 @@ fixpt_t contrtemp_get_feedback(void)
 
 void contrtemp_set_setpoint(fixpt_t w)
 {
+	struct settings *settings;
+
 	pid_set_setpoint(&temp_pid, w);
+
+	settings = get_settings();
+	settings->temp_setpoint = w;
+	store_settings();
 }
 
 fixpt_t contrtemp_get_setpoint(void)
@@ -98,11 +105,17 @@ void contrtemp_work(void)
 
 void contrtemp_init(void)
 {
+	struct settings *settings;
+
 	pid_init(&temp_pid,
 		 float_to_fixpt(CONTRTEMP_PID_KP),
 		 float_to_fixpt(CONTRTEMP_PID_KI),
 		 float_to_fixpt(CONTRTEMP_PID_KD),
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
+
+	settings = get_settings();
+	pid_set_setpoint(&temp_pid, settings->temp_setpoint);
+
 	timer_arm(&temp_timer, 0);
 }

@@ -32,6 +32,7 @@
 #include "display.h"
 #include "buttons.h"
 #include "menu.h"
+#include "settings.h"
 
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -46,6 +47,7 @@ int main(void)
 	timer_init();
 	buttons_init();
 	debug_uart_init();
+	settings_init();
 
 	display_init();
 
@@ -74,5 +76,6 @@ int main(void)
 		menu_work();
 		display_work();
 		buttons_work();
+		settings_work();
 	}
 }

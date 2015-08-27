@@ -93,18 +93,6 @@
 		(b) = __tmp;			\
 	} while (0)
 
-/* Helper to efficiently convert a bit number to
- * the corresponding bit mask.
- * Resolves at compile-time, if bitnr is a compile-time constant.
- * Uses an efficient table lookup otherwise.
- */
-extern const uint8_t __flash _bit_to_mask8[8];
-#define BITMASK8(bitnr)		(			\
-		(uint8_t)(__builtin_constant_p(bitnr) ?	\
-			  (1u << (bitnr)) :		\
-			  _bit_to_mask8[(bitnr)])	\
-	)
-
 /* Return the number of elements in a C array. */
 #define ARRAY_SIZE(x)		(sizeof(x) / sizeof((x)[0]))
 
