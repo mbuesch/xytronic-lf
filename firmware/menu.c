@@ -96,7 +96,7 @@ void menu_update_display(void)
 					 temp_int,
 					 (int16_t)CONTRTEMP_NEGLIM,
 					 (int16_t)CONTRTEMP_POSLIM);
-		strcpy(disp + 3, "C.");
+		strcpy_P(disp + 3, PSTR("C."));
 		break;
 	case MENU_SETTEMP:
 		temp_fixpt = contrtemp_get_setpoint();
@@ -105,10 +105,10 @@ void menu_update_display(void)
 					 temp_int,
 					 (int16_t)CONTRTEMP_NEGLIM,
 					 (int16_t)CONTRTEMP_POSLIM);
-		strcpy(disp + 3, "S");
+		strcpy_P(disp + 3, PSTR("S"));
 		break;
 	case MENU_DEBUG:
-		strcpy(disp, "DBG");
+		strcpy_P(disp, PSTR("DBG"));
 		break;
 	}
 
