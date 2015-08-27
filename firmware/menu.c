@@ -206,9 +206,9 @@ void menu_work(void)
 	/* Menu timeouts */
 	switch (menu.state) {
 	case MENU_CURTEMP:
+	case MENU_DEBUG:
 		break;
 	case MENU_SETTEMP:
-	case MENU_DEBUG:
 		if (timer_expired(&menu.timeout)) {
 			menu_set_state(MENU_CURTEMP);
 			stop_ramping();
