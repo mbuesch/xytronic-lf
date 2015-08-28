@@ -29,8 +29,15 @@
 #define MEASCURR_PERIOD_MS	100 /* ms */
 #define MEASCURR_CHANNEL	MEASCHAN_ADC2
 
+/* Plausibility */
 #define MEASCURR_PLAUS_NEGLIM	0.0
 #define MEASCURR_PLAUS_POSLIM	5.0
+
+/* Scaling */
+#define MEASCURR_SCALE_RAWLO	0
+#define MEASCURR_SCALE_PHYSLO	0.0
+#define MEASCURR_SCALE_RAWHI	160	//FIXME this is approximate
+#define MEASCURR_SCALE_PHYSHI	5.0
 
 
 static struct timer meascurr_timer;
@@ -63,9 +70,10 @@ void meascurr_work(void)
 
 	if (raw_adc <= MEASURE_MAX_RESULT) {
 		phys = scale((int16_t)raw_adc,
-			     0, MEASURE_MAX_RESULT,
-			     float_to_fixpt(CONTRCURR_NEGLIM), //FIXME limits are not ok
-			     float_to_fixpt(CONTRCURR_POSLIM));
+			     MEASCURR_SCALE_RAWLO,
+			     MEASCURR_SCALE_RAWHI,
+			     float_to_fixpt(MEASCURR_SCALE_PHYSLO),
+			     float_to_fixpt(MEASCURR_SCALE_PHYSHI));
 
 		/* Plausibility check. */
 		if (phys < float_to_fixpt(MEASCURR_PLAUS_NEGLIM)) {
