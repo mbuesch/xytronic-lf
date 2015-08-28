@@ -33,6 +33,10 @@ static uint16_t pwmcurr_max_duty;
 void pwmcurr_set(fixpt_t current_amps)
 {
 	uint16_t duty;
+	uint16_t max_duty;
+
+	/* FIXME: Run with reduced resolution for now. */
+	max_duty = pwmcurr_max_duty >> 3;
 
 	/* Scale amps to duty cycle duration.
 	 * Scaling is inverse:
@@ -42,7 +46,10 @@ void pwmcurr_set(fixpt_t current_amps)
 	duty = (uint16_t)unscale(current_amps,
 				 float_to_fixpt(CONTRCURR_NEGLIM),
 				 float_to_fixpt(CONTRCURR_POSLIM),
-				 (int16_t)pwmcurr_max_duty, 0);
+				 (int16_t)max_duty, 0);
+
+	/* FIXME: Run with reduced resolution for now. */
+	duty = (duty << 3) | 7;
 
 	/* Clamp the result (should not be necessary) */
 	duty = clamp(duty, (uint16_t)0, pwmcurr_max_duty);
