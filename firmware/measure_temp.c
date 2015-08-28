@@ -29,8 +29,15 @@
 #define MEASTEMP_PERIOD_MS	100 /* ms */
 #define MEASTEMP_CHANNEL	MEASCHAN_ADC1
 
+/* Plausibility */
 #define MEASTEMP_PLAUS_NEGLIM	20.0
 #define MEASTEMP_PLAUS_POSLIM	480.0
+
+/* Scaling */
+#define MEASTEMP_SCALE_RAWLO	210
+#define MEASTEMP_SCALE_PHYSLO	150.0
+#define MEASTEMP_SCALE_RAWHI	411
+#define MEASTEMP_SCALE_PHYSHI	480.0
 
 
 static struct timer meastemp_timer;
@@ -63,9 +70,10 @@ void meastemp_work(void)
 
 	if (raw_adc <= MEASURE_MAX_RESULT) {
 		phys = scale((int16_t)raw_adc,
-			     0, MEASURE_MAX_RESULT,
-			     float_to_fixpt(CONTRTEMP_NEGLIM), //FIXME limits are not ok
-			     float_to_fixpt(CONTRTEMP_POSLIM));
+			     MEASTEMP_SCALE_RAWLO,
+			     MEASTEMP_SCALE_RAWHI,
+			     float_to_fixpt(MEASTEMP_SCALE_PHYSLO),
+			     float_to_fixpt(MEASTEMP_SCALE_PHYSHI));
 
 		/* Plausibility check. */
 		if (phys < float_to_fixpt(MEASTEMP_PLAUS_NEGLIM)) {
