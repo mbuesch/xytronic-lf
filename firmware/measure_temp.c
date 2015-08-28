@@ -29,24 +29,57 @@
 #define MEASTEMP_PERIOD_MS	100 /* ms */
 #define MEASTEMP_CHANNEL	MEASCHAN_ADC1
 
+#define MEASTEMP_PLAUS_NEGLIM	20.0
+#define MEASTEMP_PLAUS_POSLIM	480.0
+
 
 static struct timer meastemp_timer;
+static uint16_t meastemp_measured_raw;
+static bool meastemp_is_plausible;
 
+
+bool meastemp_value_is_plausible(void)
+{
+	return meastemp_is_plausible;
+}
 
 /* This runs in IRQ context. */
 static void meastemp_meas_callback(void *context, uint16_t raw_adc)
 {
-	fixpt_t phys;
-
-	phys = scale((int16_t)raw_adc, 0, MEASURE_MAX_RESULT,
-		     float_to_fixpt(CONTRTEMP_NEGLIM), //FIXME limits are not ok
-		     float_to_fixpt(CONTRTEMP_POSLIM));
-	contrtemp_set_feedback(phys);
+	meastemp_measured_raw = raw_adc;
 }
 
 void meastemp_work(void)
 {
 	bool scheduled;
+	uint16_t raw_adc;
+	fixpt_t phys;
+	uint8_t sreg;
+
+	sreg = irq_disable_save();
+	raw_adc = meastemp_measured_raw;
+	meastemp_measured_raw = MEASURE_MAX_RESULT + 1;
+	irq_restore(sreg);
+
+	if (raw_adc <= MEASURE_MAX_RESULT) {
+		phys = scale((int16_t)raw_adc,
+			     0, MEASURE_MAX_RESULT,
+			     float_to_fixpt(CONTRTEMP_NEGLIM), //FIXME limits are not ok
+			     float_to_fixpt(CONTRTEMP_POSLIM));
+
+		/* Plausibility check. */
+		if (phys < float_to_fixpt(MEASTEMP_PLAUS_NEGLIM)) {
+			phys = float_to_fixpt(MEASTEMP_PLAUS_NEGLIM);
+			meastemp_is_plausible = false;
+		} else if (phys > float_to_fixpt(MEASTEMP_PLAUS_POSLIM)) {
+			phys = float_to_fixpt(MEASTEMP_PLAUS_POSLIM);
+			meastemp_is_plausible = false;
+		} else {
+			meastemp_is_plausible = true;
+		}
+
+		contrtemp_set_feedback(phys);
+	}
 
 	if (timer_expired(&meastemp_timer)) {
 		scheduled = measure_schedule(MEASTEMP_CHANNEL,

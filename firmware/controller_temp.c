@@ -25,6 +25,7 @@
 #include "timer.h"
 #include "scale.h"
 #include "settings.h"
+#include "menu.h"
 #include "debug_uart.h"
 
 
@@ -43,7 +44,10 @@ static struct timer temp_timer;
 
 void contrtemp_set_feedback(fixpt_t r)
 {
-	temp_feedback = r;
+	if (r != temp_feedback) {
+		temp_feedback = r;
+		menu_update_display();
+	}
 }
 
 fixpt_t contrtemp_get_feedback(void)
