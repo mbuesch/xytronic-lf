@@ -38,8 +38,11 @@
 
 static struct pid temp_pid;
 static fixpt_t temp_feedback;
-static struct report_int16_context temp_feedback_report;
 static struct timer temp_timer;
+
+static struct report_int16_context temp_feedback_report;
+static struct report_int16_context temp_control1_report;
+static struct report_int16_context temp_control2_report;
 
 
 void contrtemp_set_feedback(fixpt_t r)
@@ -90,9 +93,7 @@ void contrtemp_work(void)
 
 	/* Get the feedback (r) */
 	r = temp_feedback;
-	debug_report_int16(&temp_feedback_report,
-			   PSTR("temp-r"),
-			   (int16_t)fixpt_to_int(r));
+	debug_report_int16(&temp_feedback_report, PSTR("tr"), (int16_t)r);
 
 	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRTEMP_PERIOD_MS / 1000.0f);
@@ -100,8 +101,12 @@ void contrtemp_work(void)
 	/* Run the PID controller */
 	y = pid_run(&temp_pid, dt, r);
 
+	debug_report_int16(&temp_control1_report, PSTR("ty1"), (int16_t)y);
+
 	/* Map the requested temperature to a heater current. */
 	y_current = temp_to_amps(y);
+
+	debug_report_int16(&temp_control2_report, PSTR("ty2"), (int16_t)y_current);
 
 	/* Set the current controller setpoint to the requested current. */
 	contrcurr_set_setpoint(y_current);

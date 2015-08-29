@@ -1,6 +1,7 @@
 #ifndef CONTROLLER_TEMP_H_
 #define CONTROLLER_TEMP_H_
 
+#include "util.h"
 #include "fixpt.h"
 
 
