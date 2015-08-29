@@ -53,10 +53,11 @@ static const uint8_t __flash button_id_to_port_mask[] = {
 	[BUTTON_SET]	= 1u << BUTTON_BIT_SET,
 	[BUTTON_MINUS]	= 1u << BUTTON_BIT_MINUS,
 	[BUTTON_PLUS]	= 1u << BUTTON_BIT_PLUS,
+	//TODO iron button
 };
 
 
-static inline uint8_t buttons_get(void)
+static uint8_t buttons_get_raw(void)
 {
 	uint8_t state;
 
@@ -75,6 +76,16 @@ void buttons_register_handler(enum button_id button,
 	buttons.handlers[button] = handler;
 }
 
+uint8_t button_is_pressed(enum button_id button)
+{
+	uint8_t state, mask;
+
+	mask = button_id_to_port_mask[button];
+	state = buttons_get_raw();
+
+	return state & mask;
+}
+
 void buttons_work(void)
 {
 	uint8_t state, pos_edge, neg_edge, mask;
@@ -85,7 +96,7 @@ void buttons_work(void)
 		return;
 	timer_add(&buttons.debounce_timer, BUTTONS_DEBOUNCE_MS);
 
-	state = buttons_get();
+	state = buttons_get_raw();
 	pos_edge = (state & ~buttons.prev_state) & BUTTONS_MASK;
 	neg_edge = (~state & buttons.prev_state) & BUTTONS_MASK;
 	buttons.prev_state = state;
