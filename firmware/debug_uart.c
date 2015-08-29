@@ -63,14 +63,20 @@ static void debug_uart_tx_string(const char __memx *str)
 	}
 }
 
+static void debug_uart_tx_eol(void)
+{
+	debug_uart_tx((uint8_t)'\r');
+	debug_uart_tx((uint8_t)'\n');
+}
+
 static void debug_uart_print_timestamp(void)
 {
 	char buf[(sizeof(unsigned int) / 4) + 1];
 
 	utoa((unsigned int)(uint16_t)_timer_get_now(), buf, 16);
 	debug_uart_tx_string(buf);
-	debug_uart_tx(':');
-	debug_uart_tx(' ');
+	debug_uart_tx((uint8_t)':');
+	debug_uart_tx((uint8_t)' ');
 }
 
 void debug_print(const char __memx *str)
@@ -84,7 +90,7 @@ void debug_print(const char __memx *str)
 
 	debug_uart_print_timestamp();
 	debug_uart_tx_string(str);
-	debug_uart_tx((uint8_t)'\n');
+	debug_uart_tx_eol();
 
 	irq_restore(sreg);
 }
@@ -105,7 +111,7 @@ void debug_print_int16(const char __memx *prefix, int16_t value)
 	build_assert(sizeof(int) == sizeof(value));
 	itoa(value, buf, 10);
 	debug_uart_tx_string(buf);
-	debug_uart_tx((uint8_t)'\n');
+	debug_uart_tx_eol();
 
 	irq_restore(sreg);
 }
