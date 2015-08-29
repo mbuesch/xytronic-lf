@@ -23,18 +23,22 @@
 #include "pid.h"
 #include "timer.h"
 #include "pwm_current.h"
+#include "debug_uart.h"
 
 
 /* Current controller PID parameters */
 #define CONTRCURR_PID_KP	1.0
-#define CONTRCURR_PID_KI	0.1
+#define CONTRCURR_PID_KI	0.0
 #define CONTRCURR_PID_KD	0.0
-#define CONTRCURR_PERIOD_MS	100	/* milliseconds */
+#define CONTRCURR_PERIOD_MS	10	/* milliseconds */
 
 
 static struct pid current_pid;
 static fixpt_t current_feedback;
 static struct timer current_timer;
+
+static struct report_int16_context current_feedback_report;
+static struct report_int16_context current_control_report;
 
 
 void contrcurr_set_feedback(fixpt_t r)
@@ -57,12 +61,15 @@ void contrcurr_work(void)
 
 	/* Get the feedback (r) */
 	r = current_feedback;
+	debug_report_int16(&current_feedback_report, PSTR("cr"), (int16_t)r);
 
 	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRCURR_PERIOD_MS / 1000.0f);
 
 	/* Run the PID controller */
 	y = pid_run(&current_pid, dt, r);
+
+	debug_report_int16(&current_control_report, PSTR("cy"), (int16_t)y);
 
 	/* Reconfigure the PWM unit to output the
 	 * requested heater current (y). */
