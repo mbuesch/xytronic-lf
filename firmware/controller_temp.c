@@ -36,6 +36,7 @@
 #define CONTRTEMP_PERIOD_MS	100	/* milliseconds */
 
 
+static bool temp_contr_enabled;
 static struct pid temp_pid;
 static fixpt_t temp_feedback;
 static struct timer temp_timer;
@@ -83,10 +84,21 @@ static fixpt_t temp_to_amps(fixpt_t temp)
 		       float_to_fixpt(CONTRCURR_POSLIM));
 }
 
+void contrtemp_set_enabled(bool enabled)
+{
+	if (temp_contr_enabled != enabled) {
+		temp_contr_enabled = enabled;
+		pid_reset(&temp_pid);
+		timer_arm(&temp_timer, 0);
+	}
+}
+
 void contrtemp_work(void)
 {
 	fixpt_t dt, r, y, y_current;
 
+	if (!temp_contr_enabled)
+		return;
 	if (!timer_expired(&temp_timer))
 		return;
 	timer_add(&temp_timer, CONTRTEMP_PERIOD_MS);
@@ -126,5 +138,5 @@ void contrtemp_init(void)
 	settings = get_settings();
 	pid_set_setpoint(&temp_pid, settings->temp_setpoint);
 
-	timer_arm(&temp_timer, 0);
+	contrtemp_set_enabled(true);
 }
