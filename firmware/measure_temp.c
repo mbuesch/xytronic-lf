@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "scale.h"
 #include "controller_temp.h"
+#include "debug_uart.h"
 
 
 #define MEASTEMP_PERIOD_MS	100 /* ms */
@@ -43,6 +44,7 @@
 static struct timer meastemp_timer;
 static uint16_t meastemp_measured_raw;
 static bool meastemp_is_plausible;
+static struct report_int16_context meastemp_report;
 
 
 bool meastemp_value_is_plausible(void)
@@ -69,6 +71,9 @@ void meastemp_work(void)
 	irq_restore(sreg);
 
 	if (raw_adc <= MEASURE_MAX_RESULT) {
+		debug_report_int16(&meastemp_report, PSTR("mt"),
+				   (int16_t)raw_adc);
+
 		phys = scale((int16_t)raw_adc,
 			     MEASTEMP_SCALE_RAWLO,
 			     MEASTEMP_SCALE_RAWHI,
