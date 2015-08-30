@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "scale.h"
 #include "controller_current.h"
+#include "debug_uart.h"
 
 
 #define MEASCURR_PERIOD_MS	100 /* ms */
@@ -34,15 +35,16 @@
 #define MEASCURR_PLAUS_POSLIM	5.0
 
 /* Scaling */
-#define MEASCURR_SCALE_RAWLO	0
-#define MEASCURR_SCALE_PHYSLO	0.0
-#define MEASCURR_SCALE_RAWHI	160	//FIXME this is approximate
-#define MEASCURR_SCALE_PHYSHI	5.0
+#define MEASCURR_SCALE_RAWLO	80
+#define MEASCURR_SCALE_PHYSLO	2.5
+#define MEASCURR_SCALE_RAWHI	140
+#define MEASCURR_SCALE_PHYSHI	4.0
 
 
 static struct timer meascurr_timer;
 static uint16_t meascurr_measured_raw;
 static bool meascurr_is_plausible;
+static struct report_int16_context meascurr_report;
 
 
 bool meascurr_value_is_plausible(void)
@@ -69,6 +71,9 @@ void meascurr_work(void)
 	irq_restore(sreg);
 
 	if (raw_adc <= MEASURE_MAX_RESULT) {
+		debug_report_int16(&meascurr_report, PSTR("mc"),
+				   (int16_t)raw_adc);
+
 		phys = scale((int16_t)raw_adc,
 			     MEASCURR_SCALE_RAWLO,
 			     MEASCURR_SCALE_RAWHI,
