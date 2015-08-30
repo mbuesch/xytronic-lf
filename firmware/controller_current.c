@@ -23,16 +23,18 @@
 #include "pid.h"
 #include "timer.h"
 #include "pwm_current.h"
+#include "scale.h"
 #include "debug_uart.h"
 
 
 /* Current controller PID parameters */
-#define CONTRCURR_PID_KP	1.0
+#define CONTRCURR_PID_KP	0.5
 #define CONTRCURR_PID_KI	0.0
 #define CONTRCURR_PID_KD	0.0
-#define CONTRCURR_PERIOD_MS	10	/* milliseconds */
+#define CONTRCURR_PERIOD_MS	100	/* milliseconds */
 
 
+static bool current_contr_enabled;
 static struct pid current_pid;
 static fixpt_t current_feedback;
 static struct timer current_timer;
@@ -51,10 +53,33 @@ void contrcurr_set_setpoint(fixpt_t w)
 	pid_set_setpoint(&current_pid, w);
 }
 
+void contrcurr_set_enabled(bool enable,
+			   uint8_t disabled_curr_percent)
+{
+	fixpt_t y;
+
+	if (enable != current_contr_enabled) {
+		current_contr_enabled = enable;
+		pwmcurr_set(int_to_fixpt(0));
+		pid_reset(&current_pid);
+		timer_arm(&current_timer, 0);
+	}
+
+	if (!enable) {
+		y = scale(disabled_curr_percent,
+			  0, 100,
+			  float_to_fixpt(CONTRCURR_NEGLIM),
+			  float_to_fixpt(CONTRCURR_POSLIM));
+		pwmcurr_set(y);
+	}
+}
+
 void contrcurr_work(void)
 {
 	fixpt_t dt, r, y;
 
+	if (!current_contr_enabled)
+		return;
 	if (!timer_expired(&current_timer))
 		return;
 	timer_add(&current_timer, CONTRCURR_PERIOD_MS);
@@ -84,5 +109,6 @@ void contrcurr_init(void)
 		 float_to_fixpt(CONTRCURR_PID_KD),
 		 float_to_fixpt(CONTRCURR_NEGLIM),
 		 float_to_fixpt(CONTRCURR_POSLIM));
-	timer_arm(&current_timer, 0);
+
+	contrcurr_set_enabled(true, 0);
 }

@@ -1,6 +1,7 @@
 #ifndef CONTROLLER_CURRENT_H_
 #define CONTROLLER_CURRENT_H_
 
+#include "util.h"
 #include "fixpt.h"
 
 
@@ -10,6 +11,9 @@
 
 void contrcurr_set_feedback(fixpt_t r);
 void contrcurr_set_setpoint(fixpt_t w);
+
+void contrcurr_set_enabled(bool enable,
+			   uint8_t disabled_curr_percent);
 
 void contrcurr_work(void);
 void contrcurr_init(void);
