@@ -21,11 +21,16 @@ void pid_init(struct pid *pid,
 	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
 	      fixpt_t y_neglim, fixpt_t y_poslim);
 
+static inline void pid_reset(struct pid *pid)
+{
+	pid->prev_e = int_to_fixpt(0);
+	pid->integr = int_to_fixpt(0);
+}
+
 static inline void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)
 {
 	pid->setpoint = setpoint;
-	pid->prev_e = int_to_fixpt(0);
-	pid->integr = int_to_fixpt(0);
+	pid_reset(pid);
 }
 
 static inline fixpt_t pid_get_setpoint(struct pid *pid)

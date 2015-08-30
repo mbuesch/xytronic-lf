@@ -71,4 +71,5 @@ void pid_init(struct pid *pid,
 	pid->kd = kd;
 	pid->y_neglim = y_neglim;
 	pid->y_poslim = y_poslim;
+	pid_reset(pid);
 }
