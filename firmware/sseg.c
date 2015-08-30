@@ -56,6 +56,8 @@ static const uint8_t __flash digit_to_segment_map[] = {
 			  (1 << SSEG_G),
 };
 
+#define EMPTY_SEG	0
+
 static const uint8_t __flash char_to_segment_map[] = {
 	['A' - 'A']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
 			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
@@ -77,6 +79,17 @@ static const uint8_t __flash char_to_segment_map[] = {
 			  (1 << SSEG_G),
 	['G' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
 			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+	['H' - 'A']	= EMPTY_SEG,
+	['I' - 'A']	= EMPTY_SEG,
+	['J' - 'A']	= EMPTY_SEG,
+	['K' - 'A']	= EMPTY_SEG,
+	['L' - 'A']	= EMPTY_SEG,
+	['M' - 'A']	= EMPTY_SEG,
+	['N' - 'A']	= EMPTY_SEG,
+	['O' - 'A']	= EMPTY_SEG,
+	['P' - 'A']	= (1 << SSEG_A) | (1 << SSEG_B) | (0 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
 };
 
@@ -129,7 +142,7 @@ void sseg_digit_set(struct sseg_digit_data *ddata,
 		digit = (char)(digit - ('a' - 'A'));
 	if (digit >= '0' && digit <= '9')
 		segment_mask = digit_to_segment_map[digit - '0'];
-	else if (digit >= 'A' && digit <= 'G')
+	else if (digit >= 'A' && digit <= 'P')
 		segment_mask = char_to_segment_map[digit - 'A'];
 	else
 		segment_mask = 0;
