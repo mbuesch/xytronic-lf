@@ -24,6 +24,7 @@
 #include "buttons.h"
 #include "timer.h"
 #include "controller_temp.h"
+#include "controller_current.h"
 #include "debug_uart.h"
 
 #include <string.h>
@@ -36,6 +37,7 @@ enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
+	MENU_MANUAL,		/* Manual mode */
 };
 
 enum ramp_state {
@@ -53,10 +55,15 @@ struct menu_context {
 	enum menu_state state;
 	struct timer timeout;
 
+	struct timer delay_timer;
+	bool delay_running;
+
 	enum ramp_state ramp;
 	struct timer ramp_timer;
 	ramp_handler_t ramp_handler;
 	int32_t ramp_period;
+
+	uint8_t manmode_percentage;
 };
 
 static struct menu_context menu;
@@ -110,6 +117,12 @@ void menu_update_display(void)
 	case MENU_DEBUG:
 		strcpy_P(disp, PSTR("DBG"));
 		break;
+	case MENU_MANUAL:
+		int_to_ascii_align_right(disp, 2,
+					 menu.manmode_percentage,
+					 0, 100);
+		strcpy_P(disp + 3, PSTR("P"));
+		break;
 	}
 
 	display_show(disp);
@@ -159,20 +172,27 @@ static void menu_button_handler(enum button_id button,
 {
 	switch (menu.state) {
 	case MENU_CURTEMP:
+		menu.delay_running = false;
 		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS)
-				start_ramping(RAMP_DOWN, settemp_ramp_handler);
-			if (button == BUTTON_PLUS)
-				start_ramping(RAMP_UP, settemp_ramp_handler);
+			if (button == BUTTON_MINUS ||
+			    button == BUTTON_PLUS) {
+				start_ramping((button == BUTTON_MINUS) ?
+						RAMP_DOWN : RAMP_UP,
+					      settemp_ramp_handler);
+				menu_set_state(MENU_SETTEMP);
+				timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
+				break;
+			}
+		}
+		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
 				menu_set_state(MENU_DEBUG);
 				break;
 			}
-			menu_set_state(MENU_SETTEMP);
-			timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
 		}
 		break;
 	case MENU_SETTEMP:
+		menu.delay_running = false;
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
 		if (bstate == BSTATE_POSEDGE) {
 			if (button == BUTTON_MINUS)
@@ -185,15 +205,75 @@ static void menu_button_handler(enum button_id button,
 		break;
 	case MENU_DEBUG:
 		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_PLUS)
+			if (button == BUTTON_PLUS) {
 				debug_enable(true);
+				break;
+			}
 			if (button == BUTTON_MINUS) {
 				debug_enable(false);
 				menu_update_display();
+				break;
 			}
-			if (!debug_is_enabled()) {
-				if (button == BUTTON_SET)
+			if (button == BUTTON_SET) {
+				timer_arm(&menu.delay_timer, 1000);
+				menu.delay_running = true;
+				break;
+			}
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_SET) {
+				if (!debug_is_enabled()) {
 					menu_set_state(MENU_CURTEMP);
+					break;
+				}
+			}
+		}
+		if (bstate == BSTATE_PRESSED) {
+			if (button == BUTTON_SET) {
+				if (!debug_is_enabled() &&
+				    menu.delay_running &&
+				    timer_expired(&menu.delay_timer)) {
+					menu.manmode_percentage = 0;
+					contrcurr_set_enabled(false, menu.manmode_percentage);
+					contrtemp_set_enabled(false);
+					menu_set_state(MENU_MANUAL);
+					break;
+				}
+			}
+		}
+		break;
+	case MENU_MANUAL:
+		if (menu.delay_running) {
+			if (bstate == BSTATE_NEGEDGE) {
+				menu.delay_running = false;
+				break;
+			}
+			break;
+		}
+		if (bstate == BSTATE_POSEDGE) {
+			if (button == BUTTON_PLUS) {
+				if (menu.manmode_percentage <= 90) {
+					menu.manmode_percentage = (uint8_t)(menu.manmode_percentage + 10);
+					contrcurr_set_enabled(false, menu.manmode_percentage);
+					menu_update_display();
+				}
+				break;
+			}
+			if (button == BUTTON_MINUS) {
+				if (menu.manmode_percentage >= 10) {
+					menu.manmode_percentage = (uint8_t)(menu.manmode_percentage - 10);
+					contrcurr_set_enabled(false, menu.manmode_percentage);
+					menu_update_display();
+				}
+				break;
+			}
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_SET) {
+				contrcurr_set_enabled(true, 0);
+				contrtemp_set_enabled(true);
+				menu_set_state(MENU_CURTEMP);
+				break;
 			}
 		}
 		break;
@@ -207,6 +287,7 @@ void menu_work(void)
 	switch (menu.state) {
 	case MENU_CURTEMP:
 	case MENU_DEBUG:
+	case MENU_MANUAL:
 		break;
 	case MENU_SETTEMP:
 		if (timer_expired(&menu.timeout)) {
@@ -236,5 +317,10 @@ void menu_init(void)
 	buttons_register_handler(BUTTON_PLUS, menu_button_handler);
 	buttons_register_handler(BUTTON_MINUS, menu_button_handler);
 
-	menu_set_state(MENU_CURTEMP);
+	if (button_is_pressed(BUTTON_SET)) {
+		debug_enable(true);
+		menu_set_state(MENU_DEBUG);
+	} else {
+		menu_set_state(MENU_CURTEMP);
+	}
 }
