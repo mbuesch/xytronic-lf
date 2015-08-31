@@ -1,6 +1,5 @@
 CPPFLAGS	:= -I.. -Ifake -DF_CPU=8000000UL \
-		   -DTESTSUITE=1 \
-		   -DFIXPT_SIZE=16 -DFIXPT_SHIFT=5 -DFIXPTFLOAT_SIZE=64
+		   -DTESTSUITE=1
 CFLAGS		:= -std=c11 -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 		   -Wsuggest-attribute=noreturn -Wundef -Wpointer-arith \
 		   -Wcast-qual -Wlogical-op -Wshadow -Wconversion
@@ -18,7 +17,7 @@ TEST_BINS	:= $(foreach t,$(TESTS),$(t).run)
 	$(CC) -o $@ -c $(CPPFLAGS) $(CFLAGS) $<
 
 test_%.run: test_%.o fake/fake.o
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $(LDFLAGS) $^
 
 all: $(TEST_BINS)
 	./test_common.run
