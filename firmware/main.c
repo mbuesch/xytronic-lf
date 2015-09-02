@@ -62,6 +62,8 @@ int main(void)
 
 	menu_init();
 
+	measure_start();
+
 	wdt_enable(WDTO_250MS);
 	irq_enable();
 	while (1) {

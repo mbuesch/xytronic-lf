@@ -26,10 +26,6 @@
 #include "controller_temp.h"
 #include "debug_uart.h"
 
-
-#define MEASTEMP_PERIOD_MS	100 /* ms */
-#define MEASTEMP_CHANNEL	MEASCHAN_ADC1
-
 /* Plausibility */
 #define MEASTEMP_PLAUS_NEGLIM	20.0
 #define MEASTEMP_PLAUS_POSLIM	480.0
@@ -41,7 +37,6 @@
 #define MEASTEMP_SCALE_PHYSHI	480.0
 
 
-static struct timer meastemp_timer;
 static uint16_t meastemp_measured_raw;
 static bool meastemp_is_plausible;
 static struct report_int16_context meastemp_report;
@@ -53,14 +48,13 @@ bool meastemp_value_is_plausible(void)
 }
 
 /* This runs in IRQ context. */
-static void meastemp_meas_callback(void *context, uint16_t raw_adc)
+static void meastemp_meas_callback(uint16_t raw_adc)
 {
 	meastemp_measured_raw = raw_adc;
 }
 
 void meastemp_work(void)
 {
-	bool scheduled;
 	uint16_t raw_adc;
 	fixpt_t phys;
 	uint8_t sreg;
@@ -93,16 +87,17 @@ void meastemp_work(void)
 
 		contrtemp_set_feedback(phys);
 	}
-
-	if (timer_expired(&meastemp_timer)) {
-		scheduled = measure_schedule(MEASTEMP_CHANNEL,
-					     meastemp_meas_callback, NULL);
-		if (scheduled)
-			timer_add(&meastemp_timer, MEASTEMP_PERIOD_MS);
-	}
 }
+
+static const struct measure_config __flash meastemp_config = {
+	.mux			= MEAS_MUX_ADC1,
+	.ps			= MEAS_PS_64,
+	.ref			= MEAS_REF_AREF,
+	.callback		= meastemp_meas_callback,
+	.averaging_count	= 128,
+};
 
 void meastemp_init(void)
 {
-	timer_arm(&meastemp_timer, 0);
+	measure_register_channel(MEAS_CHAN_1, &meastemp_config);
 }

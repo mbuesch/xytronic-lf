@@ -4,24 +4,59 @@
 #include "util.h"
 
 
-enum measure_chan {
-	MEASCHAN_ADC0,
-	MEASCHAN_ADC1,
-	MEASCHAN_ADC2,
-	MEASCHAN_ADC3,
-	MEASCHAN_ADC4,
-	MEASCHAN_ADC5,
-};
+/* Multiplexer selections */
+#define MEAS_MUX_ADC0		((0 << MUX3) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0))
+#define MEAS_MUX_ADC1		((0 << MUX3) | (0 << MUX2) | (0 << MUX1) | (1 << MUX0))
+#define MEAS_MUX_ADC2		((0 << MUX3) | (0 << MUX2) | (1 << MUX1) | (0 << MUX0))
+#define MEAS_MUX_ADC3		((0 << MUX3) | (0 << MUX2) | (1 << MUX1) | (1 << MUX0))
+#define MEAS_MUX_ADC4		((0 << MUX3) | (1 << MUX2) | (0 << MUX1) | (0 << MUX0))
+#define MEAS_MUX_ADC5		((0 << MUX3) | (1 << MUX2) | (0 << MUX1) | (1 << MUX0))
+#define MEAS_MUX_ADC6		((0 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0))
+#define MEAS_MUX_ADC7		((0 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0))
+#define MEAS_MUX_ADC8		((1 << MUX3) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0))
+#define MEAS_MUX_BG		((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0))
+#define MEAS_MUX_GND		((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0))
+
+/* Prescaler selections */
+#define MEAS_PS_2		((0 << ADPS2) | (0 << ADPS1) | (1 << ADPS0))
+#define MEAS_PS_4		((0 << ADPS2) | (1 << ADPS1) | (0 << ADPS0))
+#define MEAS_PS_8		((0 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
+#define MEAS_PS_16		((1 << ADPS2) | (0 << ADPS1) | (0 << ADPS0))
+#define MEAS_PS_32		((1 << ADPS2) | (0 << ADPS1) | (1 << ADPS0))
+#define MEAS_PS_64		((1 << ADPS2) | (1 << ADPS1) | (0 << ADPS0))
+#define MEAS_PS_128		((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
+
+/* Reference selection */
+#define MEAS_REF_AREF		((0 << REFS1) | (0 << REFS0))
+#define MEAS_REF_AVCC		((0 << REFS1) | (1 << REFS0))
+#define MEAS_REF_RESERVED	((1 << REFS1) | (0 << REFS0))
+#define MEAS_REF_INT1P1V	((1 << REFS1) | (1 << REFS0))
 
 #define MEASURE_MAX_RESULT	0x3FF
 
+enum measure_chan {
+	MEAS_CHAN_0,
+	MEAS_CHAN_1,
+
+	NR_MEAS_CHANS
+};
 
 /* Callback runs in IRQ context. */
-typedef void (*measure_cb_t)(void *context, uint16_t raw_adc);
+typedef void (*measure_cb_t)(uint16_t raw_adc);
 
-bool measure_schedule(enum measure_chan chan,
-		      measure_cb_t callback, void *context);
+struct measure_config {
+	uint8_t mux;
+	uint8_t ps;
+	uint8_t ref;
+	measure_cb_t callback;
+	uint16_t averaging_count;
+};
 
+
+void measure_register_channel(enum measure_chan chan,
+			      const struct measure_config __flash *config);
+
+void measure_start(void);
 void measure_init(void);
 
 #endif /* MEASURE_H_ */

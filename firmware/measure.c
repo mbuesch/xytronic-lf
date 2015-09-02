@@ -21,152 +21,162 @@
 
 #include "measure.h"
 
+#include <string.h>
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
 
-/* Multiplexer selections */
-#define MUX_ADC0		((0 << MUX3) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0))
-#define MUX_ADC1		((0 << MUX3) | (0 << MUX2) | (0 << MUX1) | (1 << MUX0))
-#define MUX_ADC2		((0 << MUX3) | (0 << MUX2) | (1 << MUX1) | (0 << MUX0))
-#define MUX_ADC3		((0 << MUX3) | (0 << MUX2) | (1 << MUX1) | (1 << MUX0))
-#define MUX_ADC4		((0 << MUX3) | (1 << MUX2) | (0 << MUX1) | (0 << MUX0))
-#define MUX_ADC5		((0 << MUX3) | (1 << MUX2) | (0 << MUX1) | (1 << MUX0))
-#define MUX_ADC6		((0 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0))
-#define MUX_ADC7		((0 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0))
-#define MUX_ADC8		((1 << MUX3) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0))
-#define MUX_BG			((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0))
-#define MUX_GND			((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0))
-#define MUX_NONE		0xFF
-
-/* Prescaler selections */
-#define PS_2			((0 << ADPS2) | (0 << ADPS1) | (1 << ADPS0))
-#define PS_4			((0 << ADPS2) | (1 << ADPS1) | (0 << ADPS0))
-#define PS_8			((0 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
-#define PS_16			((1 << ADPS2) | (0 << ADPS1) | (0 << ADPS0))
-#define PS_32			((1 << ADPS2) | (0 << ADPS1) | (1 << ADPS0))
-#define PS_64			((1 << ADPS2) | (1 << ADPS1) | (0 << ADPS0))
-#define PS_128			((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
+/* Trigger source selection */
+#define TS_FREERUN		((0 << ADTS2) | (0 << ADTS1) | (0 << ADTS0))
+#define TS_ACOMP		((0 << ADTS2) | (0 << ADTS1) | (1 << ADTS0))
+#define TS_INT0			((0 << ADTS2) | (1 << ADTS1) | (0 << ADTS0))
+#define TS_T0CMA		((0 << ADTS2) | (1 << ADTS1) | (1 << ADTS0))
+#define TS_T0OV			((1 << ADTS2) | (0 << ADTS1) | (0 << ADTS0))
+#define TS_T1CMB		((1 << ADTS2) | (0 << ADTS1) | (1 << ADTS0))
+#define TS_T1OV			((1 << ADTS2) | (1 << ADTS1) | (0 << ADTS0))
+#define TS_T1CAP		((1 << ADTS2) | (1 << ADTS1) | (1 << ADTS0))
 
 
-static uint8_t active_mux;
-static measure_cb_t active_cb;
-static void *active_cb_context;
+struct meas_chan_context {
+	const struct measure_config __flash *config;
+};
 
+struct meas_context {
+	struct meas_chan_context channels[NR_MEAS_CHANS];
+	uint8_t active_chan;
+	uint16_t avg_count;
+	uint32_t avg_sum;
+};
+
+static struct meas_context meas;
+
+
+static void adc_disable(void)
+{
+	/* Disable the ADC. */
+	ADCSRA = 0;
+	/* Clear the interrupt flag. */
+	ADCSRA |= 1 << ADIF;
+}
+
+static void adc_busywait(void)
+{
+	do { } while (ADCSRA & (1 << ADSC));
+}
+
+static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref,
+			bool irq, bool freerunning)
+{
+	uint8_t trig, ie;
+
+	/* Mask the multiplexer bits. */
+	mux &= (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0);
+	/* Mask the prescaler bits. */
+	ps &= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+	/* Mask the reference bits. */
+	ref &= (1 << REFS1) | (1 << REFS0);
+
+	/* Free-running mode selection. */
+	if (freerunning)
+		trig = 1 << ADATE;
+	else
+		trig = 0 << ADATE;
+
+	/* Interrupt-enable selection */
+	if (irq)
+		ie = 1 << ADIE;
+	else
+		ie = 0 << ADIE;
+
+	mb();
+
+	/* Set multiplexer and start conversion. */
+	ADMUX = ref | (0 << ADLAR) | mux;
+	ADCSRB = (0 << ACME) | TS_FREERUN;
+	ADCSRA = (1 << ADEN) | (1 << ADSC) | ps | ie | trig;
+}
+
+static void adc_trigger_chan(struct meas_chan_context *chan)
+{
+	const struct measure_config __flash *config = chan ? chan->config : NULL;
+
+	adc_disable();
+	if (config) {
+		adc_trigger(config->mux, config->ps, config->ref,
+			    true, true);
+	} else {
+		adc_trigger(MEAS_MUX_GND, MEAS_PS_64, MEAS_REF_AREF,
+			    true, false);
+	}
+}
 
 ISR(ADC_vect)
 {
+	struct meas_chan_context *active_chan;
+	const struct measure_config __flash *config;
 	uint16_t raw_adc;
+	bool trigger_next_chan = false;
 
 	mb();
 
 	/* Read the raw ADC value. */
 	raw_adc = ADC;
 
-	/* If a callback is defined, call it. */
-	if (active_cb) {
-		active_cb(active_cb_context, raw_adc);
-		active_cb = NULL;
-		active_cb_context = NULL;
-	}
+	active_chan = &meas.channels[meas.active_chan];
+	config = active_chan->config;
 
-	/* Mark the ADC resource as unused. */
-	active_mux = MUX_NONE;
+	if (config) {
+		/* Add it to the average and check if we are done. */
+		meas.avg_sum += raw_adc;
+		meas.avg_count += 1;
+		if (meas.avg_count >= config->averaging_count) {
+			raw_adc = (uint16_t)(meas.avg_sum / (uint32_t)meas.avg_count);
+
+			/* Call the callback. */
+			if (config->callback)
+				config->callback(raw_adc);
+
+			trigger_next_chan = true;
+		}
+	} else {
+		trigger_next_chan = true;
+	}
+	if (trigger_next_chan) {
+		/* Switch to the next channel. */
+		meas.avg_sum = 0;
+		meas.avg_count = 0;
+		meas.active_chan++;
+		if (meas.active_chan >= ARRAY_SIZE(meas.channels))
+			meas.active_chan = 0;
+		adc_trigger_chan(&meas.channels[meas.active_chan]);
+	}
 
 	mb();
 }
 
-static void adc_trigger(uint8_t mux, uint8_t ps, bool irq)
+void measure_register_channel(enum measure_chan chan,
+			      const struct measure_config __flash *config)
 {
-	uint8_t ref;
-
-	/* Mask the multiplexer bits. */
-	mux &= (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0);
-	/* Mask the prescaler bits. */
-	ps &= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-
-	/* Mark the ADC resource as used. */
-	active_mux = mux;
-	mb();
-
-	/* REF = AREF pin */
-	ref = (0 << REFS1) | (0 << REFS0);
-
-	/* Set multiplexer and start conversion. */
-	ADMUX = ref | (0 << ADLAR) | mux;
-	if (irq) {
-		ADCSRA = (1 << ADEN) | (1 << ADSC) |
-			 (1 << ADIE) | (0 << ADATE) | ps;
-	} else {
-		ADCSRA = (1 << ADEN) | (1 << ADSC) |
-			 (0 << ADIE) | (0 << ADATE) | ps;
-	}
+	meas.channels[chan].config = config;
 }
 
-static void adc_busywait(void)
+void measure_start(void)
 {
-	do { } while (ADCSRA & (1 << ADSC));
-	ADCSRA |= (1 << ADIF); /* Clear IRQ flag */
-}
-
-bool measure_schedule(enum measure_chan chan,
-		      measure_cb_t callback, void *context)
-{
-	uint8_t sreg;
-	bool success;
-	uint8_t mux;
-	uint8_t ps;
-
-	switch (chan) {
-	case MEASCHAN_ADC0:
-		mux = MUX_ADC0;
-		break;
-	case MEASCHAN_ADC1:
-		mux = MUX_ADC1;
-		break;
-	case MEASCHAN_ADC2:
-		mux = MUX_ADC2;
-		break;
-	case MEASCHAN_ADC3:
-		mux = MUX_ADC3;
-		break;
-	case MEASCHAN_ADC4:
-		mux = MUX_ADC4;
-		break;
-	case MEASCHAN_ADC5:
-		mux = MUX_ADC5;
-		break;
-	default:
-		return false;
-	}
-
-	ps = PS_128;
-
-	sreg = irq_disable_save();
-	if (active_mux == MUX_NONE) {
-		active_cb = callback;
-		active_cb_context = context;
-		adc_trigger(mux, ps, true);
-
-		success = true;
-	} else {
-		success = false;
-	}
-	irq_restore(sreg);
-
-	return success;
+	adc_trigger_chan(&meas.channels[0]);
 }
 
 void measure_init(void)
 {
-	active_cb = NULL;
-	active_cb_context = NULL;
+	uint8_t i;
+
+	memset(&meas, 0, sizeof(meas));
+	for (i = 0; i < ARRAY_SIZE(meas.channels); i++)
+		meas.channels[i].config = NULL;
 
 	/* Discard the first measurement. */
-	adc_trigger(MUX_GND, PS_128, false);
+	adc_trigger_chan(NULL);
 	adc_busywait();
 	(void)ADC;
-
-	/* Mark the ADC resource as unused. */
-	active_mux = MUX_NONE;
+	adc_disable();
 }

@@ -27,9 +27,6 @@
 #include "debug_uart.h"
 
 
-#define MEASCURR_PERIOD_MS	100 /* ms */
-#define MEASCURR_CHANNEL	MEASCHAN_ADC2
-
 /* Plausibility */
 #define MEASCURR_PLAUS_NEGLIM	0.0
 #define MEASCURR_PLAUS_POSLIM	5.0
@@ -41,7 +38,6 @@
 #define MEASCURR_SCALE_PHYSHI	4.0
 
 
-static struct timer meascurr_timer;
 static uint16_t meascurr_measured_raw;
 static bool meascurr_is_plausible;
 static struct report_int16_context meascurr_report;
@@ -53,14 +49,13 @@ bool meascurr_value_is_plausible(void)
 }
 
 /* This runs in IRQ context. */
-static void meascurr_meas_callback(void *context, uint16_t raw_adc)
+static void meascurr_meas_callback(uint16_t raw_adc)
 {
 	meascurr_measured_raw = raw_adc;
 }
 
 void meascurr_work(void)
 {
-	bool scheduled;
 	uint16_t raw_adc;
 	fixpt_t phys;
 	uint8_t sreg;
@@ -93,16 +88,17 @@ void meascurr_work(void)
 
 		contrcurr_set_feedback(phys);
 	}
-
-	if (timer_expired(&meascurr_timer)) {
-		scheduled = measure_schedule(MEASCURR_CHANNEL,
-					     meascurr_meas_callback, NULL);
-		if (scheduled)
-			timer_add(&meascurr_timer, MEASCURR_PERIOD_MS);
-	}
 }
+
+static const struct measure_config __flash meascurr_config = {
+	.mux			= MEAS_MUX_ADC2,
+	.ps			= MEAS_PS_64,
+	.ref			= MEAS_REF_AREF,
+	.callback		= meascurr_meas_callback,
+	.averaging_count	= 6250,
+};
 
 void meascurr_init(void)
 {
-	timer_arm(&meascurr_timer, 0);
+	measure_register_channel(MEAS_CHAN_0, &meascurr_config);
 }
