@@ -55,6 +55,7 @@ void pwmcurr_set(fixpt_t current_amps)
 	duty = clamp(duty, (uint16_t)0, pwmcurr_max_duty);
 
 	/* Program the hardware */
+//TODO we might introduce a (fast) ramp here on duty changes.
 	OCR1A = duty;
 }
 
