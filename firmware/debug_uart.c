@@ -79,7 +79,7 @@ static void debug_uart_print_timestamp(void)
 	debug_uart_tx((uint8_t)' ');
 }
 
-void debug_print(const char __memx *str)
+static void debug_print_str2(const char __flash *str0, const char *str1)
 {
 	uint8_t sreg;
 
@@ -89,39 +89,63 @@ void debug_print(const char __memx *str)
 	sreg = irq_disable_save();
 
 	debug_uart_print_timestamp();
-	debug_uart_tx_string(str);
+	if (str0)
+		debug_uart_tx_string(str0);
+	if (str1) {
+		debug_uart_tx((uint8_t)' ');
+		debug_uart_tx_string(str1);
+	}
 	debug_uart_tx_eol();
 
 	irq_restore(sreg);
 }
 
-void debug_print_int16(const char __memx *prefix, int16_t value)
+void debug_print_int32(const char __flash *prefix, int32_t value)
 {
-	uint8_t sreg;
-	char buf[5 + 1 + 1];
+	char buf[10 + 1 + 1];
 
-	if (!debug_enabled)
-		return;
+	build_assert(sizeof(long) == sizeof(value));
+	ltoa(value, buf, 10);
 
-	sreg = irq_disable_save();
-
-	debug_uart_print_timestamp();
-	debug_uart_tx_string(prefix);
-	debug_uart_tx((uint8_t)' ');
-	build_assert(sizeof(int) == sizeof(value));
-	itoa(value, buf, 10);
-	debug_uart_tx_string(buf);
-	debug_uart_tx_eol();
-
-	irq_restore(sreg);
+	debug_print_str2(prefix, buf);
 }
 
-void debug_report_int16(struct report_int16_context *ctx,
-			const char __memx *prefix,
+void debug_print_int24(const char __flash *prefix, int24_t value)
+{
+	debug_print_int32(prefix, value);
+}
+
+void debug_print_int16(const char __flash *prefix, int16_t value)
+{
+	debug_print_int32(prefix, value);
+}
+
+void debug_report_int32(const char __flash *prefix,
+			int32_t *old_value,
+			int32_t new_value)
+{
+	if (*old_value != new_value) {
+		*old_value = new_value;
+		debug_print_int32(prefix, new_value);
+	}
+}
+
+void debug_report_int24(const char __flash *prefix,
+			int24_t *old_value,
+			int24_t new_value)
+{
+	if (*old_value != new_value) {
+		*old_value = new_value;
+		debug_print_int24(prefix, new_value);
+	}
+}
+
+void debug_report_int16(const char __flash *prefix,
+			int16_t *old_value,
 			int16_t new_value)
 {
-	if (ctx->old_value != new_value) {
-		ctx->old_value = new_value;
+	if (*old_value != new_value) {
+		*old_value = new_value;
 		debug_print_int16(prefix, new_value);
 	}
 }
@@ -130,10 +154,12 @@ void debug_enable(bool enable)
 {
 	debug_enabled = enable;
 	display_enable(!enable);
-	if (enable)
+	if (enable) {
 		debug_uart_enable();
-	else
+		debug_uart_tx_string(PSTR("\r\nst\r\n"));
+	} else {
 		debug_uart_disable();
+	}
 }
 
 bool debug_is_enabled(void)

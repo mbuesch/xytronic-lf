@@ -40,7 +40,7 @@
 
 static uint16_t meascurr_measured_raw;
 static bool meascurr_is_plausible;
-static struct report_int16_context meascurr_report;
+static int16_t meascurr_old_report;
 
 
 bool meascurr_value_is_plausible(void)
@@ -66,7 +66,8 @@ void meascurr_work(void)
 	irq_restore(sreg);
 
 	if (raw_adc <= MEASURE_MAX_RESULT) {
-		debug_report_int16(&meascurr_report, PSTR("mc"),
+		debug_report_int16(PSTR("mc"),
+				   &meascurr_old_report,
 				   (int16_t)raw_adc);
 
 		phys = scale((int16_t)raw_adc,
@@ -74,6 +75,7 @@ void meascurr_work(void)
 			     MEASCURR_SCALE_RAWHI,
 			     float_to_fixpt(MEASCURR_SCALE_PHYSLO),
 			     float_to_fixpt(MEASCURR_SCALE_PHYSHI));
+phys = fixpt_div(phys, int_to_fixpt(6));//FIXME
 
 		/* Plausibility check. */
 		if (phys < float_to_fixpt(MEASCURR_PLAUS_NEGLIM)) {
@@ -95,7 +97,7 @@ static const struct measure_config __flash meascurr_config = {
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
 	.callback		= meascurr_meas_callback,
-	.averaging_count	= 6250,
+	.averaging_count	= 3000,
 };
 
 void meascurr_init(void)

@@ -30,10 +30,10 @@
 
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP	1.0
+#define CONTRTEMP_PID_KP	2.0
 #define CONTRTEMP_PID_KI	0.1
 #define CONTRTEMP_PID_KD	0.0
-#define CONTRTEMP_PERIOD_MS	100	/* milliseconds */
+#define CONTRTEMP_PERIOD_MS	50	/* milliseconds */
 
 
 static bool temp_contr_enabled;
@@ -41,9 +41,9 @@ static struct pid temp_pid;
 static fixpt_t temp_feedback;
 static struct timer temp_timer;
 
-static struct report_int16_context temp_feedback_report;
-static struct report_int16_context temp_control1_report;
-static struct report_int16_context temp_control2_report;
+static int24_t old_temp_feedback;
+static int24_t old_temp_control1;
+static int24_t old_temp_control2;
 
 
 void contrtemp_set_feedback(fixpt_t r)
@@ -77,11 +77,15 @@ fixpt_t contrtemp_get_setpoint(void)
 
 static fixpt_t temp_to_amps(fixpt_t temp)
 {
-	return rescale(temp,
-		       float_to_fixpt(CONTRTEMP_NEGLIM),
-		       float_to_fixpt(CONTRTEMP_POSLIM),
-		       float_to_fixpt(CONTRCURR_NEGLIM),
-		       float_to_fixpt(CONTRCURR_POSLIM));
+	fixpt_t current;
+
+	current = rescale(temp,
+			  float_to_fixpt(CONTRTEMP_NEGLIM),
+			  float_to_fixpt(CONTRTEMP_POSLIM),
+			  float_to_fixpt(CONTRCURR_NEGLIM),
+			  float_to_fixpt(CONTRCURR_POSLIM));
+
+	return current;
 }
 
 void contrtemp_set_enabled(bool enabled)
@@ -105,7 +109,7 @@ void contrtemp_work(void)
 
 	/* Get the feedback (r) */
 	r = temp_feedback;
-	debug_report_int16(&temp_feedback_report, PSTR("tr"), (int16_t)r);
+	debug_report_int24(PSTR("tr"), &old_temp_feedback, (int24_t)r);
 
 	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRTEMP_PERIOD_MS / 1000.0f);
@@ -113,12 +117,12 @@ void contrtemp_work(void)
 	/* Run the PID controller */
 	y = pid_run(&temp_pid, dt, r);
 
-	debug_report_int16(&temp_control1_report, PSTR("ty1"), (int16_t)y);
+	debug_report_int24(PSTR("ty1"), &old_temp_control1, (int16_t)y);
 
 	/* Map the requested temperature to a heater current. */
 	y_current = temp_to_amps(y);
 
-	debug_report_int16(&temp_control2_report, PSTR("ty2"), (int16_t)y_current);
+	debug_report_int24(PSTR("ty2"), &old_temp_control2, (int16_t)y_current);
 
 	/* Set the current controller setpoint to the requested current. */
 	contrcurr_set_setpoint(y_current);
