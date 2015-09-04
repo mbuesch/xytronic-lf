@@ -24,6 +24,7 @@
 #include "display.h"
 
 #include <avr/io.h>
+#include <avr/wdt.h>
 
 
 static bool debug_enabled;
@@ -44,7 +45,8 @@ static void debug_uart_disable(void)
 static void debug_uart_tx(uint8_t byte)
 {
 	/* Wait for USART data register empty. */
-	while (!(UCSR0A & (1 << UDRE0)));
+	while (!(UCSR0A & (1 << UDRE0)))
+		wdt_reset();
 
 	/* Transmit the byte. */
 	UDR0 = byte;
@@ -71,7 +73,7 @@ static void debug_uart_tx_eol(void)
 
 static void debug_uart_print_timestamp(void)
 {
-	char buf[(sizeof(unsigned int) / 4) + 1];
+	char buf[(sizeof(unsigned int) * 2) + 1];
 
 	utoa((unsigned int)(uint16_t)_timer_get_now(), buf, 16);
 	debug_uart_tx_string(buf);
