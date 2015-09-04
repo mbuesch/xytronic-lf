@@ -102,6 +102,8 @@ static void adc_trigger_chan(struct meas_chan_context *chan)
 	const struct measure_config __flash *config = chan ? chan->config : NULL;
 
 	adc_disable();
+	meas.avg_sum = 0;
+	meas.avg_count = 0;
 	if (config) {
 		adc_trigger(config->mux, config->ps, config->ref,
 			    true, true);
@@ -144,8 +146,6 @@ ISR(ADC_vect)
 	}
 	if (trigger_next_chan) {
 		/* Switch to the next channel. */
-		meas.avg_sum = 0;
-		meas.avg_count = 0;
 		meas.active_chan++;
 		if (meas.active_chan >= ARRAY_SIZE(meas.channels))
 			meas.active_chan = 0;
