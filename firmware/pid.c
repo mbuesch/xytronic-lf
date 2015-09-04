@@ -43,6 +43,9 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	pid->integr = i;
 
 	/* D term */
+//FIXME
+d = int_to_fixpt(0);
+#if 0
 	de = fixpt_sub(e, pid->prev_e);
 	if (dt) {
 		d = fixpt_mul_div(de, pid->kd, dt);
@@ -53,6 +56,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 			d = y_poslim;
 	}
 	pid->prev_e = e;
+#endif
 
 	/* Add P, I and D terms */
 	pid_result = fixpt_add(fixpt_add(p, i), d);
