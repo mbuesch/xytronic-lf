@@ -90,12 +90,18 @@ static inline int32_t fixpt_to_int(fixpt_t p)
 	return fixpt_big_to_int(fixpt_inflate(p));
 }
 
+#define FLOAT_TO_FIXPT_BIG(f)	((fixpt_big_t)(						\
+		((f) < 0.0) ?								\
+			(fixpt_big_t)(((f) * (fixptfloat_t)(1L << FIXPT_SHIFT)) - 0.5)	\
+		:									\
+			(fixpt_big_t)(((f) * (fixptfloat_t)(1L << FIXPT_SHIFT)) + 0.5)	\
+	))
+
+#define FLOAT_TO_FIXPT(f)	((fixpt_t)FLOAT_TO_FIXPT_BIG(f))
+
 static inline fixpt_big_t float_to_fixpt_big(fixptfloat_t f)
 {
-	if (f < 0.0)
-		return (fixpt_big_t)((f * (fixptfloat_t)(1L << FIXPT_SHIFT)) - 0.5);
-	else
-		return (fixpt_big_t)((f * (fixptfloat_t)(1L << FIXPT_SHIFT)) + 0.5);
+	return (fixpt_big_t)FLOAT_TO_FIXPT_BIG(f);
 }
 
 static inline fixpt_t float_to_fixpt(fixptfloat_t f)
