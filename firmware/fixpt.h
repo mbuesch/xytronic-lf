@@ -1,17 +1,17 @@
 #ifndef FIXEDPOINT_H_
 #define FIXEDPOINT_H_
 
-#include <stdint.h>
+#include "util.h"
 
 
 #ifndef FIXPT_SIZE
   /* Q10.5 */
-# define FIXPT_SIZE		16
-# define FIXPT_SHIFT		5
+# define FIXPT_SIZE		24
+# define FIXPT_SHIFT		6
 #endif
 
 #ifndef FIXPTFLOAT_SIZE
-# define FIXPTFLOAT_SIZE	64
+# define FIXPTFLOAT_SIZE	32
 #endif
 
 
@@ -20,6 +20,9 @@ typedef int8_t fixpt_t;
 typedef int16_t fixpt_big_t;
 #elif FIXPT_SIZE == 16
 typedef int16_t fixpt_t;
+typedef int24_t fixpt_big_t;
+#elif FIXPT_SIZE == 24
+typedef int24_t fixpt_t;
 typedef int32_t fixpt_big_t;
 #elif FIXPT_SIZE == 32
 typedef int32_t fixpt_t;
@@ -68,10 +71,18 @@ static inline fixpt_t int_to_fixpt(int32_t i)
 
 static inline int32_t fixpt_big_to_int(fixpt_big_t p)
 {
+#if 1
+//FIXME we should be able to optimize that div by doing shift. Compiler won't do.
 	if (p < 0)
 		return (int32_t)((p - (1L << (FIXPT_SHIFT - 1))) / (1L << FIXPT_SHIFT));
 	else
 		return (int32_t)((p + (1L << (FIXPT_SHIFT - 1))) / (1L << FIXPT_SHIFT));
+#else
+	if (p < 0)
+		return (int32_t)((p - (1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT);
+	else
+		return (int32_t)((p + (1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT);
+#endif
 }
 
 static inline int32_t fixpt_to_int(fixpt_t p)
@@ -81,10 +92,10 @@ static inline int32_t fixpt_to_int(fixpt_t p)
 
 static inline fixpt_big_t float_to_fixpt_big(fixptfloat_t f)
 {
-	if (f < 0)
-		return (fixpt_big_t)((f * (1L << FIXPT_SHIFT)) - 0.5f);
+	if (f < 0.0)
+		return (fixpt_big_t)((f * (fixptfloat_t)(1L << FIXPT_SHIFT)) - 0.5);
 	else
-		return (fixpt_big_t)((f * (1L << FIXPT_SHIFT)) + 0.5f);
+		return (fixpt_big_t)((f * (fixptfloat_t)(1L << FIXPT_SHIFT)) + 0.5);
 }
 
 static inline fixpt_t float_to_fixpt(fixptfloat_t f)
