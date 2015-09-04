@@ -27,7 +27,9 @@
 fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 {
 	fixpt_t e, de;
-	fixpt_t p, i, d, pid_result;
+	fixpt_t kp, ki, kd;
+	fixpt_t p, i, d;
+	fixpt_t pid_result = int_to_fixpt(0);
 	fixpt_t y_neglim = pid->y_neglim;
 	fixpt_t y_poslim = pid->y_poslim;
 
@@ -35,31 +37,40 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	e = fixpt_sub(pid->setpoint, r);
 
 	/* P term */
-	p = fixpt_mul(pid->kp, e);
+	kp = pid->kp;
+	if (kp != int_to_fixpt(0)) {
+		p = fixpt_mul(kp, e);
+
+		pid_result = fixpt_add(pid_result, p);
+	}
 
 	/* I term */
-	i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(pid->ki, e), dt));
-	i = clamp(i, y_neglim, y_poslim);
-	pid->integr = i;
+	ki = pid->ki;
+	if (ki != int_to_fixpt(0)) {
+		i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(ki, e), dt));
+		i = clamp(i, y_neglim, y_poslim);
+		pid->integr = i;
+
+		pid_result = fixpt_add(pid_result, i);
+	}
 
 	/* D term */
-//FIXME
-d = int_to_fixpt(0);
-#if 0
-	de = fixpt_sub(e, pid->prev_e);
-	if (dt) {
-		d = fixpt_mul_div(de, pid->kd, dt);
-	} else {
-		if (de < 0)
-			d = y_neglim;
-		else
-			d = y_poslim;
-	}
-	pid->prev_e = e;
-#endif
+	kd = pid->kd;
+	if (kd != int_to_fixpt(0)) {
+		de = fixpt_sub(e, pid->prev_e);
+		if (dt) {
+			d = fixpt_mul_div(de, kd, dt);
+		} else {
+			if (de < 0)
+				d = y_neglim;
+			else
+				d = y_poslim;
+		}
+		pid->prev_e = e;
 
-	/* Add P, I and D terms */
-	pid_result = fixpt_add(fixpt_add(p, i), d);
+		pid_result = fixpt_add(pid_result, d);
+	}
+
 	pid_result = clamp(pid_result, y_neglim, y_poslim);
 
 	return pid_result;
