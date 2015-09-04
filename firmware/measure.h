@@ -53,6 +53,7 @@ struct measure_config {
 	uint8_t ps;
 	uint8_t ref;
 
+//FIXME: Do this via time instead?
 	uint16_t averaging_count;
 
 	uint16_t scale_raw_lo;
