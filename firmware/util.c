@@ -24,24 +24,6 @@
 #include <avr/eeprom.h>
 
 
-/* Reboot the SOC. */
-void reboot(void)
-{
-	/* Disable IRQs and use the watchdog
-	 * to trigger a watchdog reset. */
-	irq_disable();
-	wdt_enable(WDTO_15MS);
-	while (1);
-	unreachable();
-}
-
-/* A fatal error occurred. */
-void panic(void)
-{
-	//TODO: Try to get an error message out.
-	reboot();
-}
-
 /* Read a block of data from the EEPROM.
  * This function resets the watchdog timer after each processed byte.
  */
