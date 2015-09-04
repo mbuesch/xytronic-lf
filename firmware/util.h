@@ -126,6 +126,10 @@
 # define unreachable()		while (1)
 #endif
 
+/* Non-standard integer types. */
+typedef __int24		int24_t;
+typedef __uint24	uint24_t;
+
 
 void reboot(void) noreturn;
 void panic(void) noreturn;
