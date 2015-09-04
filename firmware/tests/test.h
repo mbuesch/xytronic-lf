@@ -1,3 +1,5 @@
+#include "fake/fake.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
