@@ -49,19 +49,11 @@ static inline fixpt_big_t fixpt_inflate(fixpt_t a)
 	return (fixpt_big_t)a;
 }
 
-static inline fixpt_t fixpt_deflate(fixpt_big_t a)
-{
-	if (a >= FIXPT_MAX)
-		return FIXPT_MAX;
-	if (a <= FIXPT_MIN)
-		return FIXPT_MIN;
-
-	return (fixpt_t)a;
-}
+fixpt_t fixpt_deflate(fixpt_big_t a);
 
 static inline fixpt_big_t int_to_fixpt_big(int32_t i)
 {
-	return (fixpt_big_t)(i * (1L << FIXPT_SHIFT));
+	return (fixpt_big_t)(i << FIXPT_SHIFT);
 }
 
 static inline fixpt_t int_to_fixpt(int32_t i)
@@ -69,21 +61,7 @@ static inline fixpt_t int_to_fixpt(int32_t i)
 	return fixpt_deflate(int_to_fixpt_big(i));
 }
 
-static inline int32_t fixpt_big_to_int(fixpt_big_t p)
-{
-#if 1
-//FIXME we should be able to optimize that div by doing shift. Compiler won't do.
-	if (p < 0)
-		return (int32_t)((p - (1L << (FIXPT_SHIFT - 1))) / (1L << FIXPT_SHIFT));
-	else
-		return (int32_t)((p + (1L << (FIXPT_SHIFT - 1))) / (1L << FIXPT_SHIFT));
-#else
-	if (p < 0)
-		return (int32_t)((p - (1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT);
-	else
-		return (int32_t)((p + (1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT);
-#endif
-}
+int32_t fixpt_big_to_int(fixpt_big_t p);
 
 static inline int32_t fixpt_to_int(fixpt_t p)
 {
@@ -143,50 +121,15 @@ static inline fixpt_big_t fixpt_big_sub(fixpt_big_t a, fixpt_big_t b)
 
 /* Calculate: a * b
  */
-static inline fixpt_big_t fixpt_big_mul(fixpt_big_t a, fixpt_big_t b)
-{
-	fixpt_big_t tmp;
-
-	/* Multiply */
-	tmp = a * b;
-	/* Round */
-	tmp += (fixpt_big_t)1L << (FIXPT_SHIFT - 1);
-	/* Scale */
-	tmp >>= FIXPT_SHIFT;
-
-	return tmp;
-}
+fixpt_big_t fixpt_big_mul(fixpt_big_t a, fixpt_big_t b);
 
 /* Calculate: a / b
  */
-static inline fixpt_big_t fixpt_big_div(fixpt_big_t a, fixpt_big_t b)
-{
-	fixpt_big_t tmp;
-
-	/* Scale */
-	tmp = a << FIXPT_SHIFT;
-	/* Round */
-	if ((tmp >= 0 && b >= 0) || (tmp < 0 && b < 0))
-		tmp += b / 2;
-	else
-		tmp -= b / 2;
-	/* Divide */
-	tmp /= b;
-
-	return tmp;
-}
+fixpt_big_t fixpt_big_div(fixpt_big_t a, fixpt_big_t b);
 
 /* Calculate: (a * b) / c
  */
-static inline fixpt_big_t fixpt_big_mul_div(fixpt_big_t a, fixpt_big_t b, fixpt_big_t c)
-{
-	fixpt_big_t tmp;
-
-	tmp = fixpt_big_mul(a, b);
-	tmp = fixpt_big_div(tmp, c);
-
-	return tmp;
-}
+fixpt_big_t fixpt_big_mul_div(fixpt_big_t a, fixpt_big_t b, fixpt_big_t c);
 
 /* Calculate: a + b
  */

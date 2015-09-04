@@ -8,6 +8,7 @@ SRCS			:= bitmap.c \
 			   controller_temp.c \
 			   debug_uart.c \
 			   display.c \
+			   fixpt.c \
 			   main.c \
 			   measure.c \
 			   measure_current.c \

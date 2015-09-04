@@ -1,5 +1,6 @@
 #include "test.h"
 #include "scale.c"
+#include "fixpt.c"
 
 
 static void test_scale(void)

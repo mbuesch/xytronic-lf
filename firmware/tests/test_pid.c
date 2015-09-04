@@ -1,5 +1,6 @@
 #include "test.h"
 #include "pid.c"
+#include "fixpt.c"
 
 
 static void check_common(void)
