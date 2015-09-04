@@ -38,66 +38,40 @@
 #define MEASCURR_SCALE_PHYSHI	4.0
 
 
-static uint16_t meascurr_measured_raw;
 static bool meascurr_is_plausible;
-static int16_t meascurr_old_report;
 
 
+//FIXME
 bool meascurr_value_is_plausible(void)
 {
 	return meascurr_is_plausible;
 }
 
 /* This runs in IRQ context. */
-static void meascurr_meas_callback(uint16_t raw_adc)
+static void meascurr_meas_callback(fixpt_t measured_phys_value,
+				   bool is_plausible)
 {
-	meascurr_measured_raw = raw_adc;
-}
-
-void meascurr_work(void)
-{
-	uint16_t raw_adc;
-	fixpt_t phys;
-	uint8_t sreg;
-
-	sreg = irq_disable_save();
-	raw_adc = meascurr_measured_raw;
-	meascurr_measured_raw = MEASURE_MAX_RESULT + 1;
-	irq_restore(sreg);
-
-	if (raw_adc <= MEASURE_MAX_RESULT) {
-		debug_report_int16(PSTR("mc"),
-				   &meascurr_old_report,
-				   (int16_t)raw_adc);
-
-		phys = scale((int16_t)raw_adc,
-			     MEASCURR_SCALE_RAWLO,
-			     MEASCURR_SCALE_RAWHI,
-			     float_to_fixpt(MEASCURR_SCALE_PHYSLO),
-			     float_to_fixpt(MEASCURR_SCALE_PHYSHI));
-phys = fixpt_div(phys, int_to_fixpt(6));//FIXME
-
-		/* Plausibility check. */
-		if (phys < float_to_fixpt(MEASCURR_PLAUS_NEGLIM)) {
-			phys = float_to_fixpt(MEASCURR_PLAUS_NEGLIM);
-			meascurr_is_plausible = false;
-		} else if (phys > float_to_fixpt(MEASCURR_PLAUS_POSLIM)) {
-			phys = float_to_fixpt(MEASCURR_PLAUS_POSLIM);
-			meascurr_is_plausible = false;
-		} else {
-			meascurr_is_plausible = true;
-		}
-
-		contrcurr_set_feedback(phys);
+	if (is_plausible) {
+measured_phys_value = fixpt_div(measured_phys_value, int_to_fixpt(6));//FIXME
+		contrcurr_set_feedback(measured_phys_value);
+	} else {
+		//TODO
 	}
 }
 
 static const struct measure_config __flash meascurr_config = {
+	.name			= "mc",
 	.mux			= MEAS_MUX_ADC2,
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
-	.callback		= meascurr_meas_callback,
 	.averaging_count	= 3000,
+	.scale_raw_lo		= MEASCURR_SCALE_RAWLO,
+	.scale_raw_hi		= MEASCURR_SCALE_RAWHI,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(MEASCURR_SCALE_PHYSLO),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(MEASCURR_SCALE_PHYSHI),
+	.plaus_neglim		= FLOAT_TO_FIXPT(MEASCURR_PLAUS_NEGLIM),
+	.plaus_poslim		= FLOAT_TO_FIXPT(MEASCURR_PLAUS_POSLIM),
+	.callback		= meascurr_meas_callback,
 };
 
 void meascurr_init(void)

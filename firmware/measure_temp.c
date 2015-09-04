@@ -37,65 +37,39 @@
 #define MEASTEMP_SCALE_PHYSHI	480.0
 
 
-static uint16_t meastemp_measured_raw;
 static bool meastemp_is_plausible;
-static int16_t meastemp_old_report;
 
 
+//FIXME
 bool meastemp_value_is_plausible(void)
 {
 	return meastemp_is_plausible;
 }
 
 /* This runs in IRQ context. */
-static void meastemp_meas_callback(uint16_t raw_adc)
+static void meastemp_meas_callback(fixpt_t measured_phys_value,
+				   bool is_plausible)
 {
-	meastemp_measured_raw = raw_adc;
-}
-
-void meastemp_work(void)
-{
-	uint16_t raw_adc;
-	fixpt_t phys;
-	uint8_t sreg;
-
-	sreg = irq_disable_save();
-	raw_adc = meastemp_measured_raw;
-	meastemp_measured_raw = MEASURE_MAX_RESULT + 1;
-	irq_restore(sreg);
-
-	if (raw_adc <= MEASURE_MAX_RESULT) {
-		debug_report_int16(PSTR("mt"),
-				   &meastemp_old_report,
-				   (int16_t)raw_adc);
-
-		phys = scale((int16_t)raw_adc,
-			     MEASTEMP_SCALE_RAWLO,
-			     MEASTEMP_SCALE_RAWHI,
-			     float_to_fixpt(MEASTEMP_SCALE_PHYSLO),
-			     float_to_fixpt(MEASTEMP_SCALE_PHYSHI));
-
-		/* Plausibility check. */
-		if (phys < float_to_fixpt(MEASTEMP_PLAUS_NEGLIM)) {
-			phys = float_to_fixpt(MEASTEMP_PLAUS_NEGLIM);
-			meastemp_is_plausible = false;
-		} else if (phys > float_to_fixpt(MEASTEMP_PLAUS_POSLIM)) {
-			phys = float_to_fixpt(MEASTEMP_PLAUS_POSLIM);
-			meastemp_is_plausible = false;
-		} else {
-			meastemp_is_plausible = true;
-		}
-
-		contrtemp_set_feedback(phys);
+	if (is_plausible) {
+		contrtemp_set_feedback(measured_phys_value);
+	} else {
+		//TODO
 	}
 }
 
 static const struct measure_config __flash meastemp_config = {
+	.name			= "mt",
 	.mux			= MEAS_MUX_ADC1,
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
-	.callback		= meastemp_meas_callback,
 	.averaging_count	= 128,
+	.scale_raw_lo		= MEASTEMP_SCALE_RAWLO,
+	.scale_raw_hi		= MEASTEMP_SCALE_RAWHI,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(MEASTEMP_SCALE_PHYSLO),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(MEASTEMP_SCALE_PHYSHI),
+	.plaus_neglim		= FLOAT_TO_FIXPT(MEASTEMP_PLAUS_NEGLIM),
+	.plaus_poslim		= FLOAT_TO_FIXPT(MEASTEMP_PLAUS_POSLIM),
+	.callback		= meastemp_meas_callback,
 };
 
 void meastemp_init(void)

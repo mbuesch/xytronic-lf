@@ -5,7 +5,6 @@
 
 bool meastemp_value_is_plausible(void);
 
-void meastemp_work(void);
 void meastemp_init(void);
 
 #endif /* MEASURE_TEMP_H_ */

@@ -64,6 +64,8 @@ struct menu_context {
 	int32_t ramp_period;
 
 	uint8_t manmode_percentage;
+
+	uint8_t display_update_requested;
 };
 
 static struct menu_context menu;
@@ -87,7 +89,7 @@ static void int_to_ascii_align_right(char *buf, uint8_t align_to_digit,
 	}
 }
 
-void menu_update_display(void)
+static void menu_update_display(void)
 {
 	char disp[6];
 	fixpt_t temp_fixpt;
@@ -128,10 +130,16 @@ void menu_update_display(void)
 	display_show(disp);
 }
 
+void menu_request_display_update(void)
+{
+	menu.display_update_requested = 1;
+	mb();
+}
+
 static void menu_set_state(enum menu_state new_state)
 {
 	menu.state = new_state;
-	menu_update_display();
+	menu_request_display_update();
 }
 
 static void settemp_ramp_handler(bool up)
@@ -150,7 +158,7 @@ static void settemp_ramp_handler(bool up)
 		setpoint = float_to_fixpt(CONTRTEMP_NEGLIM);
 	contrtemp_set_setpoint(setpoint);
 
-	menu_update_display();
+	menu_request_display_update();
 }
 
 static void start_ramping(enum ramp_state ramp, ramp_handler_t handler)
@@ -211,7 +219,7 @@ static void menu_button_handler(enum button_id button,
 			}
 			if (button == BUTTON_MINUS) {
 				debug_enable(false);
-				menu_update_display();
+				menu_request_display_update();
 				break;
 			}
 			if (button == BUTTON_SET) {
@@ -255,7 +263,7 @@ static void menu_button_handler(enum button_id button,
 				if (menu.manmode_percentage <= 90) {
 					menu.manmode_percentage = (uint8_t)(menu.manmode_percentage + 10);
 					contrcurr_set_enabled(false, menu.manmode_percentage);
-					menu_update_display();
+					menu_request_display_update();
 				}
 				break;
 			}
@@ -263,7 +271,7 @@ static void menu_button_handler(enum button_id button,
 				if (menu.manmode_percentage >= 10) {
 					menu.manmode_percentage = (uint8_t)(menu.manmode_percentage - 10);
 					contrcurr_set_enabled(false, menu.manmode_percentage);
-					menu_update_display();
+					menu_request_display_update();
 				}
 				break;
 			}
@@ -306,6 +314,13 @@ void menu_work(void)
 			if (menu.ramp_period > RAMP_MIN_PERIOD_MS)
 				menu.ramp_period /= 2;
 		}
+	}
+
+	mb();
+	if (menu.display_update_requested) {
+		menu.display_update_requested = 0;
+		mb();
+		menu_update_display();
 	}
 }
 

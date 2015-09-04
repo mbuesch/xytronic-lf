@@ -50,7 +50,7 @@ void contrtemp_set_feedback(fixpt_t r)
 {
 	if (r != temp_feedback) {
 		temp_feedback = r;
-		menu_update_display();
+		menu_request_display_update();
 	}
 }
 

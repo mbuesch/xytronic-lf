@@ -20,6 +20,8 @@
  */
 
 #include "measure.h"
+#include "scale.h"
+#include "debug_uart.h"
 
 #include <string.h>
 
@@ -40,6 +42,7 @@
 
 struct meas_chan_context {
 	const struct measure_config __flash *config;
+	int16_t old_report_value;
 };
 
 struct meas_context {
@@ -113,6 +116,37 @@ static void adc_trigger_chan(struct meas_chan_context *chan)
 	}
 }
 
+static void measure_handle_result(struct meas_chan_context *active_chan,
+				  const struct measure_config __flash *config,
+				  uint16_t raw_adc)
+{
+	fixpt_t phys;
+	bool is_plausible;
+
+	debug_report_int16(config->name, &active_chan->old_report_value,
+			   (int16_t)raw_adc);
+
+	/* Scale raw to phys. */
+	phys = scale((int16_t)raw_adc,
+		     (int16_t)config->scale_raw_lo,
+		     (int16_t)config->scale_raw_hi,
+		     config->scale_phys_lo,
+		     config->scale_phys_hi);
+
+	/* Plausibility check. */
+	is_plausible = true;
+	if (phys < config->plaus_neglim) {
+		phys = config->plaus_neglim;
+		is_plausible = false;
+	} else if (phys > config->plaus_poslim) {
+		phys = config->plaus_poslim;
+		is_plausible = false;
+	}
+
+	/* Call the callback. */
+	config->callback(phys, is_plausible);
+}
+
 ISR(ADC_vect)
 {
 	struct meas_chan_context *active_chan;
@@ -135,10 +169,7 @@ ISR(ADC_vect)
 		if (meas.avg_count >= config->averaging_count) {
 			raw_adc = (uint16_t)(meas.avg_sum / (uint32_t)meas.avg_count);
 
-			/* Call the callback. */
-			if (config->callback)
-				config->callback(raw_adc);
-
+			measure_handle_result(active_chan, config, raw_adc);
 			trigger_next_chan = true;
 		}
 	} else {

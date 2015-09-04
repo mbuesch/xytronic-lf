@@ -69,10 +69,7 @@ int main(void)
 	while (1) {
 		wdt_reset();
 
-		meastemp_work();
 		contrtemp_work();
-
-		meascurr_work();
 		contrcurr_work();
 
 		menu_work();

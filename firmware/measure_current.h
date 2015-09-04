@@ -6,7 +6,6 @@
 
 bool meascurr_value_is_plausible(void);
 
-void meascurr_work(void);
 void meascurr_init(void);
 
 #endif /* MEASURE_CURRENT_H_ */

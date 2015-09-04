@@ -1,6 +1,7 @@
 #ifndef MEASURE_H_
 #define MEASURE_H_
 
+#include "fixpt.h"
 #include "util.h"
 
 
@@ -42,14 +43,27 @@ enum measure_chan {
 };
 
 /* Callback runs in IRQ context. */
-typedef void (*measure_cb_t)(uint16_t raw_adc);
+typedef void (*measure_cb_t)(fixpt_t measured_phys_value,
+			     bool is_plausible);
 
 struct measure_config {
+	char name[3];
+
 	uint8_t mux;
 	uint8_t ps;
 	uint8_t ref;
-	measure_cb_t callback;
+
 	uint16_t averaging_count;
+
+	uint16_t scale_raw_lo;
+	uint16_t scale_raw_hi;
+	fixpt_t scale_phys_lo;
+	fixpt_t scale_phys_hi;
+
+	fixpt_t plaus_neglim;
+	fixpt_t plaus_poslim;
+
+	measure_cb_t callback;
 };
 
 
