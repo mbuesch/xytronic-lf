@@ -66,6 +66,7 @@ struct menu_context {
 	uint8_t manmode_percentage;
 
 	uint8_t displayed_error;
+	bool displayed_heating;
 
 	uint8_t display_update_requested;
 };
@@ -104,6 +105,8 @@ static void menu_update_display(void)
 		int_to_ascii_align_right(disp + 3, 0,
 					 menu.displayed_error, 0, 9);
 		disp[5] = '\0';
+
+		display_force_dp(2, true, false);
 		display_show(disp);
 		return;
 	}
@@ -138,6 +141,10 @@ static void menu_update_display(void)
 		break;
 	}
 
+	if (menu.displayed_heating)
+		display_force_dp(2, true, true);
+	else
+		display_force_dp(2, true, false);
 	display_show(disp);
 }
 
@@ -302,6 +309,7 @@ static void menu_button_handler(enum button_id button,
 /* Periodic work. */
 void menu_work(void)
 {
+	bool heating;
 	uint8_t error;
 
 	/* Menu timeouts */
@@ -337,6 +345,13 @@ void menu_work(void)
 		error |= 2;
 	if (error != menu.displayed_error) {
 		menu.displayed_error = error;
+		menu.display_update_requested = true;
+	}
+
+	/* Update heating condition. */
+	heating = contrtemp_is_heating_up();
+	if (heating != menu.displayed_heating) {
+		menu.displayed_heating = heating;
 		menu.display_update_requested = true;
 	}
 
