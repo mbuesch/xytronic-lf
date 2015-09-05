@@ -152,7 +152,7 @@ void display_show(const char *digits)
 		}
 		mask = BITMASK8(i);
 		if (display.dp_force_enable & mask) {
-			if (display.dp_force_enable & mask)
+			if (display.dp_force_mask & mask)
 				c = (char)(c | SSEG_DIGIT_DP);
 			else
 				c = (char)(c & (char)~SSEG_DIGIT_DP);
