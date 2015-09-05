@@ -80,16 +80,32 @@ static const uint8_t __flash char_to_segment_map[] = {
 	['G' - 'A']	= (1 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
 			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
-	['H' - 'A']	= EMPTY_SEG,
-	['I' - 'A']	= EMPTY_SEG,
-	['J' - 'A']	= EMPTY_SEG,
+	['H' - 'A']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+	['I' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
+			  (0 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
+			  (0 << SSEG_G),
+	['J' - 'A']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (1 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
+			  (0 << SSEG_G),
 	['K' - 'A']	= EMPTY_SEG,
-	['L' - 'A']	= EMPTY_SEG,
+	['L' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (0 << SSEG_G),
 	['M' - 'A']	= EMPTY_SEG,
-	['N' - 'A']	= EMPTY_SEG,
-	['O' - 'A']	= EMPTY_SEG,
+	['N' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (0 << SSEG_F) |
+			  (1 << SSEG_G),
+	['O' - 'A']	= (1 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
+			  (1 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (0 << SSEG_G),
 	['P' - 'A']	= (1 << SSEG_A) | (1 << SSEG_B) | (0 << SSEG_C) |
 			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
+			  (1 << SSEG_G),
+	['Q' - 'A']	= EMPTY_SEG,
+	['R' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (0 << SSEG_F) |
 			  (1 << SSEG_G),
 };
 
@@ -142,7 +158,8 @@ void sseg_digit_set(struct sseg_digit_data *ddata,
 		digit = (char)(digit - ('a' - 'A'));
 	if (digit >= '0' && digit <= '9')
 		segment_mask = digit_to_segment_map[digit - '0'];
-	else if (digit >= 'A' && digit <= 'P')
+	else if (digit >= 'A' &&
+		 digit <= (char)('A' + ARRAY_SIZE(char_to_segment_map) - 1))
 		segment_mask = char_to_segment_map[digit - 'A'];
 	else
 		segment_mask = 0;
