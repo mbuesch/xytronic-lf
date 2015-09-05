@@ -27,35 +27,20 @@
 #include "debug_uart.h"
 
 
-/* Plausibility */
-#define MEASCURR_PLAUS_NEGLIM	0.0
-#define MEASCURR_PLAUS_POSLIM	5.0
-
-/* Scaling */
-#define MEASCURR_SCALE_RAWLO	80
-#define MEASCURR_SCALE_PHYSLO	2.5
-#define MEASCURR_SCALE_RAWHI	140
-#define MEASCURR_SCALE_PHYSHI	4.0
-
-
-static bool meascurr_is_plausible;
-
-
-//FIXME
-bool meascurr_value_is_plausible(void)
-{
-	return meascurr_is_plausible;
-}
-
-/* This runs in IRQ context. */
 static void meascurr_meas_callback(fixpt_t measured_phys_value,
-				   bool is_plausible)
+				   enum measure_plausibility plaus)
 {
-	if (is_plausible) {
 measured_phys_value = fixpt_div(measured_phys_value, int_to_fixpt(6));//FIXME
+	switch (plaus) {
+	case MEAS_PLAUSIBLE:
+		contrcurr_set_emerg(false);
 		contrcurr_set_feedback(measured_phys_value);
-	} else {
-		//TODO
+		break;
+	case MEAS_NOT_PLAUSIBLE:
+		break;
+	case MEAS_PLAUS_TIMEOUT:
+		contrcurr_set_emerg(true);
+		break;
 	}
 }
 
@@ -65,12 +50,13 @@ static const struct measure_config __flash meascurr_config = {
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
 	.averaging_count	= 3000,
-	.scale_raw_lo		= MEASCURR_SCALE_RAWLO,
-	.scale_raw_hi		= MEASCURR_SCALE_RAWHI,
-	.scale_phys_lo		= FLOAT_TO_FIXPT(MEASCURR_SCALE_PHYSLO),
-	.scale_phys_hi		= FLOAT_TO_FIXPT(MEASCURR_SCALE_PHYSHI),
-	.plaus_neglim		= FLOAT_TO_FIXPT(MEASCURR_PLAUS_NEGLIM),
-	.plaus_poslim		= FLOAT_TO_FIXPT(MEASCURR_PLAUS_POSLIM),
+	.scale_raw_lo		= 80,
+	.scale_raw_hi		= 140,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(2.5),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(4.0),
+	.plaus_neglim		= FLOAT_TO_FIXPT(CONTRCURR_NEGLIM),
+	.plaus_poslim		= FLOAT_TO_FIXPT(CONTRCURR_POSLIM),
+	.plaus_timeout_ms	= 1000,
 	.callback		= meascurr_meas_callback,
 };
 

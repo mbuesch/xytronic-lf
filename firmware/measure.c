@@ -21,6 +21,7 @@
 
 #include "measure.h"
 #include "scale.h"
+#include "timer.h"
 #include "debug_uart.h"
 
 #include <string.h>
@@ -42,14 +43,22 @@
 
 struct meas_chan_context {
 	const struct measure_config __flash *config;
+
 	int16_t old_report_value;
+
+	bool plaus_timeout;
+	bool plaus_timeout_timer_running;
+	struct timer plaus_timeout_timer;
 };
 
 struct meas_context {
 	struct meas_chan_context channels[NR_MEAS_CHANS];
 	uint8_t active_chan;
+
 	uint16_t avg_count;
 	uint32_t avg_sum;
+
+	bool result_available;
 };
 
 static struct meas_context meas;
@@ -116,12 +125,29 @@ static void adc_trigger_chan(struct meas_chan_context *chan)
 	}
 }
 
-static void measure_handle_result(struct meas_chan_context *active_chan,
-				  const struct measure_config __flash *config,
-				  uint16_t raw_adc)
+static void adc_trigger_next_chan(void)
 {
+	/* Switch to the next channel. */
+	meas.active_chan++;
+	if (meas.active_chan >= ARRAY_SIZE(meas.channels))
+		meas.active_chan = 0;
+	adc_trigger_chan(&meas.channels[meas.active_chan]);
+}
+
+static void measure_handle_result(void)
+{
+	struct meas_chan_context *active_chan;
+	const struct measure_config __flash *config;
+	uint16_t raw_adc;
 	fixpt_t phys;
 	bool is_plausible;
+	enum measure_plausibility plaus;
+
+	active_chan = &meas.channels[meas.active_chan];
+	config = active_chan->config;
+
+	/* Calculate the result of the averaging. */
+	raw_adc = (uint16_t)(meas.avg_sum / (uint32_t)meas.avg_count);
 
 	debug_report_int16(config->name, &active_chan->old_report_value,
 			   (int16_t)raw_adc);
@@ -143,8 +169,32 @@ static void measure_handle_result(struct meas_chan_context *active_chan,
 		is_plausible = false;
 	}
 
+	if (is_plausible) {
+		active_chan->plaus_timeout_timer_running = false;
+		active_chan->plaus_timeout = false;
+	} else {
+		if (!active_chan->plaus_timeout_timer_running) {
+			timer_arm(&active_chan->plaus_timeout_timer,
+				  config->plaus_timeout_ms);
+			active_chan->plaus_timeout_timer_running = true;
+		}
+	}
+
+	if (active_chan->plaus_timeout_timer_running &&
+	    !active_chan->plaus_timeout &&
+	    timer_expired(&active_chan->plaus_timeout_timer))
+		active_chan->plaus_timeout = true;
+
 	/* Call the callback. */
-	config->callback(phys, is_plausible);
+	if (is_plausible) {
+		plaus = MEAS_PLAUSIBLE;
+	} else {
+		if (active_chan->plaus_timeout)
+			plaus = MEAS_PLAUS_TIMEOUT;
+		else
+			plaus = MEAS_NOT_PLAUSIBLE;
+	}
+	config->callback(phys, plaus);
 }
 
 ISR(ADC_vect)
@@ -152,7 +202,6 @@ ISR(ADC_vect)
 	struct meas_chan_context *active_chan;
 	const struct measure_config __flash *config;
 	uint16_t raw_adc;
-	bool trigger_next_chan = false;
 
 	mb();
 
@@ -163,24 +212,15 @@ ISR(ADC_vect)
 	config = active_chan->config;
 
 	if (config) {
-		/* Add it to the average and check if we are done. */
+		/* Add it to the averaging sum and check if we are done. */
 		meas.avg_sum += raw_adc;
 		meas.avg_count += 1;
 		if (meas.avg_count >= config->averaging_count) {
-			raw_adc = (uint16_t)(meas.avg_sum / (uint32_t)meas.avg_count);
-
-			measure_handle_result(active_chan, config, raw_adc);
-			trigger_next_chan = true;
+			meas.result_available = true;
+			adc_disable();
 		}
 	} else {
-		trigger_next_chan = true;
-	}
-	if (trigger_next_chan) {
-		/* Switch to the next channel. */
-		meas.active_chan++;
-		if (meas.active_chan >= ARRAY_SIZE(meas.channels))
-			meas.active_chan = 0;
-		adc_trigger_chan(&meas.channels[meas.active_chan]);
+		adc_trigger_next_chan();
 	}
 
 	mb();
@@ -195,6 +235,22 @@ void measure_register_channel(enum measure_chan chan,
 void measure_start(void)
 {
 	adc_trigger_chan(&meas.channels[0]);
+}
+
+void measure_work(void)
+{
+	uint8_t sreg;
+	bool result_available;
+
+	sreg = irq_disable_save();
+	result_available = meas.result_available;
+	meas.result_available = false;
+	irq_restore(sreg);
+
+	if (result_available) {
+		measure_handle_result();
+		adc_trigger_next_chan();
+	}
 }
 
 void measure_init(void)

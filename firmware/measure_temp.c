@@ -26,34 +26,20 @@
 #include "controller_temp.h"
 #include "debug_uart.h"
 
-/* Plausibility */
-#define MEASTEMP_PLAUS_NEGLIM	20.0
-#define MEASTEMP_PLAUS_POSLIM	480.0
 
-/* Scaling */
-#define MEASTEMP_SCALE_RAWLO	210
-#define MEASTEMP_SCALE_PHYSLO	150.0
-#define MEASTEMP_SCALE_RAWHI	411
-#define MEASTEMP_SCALE_PHYSHI	480.0
-
-
-static bool meastemp_is_plausible;
-
-
-//FIXME
-bool meastemp_value_is_plausible(void)
-{
-	return meastemp_is_plausible;
-}
-
-/* This runs in IRQ context. */
 static void meastemp_meas_callback(fixpt_t measured_phys_value,
-				   bool is_plausible)
+				   enum measure_plausibility plaus)
 {
-	if (is_plausible) {
+	switch (plaus) {
+	case MEAS_PLAUSIBLE:
+		contrtemp_set_emerg(false);
 		contrtemp_set_feedback(measured_phys_value);
-	} else {
-		//TODO
+		break;
+	case MEAS_NOT_PLAUSIBLE:
+		break;
+	case MEAS_PLAUS_TIMEOUT:
+		contrtemp_set_emerg(true);
+		break;
 	}
 }
 
@@ -63,12 +49,13 @@ static const struct measure_config __flash meastemp_config = {
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
 	.averaging_count	= 128,
-	.scale_raw_lo		= MEASTEMP_SCALE_RAWLO,
-	.scale_raw_hi		= MEASTEMP_SCALE_RAWHI,
-	.scale_phys_lo		= FLOAT_TO_FIXPT(MEASTEMP_SCALE_PHYSLO),
-	.scale_phys_hi		= FLOAT_TO_FIXPT(MEASTEMP_SCALE_PHYSHI),
-	.plaus_neglim		= FLOAT_TO_FIXPT(MEASTEMP_PLAUS_NEGLIM),
-	.plaus_poslim		= FLOAT_TO_FIXPT(MEASTEMP_PLAUS_POSLIM),
+	.scale_raw_lo		= 210,
+	.scale_raw_hi		= 411,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(150.0),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(480.0),
+	.plaus_neglim		= FLOAT_TO_FIXPT(20.0),
+	.plaus_poslim		= FLOAT_TO_FIXPT(480.0),
+	.plaus_timeout_ms	= 1000,
 	.callback		= meastemp_meas_callback,
 };
 

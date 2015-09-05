@@ -16,6 +16,7 @@ void contrtemp_set_setpoint(fixpt_t w);
 fixpt_t contrtemp_get_setpoint(void);
 
 void contrtemp_set_enabled(bool enabled);
+void contrtemp_set_emerg(bool emergency);
 
 void contrtemp_work(void);
 void contrtemp_init(void);

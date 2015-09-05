@@ -42,9 +42,15 @@ enum measure_chan {
 	NR_MEAS_CHANS
 };
 
+enum measure_plausibility {
+	MEAS_PLAUSIBLE,
+	MEAS_NOT_PLAUSIBLE,
+	MEAS_PLAUS_TIMEOUT,
+};
+
 /* Callback runs in IRQ context. */
 typedef void (*measure_cb_t)(fixpt_t measured_phys_value,
-			     bool is_plausible);
+			     enum measure_plausibility plaus);
 
 struct measure_config {
 	char name[3];
@@ -63,6 +69,7 @@ struct measure_config {
 
 	fixpt_t plaus_neglim;
 	fixpt_t plaus_poslim;
+	uint16_t plaus_timeout_ms;
 
 	measure_cb_t callback;
 };
@@ -72,6 +79,7 @@ void measure_register_channel(enum measure_chan chan,
 			      const struct measure_config __flash *config);
 
 void measure_start(void);
+void measure_work(void);
 void measure_init(void);
 
 #endif /* MEASURE_H_ */

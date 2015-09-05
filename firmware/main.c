@@ -69,6 +69,8 @@ int main(void)
 	while (1) {
 		wdt_reset();
 
+		measure_work();
+
 		contrtemp_work();
 		contrcurr_work();
 

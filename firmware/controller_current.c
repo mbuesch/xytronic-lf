@@ -35,6 +35,7 @@
 
 
 static bool current_contr_enabled;
+static bool current_contr_emergency;
 static struct pid current_pid;
 static fixpt_t current_feedback;
 static struct timer current_timer;
@@ -74,11 +75,23 @@ void contrcurr_set_enabled(bool enable,
 	}
 }
 
+void contrcurr_set_emerg(bool emergency)
+{
+	if (emergency != current_contr_emergency) {
+		current_contr_emergency = emergency;
+		if (emergency) {
+			//TODO
+		}
+	}
+}
+
 void contrcurr_work(void)
 {
 	fixpt_t dt, r, y;
 
 	if (!current_contr_enabled)
+		return;
+	if (current_contr_emergency)
 		return;
 	if (!timer_expired(&current_timer))
 		return;
@@ -111,4 +124,5 @@ void contrcurr_init(void)
 		 float_to_fixpt(CONTRCURR_POSLIM));
 
 	contrcurr_set_enabled(true, 0);
+	contrcurr_set_emerg(false);
 }

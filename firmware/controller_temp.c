@@ -37,6 +37,7 @@
 
 
 static bool temp_contr_enabled;
+static bool temp_contr_emergency;
 static struct pid temp_pid;
 static fixpt_t temp_feedback;
 static struct timer temp_timer;
@@ -97,11 +98,23 @@ void contrtemp_set_enabled(bool enabled)
 	}
 }
 
+void contrtemp_set_emerg(bool emergency)
+{
+	if (emergency != temp_contr_emergency) {
+		temp_contr_emergency = emergency;
+		if (emergency) {
+			//TODO
+		}
+	}
+}
+
 void contrtemp_work(void)
 {
 	fixpt_t dt, r, y, y_current;
 
 	if (!temp_contr_enabled)
+		return;
+	if (temp_contr_emergency)
 		return;
 	if (!timer_expired(&temp_timer))
 		return;
@@ -143,4 +156,5 @@ void contrtemp_init(void)
 	pid_set_setpoint(&temp_pid, settings->temp_setpoint);
 
 	contrtemp_set_enabled(true);
+	contrtemp_set_emerg(false);
 }
