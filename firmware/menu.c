@@ -97,54 +97,54 @@ static void menu_update_display(void)
 	char disp[6];
 	fixpt_t temp_fixpt;
 	int16_t temp_int;
+	uint8_t displayed_error;
+	bool displayed_heating;
 
+	displayed_error = menu.displayed_error;
+	displayed_heating = menu.displayed_heating;
 	disp[0] = '\0';
 
-	if (menu.displayed_error) {
+	if (displayed_error) {
 		strcpy_P(disp, PSTR("Err"));
 		int_to_ascii_align_right(disp + 3, 0,
-					 menu.displayed_error, 0, 9);
+					 displayed_error, 0, 9);
 		disp[5] = '\0';
-
-		display_force_dp(2, true, false);
-		display_show(disp);
-		return;
+	} else {
+		switch (menu.state) {
+		case MENU_CURTEMP:
+			temp_fixpt = contrtemp_get_feedback();
+			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
+			int_to_ascii_align_right(disp, 2,
+						 temp_int,
+						 (int16_t)CONTRTEMP_NEGLIM,
+						 (int16_t)CONTRTEMP_POSLIM);
+			strcpy_P(disp + 3, PSTR("C."));
+			break;
+		case MENU_SETTEMP:
+			temp_fixpt = contrtemp_get_setpoint();
+			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
+			int_to_ascii_align_right(disp, 2,
+						 temp_int,
+						 (int16_t)CONTRTEMP_NEGLIM,
+						 (int16_t)CONTRTEMP_POSLIM);
+			strcpy_P(disp + 3, PSTR("S"));
+			break;
+		case MENU_DEBUG:
+			strcpy_P(disp, PSTR("DBG"));
+			break;
+		case MENU_MANUAL:
+			int_to_ascii_align_right(disp, 2,
+						 menu.manmode_percentage,
+						 0, 100);
+			strcpy_P(disp + 3, PSTR("P"));
+			break;
+		}
 	}
 
-	switch (menu.state) {
-	case MENU_CURTEMP:
-		temp_fixpt = contrtemp_get_feedback();
-		temp_int = (int16_t)fixpt_to_int(temp_fixpt);
-		int_to_ascii_align_right(disp, 2,
-					 temp_int,
-					 (int16_t)CONTRTEMP_NEGLIM,
-					 (int16_t)CONTRTEMP_POSLIM);
-		strcpy_P(disp + 3, PSTR("C."));
-		break;
-	case MENU_SETTEMP:
-		temp_fixpt = contrtemp_get_setpoint();
-		temp_int = (int16_t)fixpt_to_int(temp_fixpt);
-		int_to_ascii_align_right(disp, 2,
-					 temp_int,
-					 (int16_t)CONTRTEMP_NEGLIM,
-					 (int16_t)CONTRTEMP_POSLIM);
-		strcpy_P(disp + 3, PSTR("S"));
-		break;
-	case MENU_DEBUG:
-		strcpy_P(disp, PSTR("DBG"));
-		break;
-	case MENU_MANUAL:
-		int_to_ascii_align_right(disp, 2,
-					 menu.manmode_percentage,
-					 0, 100);
-		strcpy_P(disp + 3, PSTR("P"));
-		break;
-	}
-
-	if (menu.displayed_heating)
-		display_force_dp(2, true, true);
-	else
-		display_force_dp(2, true, false);
+	/* Show the 'is heating' dot. */
+	display_force_dp(2, true,
+			 (displayed_heating && !displayed_error));
+	/* Update the display content. */
 	display_show(disp);
 }
 
@@ -196,6 +196,12 @@ static void stop_ramping(void)
 static void menu_button_handler(enum button_id button,
 				enum button_state bstate)
 {
+	if (menu.displayed_error) {
+		/* We have an error. Ignore all buttons. */
+		stop_ramping();
+		return;
+	}
+
 	switch (menu.state) {
 	case MENU_CURTEMP:
 		menu.delay_running = false;
