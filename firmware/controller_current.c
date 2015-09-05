@@ -80,9 +80,17 @@ void contrcurr_set_emerg(bool emergency)
 	if (emergency != current_contr_emergency) {
 		current_contr_emergency = emergency;
 		if (emergency) {
-			//TODO
+			/* In an emergency situation, disable the
+			 * heater current to avoid damage.
+			 */
+			pwmcurr_set(float_to_fixpt(CONTRCURR_NEGLIM));
 		}
 	}
+}
+
+bool contrcurr_in_emerg(void)
+{
+	return current_contr_emergency;
 }
 
 void contrcurr_work(void)

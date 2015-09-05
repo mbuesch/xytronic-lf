@@ -65,6 +65,8 @@ struct menu_context {
 
 	uint8_t manmode_percentage;
 
+	uint8_t displayed_error;
+
 	uint8_t display_update_requested;
 };
 
@@ -96,6 +98,15 @@ static void menu_update_display(void)
 	int16_t temp_int;
 
 	disp[0] = '\0';
+
+	if (menu.displayed_error) {
+		strcpy_P(disp, PSTR("Err"));
+		int_to_ascii_align_right(disp + 3, 0,
+					 menu.displayed_error, 0, 9);
+		disp[5] = '\0';
+		display_show(disp);
+		return;
+	}
 
 	switch (menu.state) {
 	case MENU_CURTEMP:
@@ -291,6 +302,8 @@ static void menu_button_handler(enum button_id button,
 /* Periodic work. */
 void menu_work(void)
 {
+	uint8_t error;
+
 	/* Menu timeouts */
 	switch (menu.state) {
 	case MENU_CURTEMP:
@@ -316,6 +329,18 @@ void menu_work(void)
 		}
 	}
 
+	/* Evaluate error conditions. */
+	error = 0;
+	if (contrcurr_in_emerg())
+		error |= 1;
+	if (contrtemp_in_emerg())
+		error |= 2;
+	if (error != menu.displayed_error) {
+		menu.displayed_error = error;
+		menu.display_update_requested = true;
+	}
+
+	/* Update the display, if requested. */
 	mb();
 	if (menu.display_update_requested) {
 		menu.display_update_requested = 0;

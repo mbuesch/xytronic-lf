@@ -103,9 +103,17 @@ void contrtemp_set_emerg(bool emergency)
 	if (emergency != temp_contr_emergency) {
 		temp_contr_emergency = emergency;
 		if (emergency) {
-			//TODO
+			/* In an emergency situation, disable the
+			 * heater current to avoid damage.
+			 */
+			contrcurr_set_setpoint(float_to_fixpt(CONTRCURR_NEGLIM));
 		}
 	}
+}
+
+bool contrtemp_in_emerg(void)
+{
+	return temp_contr_emergency;
 }
 
 void contrtemp_work(void)

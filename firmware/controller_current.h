@@ -15,6 +15,7 @@ void contrcurr_set_setpoint(fixpt_t w);
 void contrcurr_set_enabled(bool enable,
 			   uint8_t disabled_curr_percent);
 void contrcurr_set_emerg(bool emergency);
+bool contrcurr_in_emerg(void);
 
 void contrcurr_work(void);
 void contrcurr_init(void);
