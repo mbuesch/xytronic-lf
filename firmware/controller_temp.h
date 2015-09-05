@@ -18,6 +18,7 @@ fixpt_t contrtemp_get_setpoint(void);
 void contrtemp_set_enabled(bool enabled);
 void contrtemp_set_emerg(bool emergency);
 bool contrtemp_in_emerg(void);
+bool contrtemp_is_heating_up(void);
 
 void contrtemp_work(void);
 void contrtemp_init(void);

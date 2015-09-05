@@ -116,6 +116,17 @@ bool contrtemp_in_emerg(void)
 	return temp_contr_emergency;
 }
 
+bool contrtemp_is_heating_up(void)
+{
+	bool heating;
+	fixpt_t diff;
+
+	diff = fixpt_sub(contrtemp_get_setpoint(), temp_feedback);
+	heating = (diff > float_to_fixpt(2.0));
+
+	return heating;
+}
+
 void contrtemp_work(void)
 {
 	fixpt_t dt, r, y, y_current;
