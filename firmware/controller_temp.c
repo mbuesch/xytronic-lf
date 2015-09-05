@@ -30,9 +30,9 @@
 
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP	2.0
-#define CONTRTEMP_PID_KI	0.1
-#define CONTRTEMP_PID_KD	0.0
+#define CONTRTEMP_PID_KP	1.5
+#define CONTRTEMP_PID_KI	0.05
+#define CONTRTEMP_PID_KD	0.2
 #define CONTRTEMP_PERIOD_MS	50	/* milliseconds */
 
 

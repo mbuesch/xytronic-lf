@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "scale.h"
 #include "controller_temp.h"
+#include "controller_current.h"
 #include "debug_uart.h"
 
 
@@ -34,6 +35,9 @@ static void meastemp_meas_callback(fixpt_t measured_phys_value,
 	case MEAS_PLAUSIBLE:
 		contrtemp_set_emerg(false);
 		contrtemp_set_feedback(measured_phys_value);
+		contrcurr_set_restricted(
+			measured_phys_value < float_to_fixpt(CONTRCURR_RESTRICT_TOTEMP)
+		);
 		break;
 	case MEAS_NOT_PLAUSIBLE:
 		break;

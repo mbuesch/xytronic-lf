@@ -28,7 +28,7 @@
 
 
 /* Current controller PID parameters */
-#define CONTRCURR_PID_KP	3.0
+#define CONTRCURR_PID_KP	2.5
 #define CONTRCURR_PID_KI	0.05
 #define CONTRCURR_PID_KD	0.0
 #define CONTRCURR_PERIOD_MS	100	/* milliseconds */
@@ -36,6 +36,7 @@
 
 static bool current_contr_enabled;
 static bool current_contr_emergency;
+static bool current_contr_restricted;
 static struct pid current_pid;
 static fixpt_t current_feedback;
 static struct timer current_timer;
@@ -52,6 +53,11 @@ void contrcurr_set_feedback(fixpt_t r)
 void contrcurr_set_setpoint(fixpt_t w)
 {
 	pid_set_setpoint(&current_pid, w);
+}
+
+void contrcurr_set_restricted(bool restricted)
+{
+	current_contr_restricted = restricted;
 }
 
 void contrcurr_set_enabled(bool enable,
@@ -115,6 +121,11 @@ void contrcurr_work(void)
 	/* Run the PID controller */
 	y = pid_run(&current_pid, dt, r);
 
+	if (current_contr_restricted) {
+		if (y > float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR))
+			y = float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR);
+	}
+
 	debug_report_int24(PSTR("cy"), &old_current_control, (int16_t)y);
 
 	/* Reconfigure the PWM unit to output the
@@ -133,4 +144,5 @@ void contrcurr_init(void)
 
 	contrcurr_set_enabled(true, 0);
 	contrcurr_set_emerg(false);
+	contrcurr_set_restricted(true);
 }
