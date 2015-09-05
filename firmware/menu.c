@@ -227,13 +227,22 @@ static void menu_button_handler(enum button_id button,
 		menu.delay_running = false;
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
 		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS)
+			if (button == BUTTON_MINUS) {
 				start_ramping(RAMP_DOWN, settemp_ramp_handler);
-			if (button == BUTTON_PLUS)
+				break;
+			}
+			if (button == BUTTON_PLUS) {
 				start_ramping(RAMP_UP, settemp_ramp_handler);
+				break;
+			}
 		}
-		if (bstate == BSTATE_NEGEDGE)
+		if (bstate == BSTATE_NEGEDGE) {
 			stop_ramping();
+			if (button == BUTTON_SET) {
+				menu_set_state(MENU_CURTEMP);
+				break;
+			}
+		}
 		break;
 	case MENU_DEBUG:
 		if (bstate == BSTATE_POSEDGE) {
