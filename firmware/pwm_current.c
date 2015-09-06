@@ -27,7 +27,10 @@
 #include <avr/io.h>
 
 
-static uint16_t pwmcurr_max_duty;
+/* The max duty value (which actually is min current).
+ * Note that changing this changes the PWM frequency.
+ */
+#define PWMCURR_MAX_DUTY	0x1FFF
 
 
 void pwmcurr_set(fixpt_t current_amps)
@@ -36,7 +39,7 @@ void pwmcurr_set(fixpt_t current_amps)
 	uint16_t max_duty;
 
 	/* FIXME: Run with reduced resolution for now. */
-	max_duty = pwmcurr_max_duty >> 3;
+	max_duty = PWMCURR_MAX_DUTY >> 3;
 
 	/* Scale amps to duty cycle duration.
 	 * Scaling is inverse:
@@ -52,7 +55,7 @@ void pwmcurr_set(fixpt_t current_amps)
 	duty = (duty << 3) | 7;
 
 	/* Clamp the result (should not be necessary) */
-	duty = clamp(duty, (uint16_t)0, pwmcurr_max_duty);
+	duty = clamp(duty, (uint16_t)0, (uint16_t)PWMCURR_MAX_DUTY);
 
 	/* Program the hardware */
 //TODO we might introduce a (fast) ramp here on duty changes.
@@ -71,9 +74,8 @@ void pwmcurr_init(void)
 	TCCR1B = 0;
 
 	/* Set frequency and initial duty cycle. */
-	pwmcurr_max_duty = 0x1FFF;
-	ICR1 = pwmcurr_max_duty;
-	OCR1A = pwmcurr_max_duty;
+	ICR1 = PWMCURR_MAX_DUTY;
+	OCR1A = PWMCURR_MAX_DUTY;
 	OCR1B = 0;
 	TCNT1 = 0;
 	/* Disable all interrupts */
