@@ -44,24 +44,34 @@ int main(void)
 	irq_disable();
 	wdt_enable(WDTO_2S);
 
+	/* Wait a bit for the capacitors to charge
+	 * and the reference voltage to stabilize.
+	 */
+	_delay_ms(300);
+
+	/* Initialize basic system functions. */
 	timer_init();
 	buttons_init();
 	debug_uart_init();
 	settings_init();
-
 	display_init();
 
+	/* Initialize the measurement subsystem */
 	measure_init();
 	meascurr_init();
 	meastemp_init();
 
+	/* Initialize the controllers. */
 	contrcurr_init();
 	contrtemp_init();
 
+	/* Initialize the current actuator. */
 	pwmcurr_init();
 
+	/* Initialize the user interface. */
 	menu_init();
 
+	/* Startup measurements to get everything going. */
 	measure_start();
 
 	wdt_enable(WDTO_250MS);
@@ -69,11 +79,14 @@ int main(void)
 	while (1) {
 		wdt_reset();
 
+		/* Handle measurement results (if any). */
 		measure_work();
 
+		/* Handle the PID controllers. */
 		contrtemp_work();
 		contrcurr_work();
 
+		/* Handle user interface events. */
 		menu_work();
 		display_work();
 		buttons_work();
