@@ -42,10 +42,7 @@ static inline int32_t timer_ms_since(const struct timer *timer)
 	return _timer_count_to_ms(_timer_count_since(timer));
 }
 
-static inline bool timer_expired(const struct timer *timer)
-{
-	return _timer_count_since(timer) >= 0;
-}
+bool timer_expired(const struct timer *timer);
 
 static inline void timer_arm(struct timer *timer, int32_t millisec)
 {

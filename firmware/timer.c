@@ -44,6 +44,11 @@ ISR(TIMER0_COMPA_vect)
 	mb();
 }
 
+bool timer_expired(const struct timer *timer)
+{
+	return _timer_count_since(timer) >= 0;
+}
+
 void timer_init(void)
 {
 	build_assert(F_CPU == 8000000ul);
