@@ -28,6 +28,8 @@
 #include "menu.h"
 #include "debug_uart.h"
 
+#include <string.h>
+
 
 /* Temperature controller PID parameters */
 #define CONTRTEMP_PID_KP	1.5
@@ -170,6 +172,8 @@ void contrtemp_work(void)
 void contrtemp_init(void)
 {
 	struct settings *settings;
+
+	memset(&contrtemp, 0, sizeof(contrtemp));
 
 	pid_init(&contrtemp.pid,
 		 float_to_fixpt(CONTRTEMP_PID_KP),

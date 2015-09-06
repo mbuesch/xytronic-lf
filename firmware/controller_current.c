@@ -26,6 +26,8 @@
 #include "scale.h"
 #include "debug_uart.h"
 
+#include <string.h>
+
 
 /* Current controller PID parameters */
 #define CONTRCURR_PID_KP	2.5
@@ -141,6 +143,8 @@ void contrcurr_work(void)
 
 void contrcurr_init(void)
 {
+	memset(&contrcurr, 0, sizeof(contrcurr));
+
 	pid_init(&contrcurr.pid,
 		 float_to_fixpt(CONTRCURR_PID_KP),
 		 float_to_fixpt(CONTRCURR_PID_KI),
