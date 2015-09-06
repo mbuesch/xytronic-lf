@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 5
 Title "Xytronic LF-1600 - Power supply"
-Date "5 sep 2015"
+Date "6 sep 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -83,90 +83,90 @@ Supply voltage\n19Veff is not connected\n24Veff is labled as "24V", but actually
 $Comp
 L DIODE D2
 U 1 1 54933622
-P 3750 4800
-F 0 "D2" H 3750 4900 40  0000 C CNN
-F 1 "1N4007" H 3750 4700 40  0000 C CNN
-F 2 "~" H 3750 4800 60  0000 C CNN
-F 3 "~" H 3750 4800 60  0000 C CNN
-	1    3750 4800
+P 2650 4800
+F 0 "D2" H 2650 4900 40  0000 C CNN
+F 1 "1N4007" H 2650 4700 40  0000 C CNN
+F 2 "~" H 2650 4800 60  0000 C CNN
+F 3 "~" H 2650 4800 60  0000 C CNN
+	1    2650 4800
 	1    0    0    -1  
 $EndComp
 $Comp
 L DIODE D1
 U 1 1 54933631
-P 3750 5200
-F 0 "D1" H 3750 5300 40  0000 C CNN
-F 1 "1N4007" H 3750 5100 40  0000 C CNN
-F 2 "~" H 3750 5200 60  0000 C CNN
-F 3 "~" H 3750 5200 60  0000 C CNN
-	1    3750 5200
+P 2650 5200
+F 0 "D1" H 2650 5300 40  0000 C CNN
+F 1 "1N4007" H 2650 5100 40  0000 C CNN
+F 2 "~" H 2650 5200 60  0000 C CNN
+F 3 "~" H 2650 5200 60  0000 C CNN
+	1    2650 5200
 	-1   0    0    1   
 $EndComp
-Text GLabel 2950 5000 0    60   Input ~ 0
+Text GLabel 1850 5000 0    60   Input ~ 0
 8Veff
 $Comp
 L C C9
 U 1 1 54933778
-P 4150 5600
-F 0 "C9" H 4150 5700 40  0000 L CNN
-F 1 "470 µF / 25 V" H 4156 5515 40  0000 L CNN
-F 2 "~" H 4188 5450 30  0000 C CNN
-F 3 "~" H 4150 5600 60  0000 C CNN
-	1    4150 5600
+P 3050 5600
+F 0 "C9" H 3050 5700 40  0000 L CNN
+F 1 "470 µF / 25 V" H 3056 5515 40  0000 L CNN
+F 2 "~" H 3088 5450 30  0000 C CNN
+F 3 "~" H 3050 5600 60  0000 C CNN
+	1    3050 5600
 	1    0    0    -1  
 $EndComp
 $Comp
 L R R23
 U 1 1 54933971
-P 4600 5200
-F 0 "R23" V 4680 5200 40  0000 C CNN
-F 1 "330" V 4607 5201 40  0000 C CNN
-F 2 "~" V 4530 5200 30  0000 C CNN
-F 3 "~" H 4600 5200 30  0000 C CNN
-	1    4600 5200
+P 3500 5200
+F 0 "R23" V 3580 5200 40  0000 C CNN
+F 1 "330" V 3507 5201 40  0000 C CNN
+F 2 "~" V 3430 5200 30  0000 C CNN
+F 3 "~" H 3500 5200 30  0000 C CNN
+	1    3500 5200
 	0    -1   -1   0   
 $EndComp
-Text Label 4150 5800 1    60   ~ 0
+Text Label 3050 5800 1    60   ~ 0
 +
-Text GLabel 4600 6100 3    60   Input ~ 0
+Text GLabel 3500 6100 3    60   Input ~ 0
 GND
 Text GLabel 8250 5200 2    60   Input ~ 0
 -5V
 $Comp
 L ZENER ZD1
 U 1 1 54933C97
-P 5050 5600
-F 0 "ZD1" H 5050 5700 50  0000 C CNN
-F 1 "5 V" H 5050 5500 40  0000 C CNN
-F 2 "~" H 5050 5600 60  0000 C CNN
-F 3 "~" H 5050 5600 60  0000 C CNN
-	1    5050 5600
+P 3950 5600
+F 0 "ZD1" H 3950 5700 50  0000 C CNN
+F 1 "5 V" H 3950 5500 40  0000 C CNN
+F 2 "~" H 3950 5600 60  0000 C CNN
+F 3 "~" H 3950 5600 60  0000 C CNN
+	1    3950 5600
 	0    1    1    0   
 $EndComp
 $Comp
 L C C10
 U 1 1 54933EFD
-P 4150 4400
-F 0 "C10" H 4150 4500 40  0000 L CNN
-F 1 "100 nF" H 4156 4315 40  0000 L CNN
-F 2 "~" H 4188 4250 30  0000 C CNN
-F 3 "~" H 4150 4400 60  0000 C CNN
-	1    4150 4400
+P 3050 4400
+F 0 "C10" H 3050 4500 40  0000 L CNN
+F 1 "100 nF" H 3056 4315 40  0000 L CNN
+F 2 "~" H 3088 4250 30  0000 C CNN
+F 3 "~" H 3050 4400 60  0000 C CNN
+	1    3050 4400
 	1    0    0    -1  
 $EndComp
-Text GLabel 4400 3900 1    60   Input ~ 0
+Text GLabel 3050 3900 1    60   Input ~ 0
 GND
 Text GLabel 5950 4800 0    60   Input ~ 0
 GND
 $Comp
 L C C8
 U 1 1 549341A1
-P 4650 4400
-F 0 "C8" H 4650 4500 40  0000 L CNN
-F 1 "470 µF / 25 V" H 4656 4315 40  0000 L CNN
-F 2 "~" H 4688 4250 30  0000 C CNN
-F 3 "~" H 4650 4400 60  0000 C CNN
-	1    4650 4400
+P 3550 4400
+F 0 "C8" H 3550 4500 40  0000 L CNN
+F 1 "470 µF / 25 V" H 3556 4315 40  0000 L CNN
+F 2 "~" H 3588 4250 30  0000 C CNN
+F 3 "~" H 3550 4400 60  0000 C CNN
+	1    3550 4400
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -219,56 +219,55 @@ Wire Wire Line
 Connection ~ 5000 1950
 Connection ~ 5000 1850
 Wire Wire Line
-	2950 5000 3450 5000
+	1850 5000 2350 5000
 Wire Wire Line
-	3450 4800 3450 5200
+	2350 4800 2350 5200
 Wire Wire Line
-	3450 4800 3550 4800
+	2350 4800 2450 4800
 Wire Wire Line
-	3450 5200 3550 5200
-Connection ~ 3450 5000
+	2350 5200 2450 5200
+Connection ~ 2350 5000
 Wire Wire Line
-	3950 5200 4350 5200
+	2850 5200 3250 5200
 Wire Wire Line
-	4150 5200 4150 5400
-Connection ~ 4150 5200
+	3050 5200 3050 5400
+Connection ~ 3050 5200
 Wire Wire Line
-	4150 5800 4150 5950
+	3050 5800 3050 5950
 Wire Wire Line
-	4850 5200 8250 5200
+	3750 5200 8250 5200
 Wire Wire Line
-	5050 5200 5050 5400
-Connection ~ 5050 5200
+	3950 5200 3950 5400
+Connection ~ 3950 5200
 Wire Wire Line
-	4150 5950 5050 5950
+	3050 5950 3950 5950
 Wire Wire Line
-	4600 5950 4600 6100
+	3500 5950 3500 6100
 Wire Wire Line
-	5050 5950 5050 5800
-Connection ~ 4600 5950
+	3950 5950 3950 5800
+Connection ~ 3500 5950
 Wire Wire Line
-	3950 4800 5450 4800
+	2850 4800 5450 4800
 Wire Wire Line
-	4150 4800 4150 4600
+	3050 4800 3050 4600
 Wire Wire Line
 	5450 4800 5450 4100
 Wire Wire Line
 	5450 4100 5700 4100
-Connection ~ 4150 4800
+Connection ~ 3050 4800
 Wire Wire Line
 	6100 4400 6100 4800
 Wire Wire Line
-	4150 4200 4150 4050
+	3050 4200 3050 4050
 Wire Wire Line
-	4150 4050 4650 4050
+	3050 4050 4450 4050
 Wire Wire Line
-	4650 4050 4650 4200
+	3550 4050 3550 4200
 Wire Wire Line
-	4400 3900 4400 4050
-Connection ~ 4400 4050
+	3050 3900 3050 4050
 Wire Wire Line
-	4650 4800 4650 4600
-Connection ~ 4650 4800
+	3550 4800 3550 4600
+Connection ~ 3550 4800
 Wire Wire Line
 	5900 3650 5650 3650
 Wire Wire Line
@@ -295,18 +294,42 @@ Wire Wire Line
 	7300 4200 7300 4100
 Connection ~ 7300 4100
 Connection ~ 6100 4800
-Text Label 4650 4600 1    60   ~ 0
+Text Label 3550 4600 1    60   ~ 0
 +
 Text Label 7300 4200 1    60   ~ 0
 +
 Text Label 7300 4600 1    60   ~ 0
 -
-Text Label 4650 4200 1    60   ~ 0
+Text Label 3550 4200 1    60   ~ 0
 -
-Text Label 4150 5400 1    60   ~ 0
+Text Label 3050 5400 1    60   ~ 0
 -
 Text Notes 7350 4550 0    118  ~ 0
 XXXX
 Text Notes 7350 4700 0    60   ~ 0
-replaced by: 100nF/63V film cap
+C12 replaced by: 100nF/63V film cap
+$Comp
+L C C12b
+U 1 1 55EC92A6
+P 4450 4400
+F 0 "C12b" H 4450 4500 40  0000 L CNN
+F 1 "470 µF / 25 V" H 4456 4315 40  0000 L CNN
+F 2 "~" H 4488 4250 30  0000 C CNN
+F 3 "~" H 4450 4400 60  0000 C CNN
+	1    4450 4400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4450 4050 4450 4200
+Wire Wire Line
+	4450 4800 4450 4600
+Text Label 4450 4600 1    60   ~ 0
++
+Text Label 4450 4200 1    60   ~ 0
+-
+Connection ~ 4450 4800
+Connection ~ 3550 4050
+Connection ~ 3050 4050
+Text Notes 4000 3850 0    60   ~ 0
+C12b was added due to\nremoval of the original C12
 $EndSCHEMATC

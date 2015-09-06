@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 5
 Title "Xytronic LF-1600"
-Date "5 sep 2015"
+Date "6 sep 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -350,4 +350,49 @@ Wire Wire Line
 	3750 6750 3750 6850
 Text Notes 3800 6750 0    60   ~ 0
 added, because C1 is far\naway from VCC/GND pins
+Wire Wire Line
+	6450 1500 6450 4500
+$Comp
+L DIODE D4
+U 1 1 55EC2D4B
+P 6450 1300
+F 0 "D4" H 6450 1400 40  0000 C CNN
+F 1 "DIODE" H 6450 1200 40  0000 C CNN
+F 2 "~" H 6450 1300 60  0000 C CNN
+F 3 "~" H 6450 1300 60  0000 C CNN
+	1    6450 1300
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R9
+U 1 1 55EC2E11
+P 6750 1250
+F 0 "R9" V 6830 1250 40  0000 C CNN
+F 1 "R" V 6757 1251 40  0000 C CNN
+F 2 "~" V 6680 1250 30  0000 C CNN
+F 3 "~" H 6750 1250 30  0000 C CNN
+	1    6750 1250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6750 1500 6750 1650
+Wire Wire Line
+	6750 1650 6450 1650
+Connection ~ 6450 1650
+Text GLabel 6450 950  1    60   Input ~ 0
+GND
+Wire Wire Line
+	6450 950  6450 1100
+Text GLabel 6750 950  1    60   Input ~ 0
++5V
+Wire Wire Line
+	6750 950  6750 1000
+Wire Wire Line
+	6450 4500 5750 4500
+Wire Notes Line
+	6250 1550 6900 1000
+Text Notes 6950 1200 0    60   ~ 0
+D4 and R9\nare not assembled\non the board.
+Wire Notes Line
+	6250 1000 6900 1550
 $EndSCHEMATC
