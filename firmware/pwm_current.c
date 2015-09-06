@@ -59,10 +59,6 @@ static void pwmcurr_ocr_ramp_handle(void)
 void pwmcurr_set(fixpt_t current_amps)
 {
 	uint16_t duty;
-	uint16_t max_duty;
-
-	/* FIXME: Run with reduced resolution for now. */
-	max_duty = PWMCURR_MAX_DUTY >> 3;
 
 	/* Scale amps to duty cycle duration.
 	 * Scaling is inverse:
@@ -72,12 +68,11 @@ void pwmcurr_set(fixpt_t current_amps)
 	duty = (uint16_t)unscale(current_amps,
 				 float_to_fixpt(CONTRCURR_NEGLIM),
 				 float_to_fixpt(CONTRCURR_POSLIM),
-				 (int16_t)max_duty, 0);
+				 (int16_t)PWMCURR_MAX_DUTY, 0);
 
-	/* FIXME: Run with reduced resolution for now. */
-	duty = (duty << 3) | 7;
-
-	/* Clamp the result (should not be necessary) */
+	/* Clamp the result.
+	 * This should not be necessary, but better be safe.
+	 */
 	duty = clamp(duty, (uint16_t)0, (uint16_t)PWMCURR_MAX_DUTY);
 
 	/* Program the hardware */
