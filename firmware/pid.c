@@ -24,6 +24,28 @@
 #include <string.h>
 
 
+void pid_reset(struct pid *pid)
+{
+	pid->prev_e = int_to_fixpt(0);
+	pid->integr = int_to_fixpt(0);
+}
+
+void pid_set_factors(struct pid *pid,
+		     fixpt_t kp, fixpt_t ki, fixpt_t kd)
+{
+	pid->kp = kp;
+	pid->ki = ki;
+	pid->kd = kd;
+	pid_reset(pid);
+}
+
+void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)
+{
+	pid->setpoint = setpoint;
+	//FIXME should we reset here?
+	pid_reset(pid);
+}
+
 fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 {
 	fixpt_t e, de;
@@ -81,10 +103,7 @@ void pid_init(struct pid *pid,
 	      fixpt_t y_neglim, fixpt_t y_poslim)
 {
 	memset(pid, 0, sizeof(*pid));
-	pid->kp = kp;
-	pid->ki = ki;
-	pid->kd = kd;
 	pid->y_neglim = y_neglim;
 	pid->y_poslim = y_poslim;
-	pid_reset(pid);
+	pid_set_factors(pid, kp, ki, kd);
 }
