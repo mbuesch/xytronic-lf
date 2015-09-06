@@ -57,6 +57,7 @@ struct meas_context {
 
 	uint16_t avg_count;
 	uint32_t avg_sum;
+	struct timer avg_timer;
 
 	bool result_available;
 };
@@ -117,6 +118,8 @@ static void adc_trigger_chan(struct meas_chan_context *chan)
 	meas.avg_sum = 0;
 	meas.avg_count = 0;
 	if (config) {
+		timer_arm(&meas.avg_timer,
+			  config->averaging_timeout_ms);
 		adc_trigger(config->mux, config->ps, config->ref,
 			    true, true);
 	} else {
@@ -215,7 +218,7 @@ ISR(ADC_vect)
 		/* Add it to the averaging sum and check if we are done. */
 		meas.avg_sum += raw_adc;
 		meas.avg_count += 1;
-		if (meas.avg_count >= config->averaging_count) {
+		if (timer_expired(&meas.avg_timer)) {
 			meas.result_available = true;
 			adc_disable();
 		}

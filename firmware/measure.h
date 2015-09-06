@@ -48,29 +48,39 @@ enum measure_plausibility {
 	MEAS_PLAUS_TIMEOUT,
 };
 
-/* Callback runs in IRQ context. */
 typedef void (*measure_cb_t)(fixpt_t measured_phys_value,
 			     enum measure_plausibility plaus);
 
 struct measure_config {
+	/* A short two-character name. Just for debugging. */
 	char name[3];
 
+	/* The ADC multiplexer setting. One of MEAS_MUX_... */
 	uint8_t mux;
+	/* The ADC prescaler setting. One of MEAS_PS_... */
 	uint8_t ps;
+	/* The ADC reference setting. One of MEAS_REF_... */
 	uint8_t ref;
 
-//FIXME: Do this via time instead?
-	uint16_t averaging_count;
+	/* The time (in milliseconds) we keep adding samples for the
+	 * averaging.
+	 * The actual sample rate is: F_CPU / prescaler / 13
+	 * The sum buffer is of size uint32_t.
+	 */
+	uint16_t averaging_timeout_ms;
 
+	/* The scale() parameters for raw -> phys scaling. */
 	uint16_t scale_raw_lo;
 	uint16_t scale_raw_hi;
 	fixpt_t scale_phys_lo;
 	fixpt_t scale_phys_hi;
 
+	/* The plausibility limits. */
 	fixpt_t plaus_neglim;
 	fixpt_t plaus_poslim;
 	uint16_t plaus_timeout_ms;
 
+	/* Result callback function. */
 	measure_cb_t callback;
 };
 
