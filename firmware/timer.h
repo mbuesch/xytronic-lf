@@ -63,6 +63,11 @@ static inline void timer_arm(struct timer *timer, int32_t millisec)
 	timer->count = _timer_get_now() + (_timcnt_t)_timer_ms_to_count(millisec);
 }
 
+static inline void timer_set_now(struct timer *timer)
+{
+	timer->count = _timer_get_now();
+}
+
 static inline void timer_add(struct timer *timer, int32_t millisec)
 {
 	timer->count += (_timcnt_t)_timer_ms_to_count(millisec);
