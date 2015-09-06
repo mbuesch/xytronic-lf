@@ -53,12 +53,61 @@ struct temp_contr_context {
 static struct temp_contr_context contrtemp;
 
 
+static fixpt_t temp_to_amps(fixpt_t temp)
+{
+	fixpt_t current;
+
+	current = rescale(temp,
+			  float_to_fixpt(CONTRTEMP_NEGLIM),
+			  float_to_fixpt(CONTRTEMP_POSLIM),
+			  float_to_fixpt(CONTRCURR_NEGLIM),
+			  float_to_fixpt(CONTRCURR_POSLIM));
+
+	return current;
+}
+
+static void contrtemp_run(fixpt_t r)
+{
+	fixpt_t dt, y, y_current;
+
+	if (!contrtemp.enabled)
+		return;
+	if (contrtemp.emergency)
+		return;
+
+	/* Get delta-t that elapsed since last run, in seconds */
+	dt = fixpt_div(int_to_fixpt(timer_ms_since(&contrtemp.timer)),
+		       int_to_fixpt(1000));
+	timer_set_now(&contrtemp.timer);
+
+	/* Run the PID controller */
+	y = pid_run(&contrtemp.pid, dt, r);
+
+	debug_report_int24(PSTR("ty1"), &contrtemp.old_temp_control1,
+			   (int24_t)y);
+
+	/* Map the requested temperature to a heater current. */
+	y_current = temp_to_amps(y);
+
+	debug_report_int24(PSTR("ty2"), &contrtemp.old_temp_control2,
+			   (int24_t)y_current);
+
+	/* Set the current controller setpoint to the requested current. */
+	contrcurr_set_setpoint(y_current);
+}
+
 void contrtemp_set_feedback(fixpt_t r)
 {
 	if (r != contrtemp.feedback) {
 		contrtemp.feedback = r;
+		debug_report_int24(PSTR("tr"),
+				   &contrtemp.old_temp_feedback,
+				   (int24_t)r);
 		menu_request_display_update();
 	}
+
+	/* Run the controller. */
+	contrtemp_run(r);
 }
 
 fixpt_t contrtemp_get_feedback(void)
@@ -82,25 +131,14 @@ fixpt_t contrtemp_get_setpoint(void)
 	return pid_get_setpoint(&contrtemp.pid);
 }
 
-static fixpt_t temp_to_amps(fixpt_t temp)
-{
-	fixpt_t current;
-
-	current = rescale(temp,
-			  float_to_fixpt(CONTRTEMP_NEGLIM),
-			  float_to_fixpt(CONTRTEMP_POSLIM),
-			  float_to_fixpt(CONTRCURR_NEGLIM),
-			  float_to_fixpt(CONTRCURR_POSLIM));
-
-	return current;
-}
-
 void contrtemp_set_enabled(bool enabled)
 {
 	if (contrtemp.enabled != enabled) {
 		contrtemp.enabled = enabled;
+
+		/* Reset the controller. */
 		pid_reset(&contrtemp.pid);
-		timer_arm(&contrtemp.timer, 0);
+		timer_set_now(&contrtemp.timer);
 	}
 }
 
@@ -133,42 +171,6 @@ bool contrtemp_is_heating_up(void)
 	return heating;
 }
 
-void contrtemp_work(void)
-{
-	fixpt_t dt, r, y, y_current;
-
-	if (!contrtemp.enabled)
-		return;
-	if (contrtemp.emergency)
-		return;
-	if (!timer_expired(&contrtemp.timer))
-		return;
-	timer_add(&contrtemp.timer, CONTRTEMP_PERIOD_MS);
-
-	/* Get the feedback (r) */
-	r = contrtemp.feedback;
-	debug_report_int24(PSTR("tr"), &contrtemp.old_temp_feedback,
-			   (int24_t)r);
-
-	/* Get delta-t that elapsed since last run, in seconds */
-	dt = float_to_fixpt((float)CONTRTEMP_PERIOD_MS / 1000.0f);
-
-	/* Run the PID controller */
-	y = pid_run(&contrtemp.pid, dt, r);
-
-	debug_report_int24(PSTR("ty1"), &contrtemp.old_temp_control1,
-			   (int24_t)y);
-
-	/* Map the requested temperature to a heater current. */
-	y_current = temp_to_amps(y);
-
-	debug_report_int24(PSTR("ty2"), &contrtemp.old_temp_control2,
-			   (int24_t)y_current);
-
-	/* Set the current controller setpoint to the requested current. */
-	contrcurr_set_setpoint(y_current);
-}
-
 void contrtemp_init(void)
 {
 	struct settings *settings;
@@ -182,9 +184,11 @@ void contrtemp_init(void)
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
 
+	/* Get the initial setpoint from EEPROM. */
 	settings = get_settings();
 	pid_set_setpoint(&contrtemp.pid, settings->temp_setpoint);
 
+	/* Enable the controller. */
 	contrtemp_set_enabled(true);
 	contrtemp_set_emerg(false);
 }

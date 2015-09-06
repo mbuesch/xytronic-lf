@@ -51,9 +51,47 @@ struct current_contr_context {
 static struct current_contr_context contrcurr;
 
 
+static void contrcurr_run(fixpt_t r)
+{
+	fixpt_t dt, y;
+
+	if (!contrcurr.enabled)
+		return;
+	if (contrcurr.emergency)
+		return;
+
+	/* Get delta-t that elapsed since last run, in seconds */
+	dt = fixpt_div(int_to_fixpt(timer_ms_since(&contrcurr.timer)),
+		       int_to_fixpt(1000));
+	timer_set_now(&contrcurr.timer);
+
+	/* Run the PID controller */
+	y = pid_run(&contrcurr.pid, dt, r);
+
+	if (contrcurr.restricted) {
+		if (y > float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR))
+			y = float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR);
+	}
+
+	debug_report_int24(PSTR("cy"), &contrcurr.old_current_control,
+			   (int24_t)y);
+
+	/* Reconfigure the PWM unit to output the
+	 * requested heater current (y). */
+	pwmcurr_set(y);
+}
+
 void contrcurr_set_feedback(fixpt_t r)
 {
-	contrcurr.feedback = r;
+	if (r != contrcurr.feedback) {
+		contrcurr.feedback = r;
+		debug_report_int24(PSTR("cr"),
+				   &contrcurr.old_current_feedback,
+				   (int24_t)r);
+	}
+
+	/* Run the controller. */
+	contrcurr_run(r);
 }
 
 void contrcurr_set_setpoint(fixpt_t w)
@@ -73,12 +111,17 @@ void contrcurr_set_enabled(bool enable,
 
 	if (enable != contrcurr.enabled) {
 		contrcurr.enabled = enable;
+
+		/* Reset the controller. */
 		pwmcurr_set(int_to_fixpt(0));
 		pid_reset(&contrcurr.pid);
-		timer_arm(&contrcurr.timer, 0);
+		timer_set_now(&contrcurr.timer);
 	}
 
 	if (!enable) {
+		/* The controller is disabled.
+		 * Set the disabled-current permanently.
+		 */
 		y = scale(disabled_curr_percent,
 			  0, 100,
 			  float_to_fixpt(CONTRCURR_NEGLIM),
@@ -105,42 +148,6 @@ bool contrcurr_in_emerg(void)
 	return contrcurr.emergency;
 }
 
-void contrcurr_work(void)
-{
-	fixpt_t dt, r, y;
-
-	if (!contrcurr.enabled)
-		return;
-	if (contrcurr.emergency)
-		return;
-	if (!timer_expired(&contrcurr.timer))
-		return;
-	timer_add(&contrcurr.timer, CONTRCURR_PERIOD_MS);
-
-	/* Get the feedback (r) */
-	r = contrcurr.feedback;
-	debug_report_int24(PSTR("cr"), &contrcurr.old_current_feedback,
-			   (int24_t)r);
-
-	/* Get delta-t that elapsed since last run, in seconds */
-	dt = float_to_fixpt((float)CONTRCURR_PERIOD_MS / 1000.0f);
-
-	/* Run the PID controller */
-	y = pid_run(&contrcurr.pid, dt, r);
-
-	if (contrcurr.restricted) {
-		if (y > float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR))
-			y = float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR);
-	}
-
-	debug_report_int24(PSTR("cy"), &contrcurr.old_current_control,
-			   (int24_t)y);
-
-	/* Reconfigure the PWM unit to output the
-	 * requested heater current (y). */
-	pwmcurr_set(y);
-}
-
 void contrcurr_init(void)
 {
 	memset(&contrcurr, 0, sizeof(contrcurr));
@@ -152,7 +159,11 @@ void contrcurr_init(void)
 		 float_to_fixpt(CONTRCURR_NEGLIM),
 		 float_to_fixpt(CONTRCURR_POSLIM));
 
+	/* Enable the controller. */
 	contrcurr_set_enabled(true, 0);
 	contrcurr_set_emerg(false);
+	/* Assume the iron is cold and start
+	 * with restricted current.
+	 */
 	contrcurr_set_restricted(true);
 }

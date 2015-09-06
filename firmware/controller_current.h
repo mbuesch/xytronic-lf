@@ -21,7 +21,6 @@ void contrcurr_set_enabled(bool enable,
 void contrcurr_set_emerg(bool emergency);
 bool contrcurr_in_emerg(void);
 
-void contrcurr_work(void);
 void contrcurr_init(void);
 
 #endif /* CONTROLLER_CURRENT_H_ */

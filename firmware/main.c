@@ -79,12 +79,10 @@ int main(void)
 	while (1) {
 		wdt_reset();
 
-		/* Handle measurement results (if any). */
+		/* Handle measurement results (if any).
+		 * This will also run the controllers, if needed.
+		 */
 		measure_work();
-
-		/* Handle the PID controllers. */
-		contrtemp_work();
-		contrcurr_work();
 
 		/* Handle user interface events. */
 		menu_work();
