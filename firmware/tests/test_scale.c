@@ -187,6 +187,30 @@ static void test_unscale(void)
 		      0, 0x3FF);
 	CHECK(ret == 0x300);
 */
+
+	ret = unscale(float_to_fixpt(5.0), float_to_fixpt(0.0), float_to_fixpt(5.0),
+		      0, 0x1FFF);
+	CHECK(ret == 0x1FFF);
+
+	ret = unscale(float_to_fixpt(2.5), float_to_fixpt(0.0), float_to_fixpt(5.0),
+		      0, 0x1FFF);
+	CHECK(ret == 0x1000);
+
+	ret = unscale(float_to_fixpt(0.0), float_to_fixpt(0.0), float_to_fixpt(5.0),
+		      0, 0x1FFF);
+	CHECK(ret == 0x0);
+
+	ret = unscale(float_to_fixpt(5.0), float_to_fixpt(0.0), float_to_fixpt(5.0),
+		      0x1FFF, 0);
+	CHECK(ret == 0x0);
+
+	ret = unscale(float_to_fixpt(2.5), float_to_fixpt(0.0), float_to_fixpt(5.0),
+		      0x1FFF, 0);
+	CHECK(ret == 0x1000);
+
+	ret = unscale(float_to_fixpt(0.0), float_to_fixpt(0.0), float_to_fixpt(5.0),
+		      0x1FFF, 0);
+	CHECK(ret == 0x1FFF);
 }
 
 static void test_scale_unscale(void)
