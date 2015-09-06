@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 4 5
 Title "Xytronic LF-1600 - Heater power supply"
-Date "21 aug 2015"
+Date "5 sep 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -296,4 +296,14 @@ Text Notes 950  4300 0    60   ~ 0
 Heater elem. R 3.5 Ohms @ 20 °C
 Wire Wire Line
 	7250 4150 7250 3450
+Text Notes 7100 5150 0    60   ~ 0
+Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R28 was removed (bridged).
+Wire Wire Line
+	7000 5650 7000 5450
+Wire Wire Line
+	7000 5450 7600 5450
+Wire Wire Line
+	7600 5450 7600 5650
+Connection ~ 7600 5650
+Connection ~ 7000 5650
 $EndSCHEMATC

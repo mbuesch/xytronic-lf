@@ -36,7 +36,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 5 5
 Title "Xytronic LF-1600 - Temperature sensor"
-Date "21 aug 2015"
+Date "5 sep 2015"
 Rev "1.0"
 Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
 Comment1 ""
@@ -474,4 +474,14 @@ Wire Wire Line
 Connection ~ 8750 5600
 Text Notes 750  1450 0    60   ~ 0
 Sens R 53 Ohms @ 20 °C
+Text Notes 2400 4750 0    60   ~ 0
+Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R12 was removed (bridged).
+Wire Wire Line
+	3550 4500 3550 4700
+Wire Wire Line
+	4150 4500 4150 4700
+Connection ~ 4150 4500
+Connection ~ 3550 4500
+Wire Wire Line
+	4150 4700 3550 4700
 $EndSCHEMATC
