@@ -34,30 +34,34 @@
 #define CONTRCURR_PERIOD_MS	100	/* milliseconds */
 
 
-static bool current_contr_enabled;
-static bool current_contr_emergency;
-static bool current_contr_restricted;
-static struct pid current_pid;
-static fixpt_t current_feedback;
-static struct timer current_timer;
+struct current_contr_context {
+	bool enabled;
+	bool emergency;
+	bool restricted;
+	struct pid pid;
+	fixpt_t feedback;
+	struct timer timer;
 
-static int24_t old_current_feedback;
-static int24_t old_current_control;
+	int24_t old_current_feedback;
+	int24_t old_current_control;
+};
+
+static struct current_contr_context contrcurr;
 
 
 void contrcurr_set_feedback(fixpt_t r)
 {
-	current_feedback = r;
+	contrcurr.feedback = r;
 }
 
 void contrcurr_set_setpoint(fixpt_t w)
 {
-	pid_set_setpoint(&current_pid, w);
+	pid_set_setpoint(&contrcurr.pid, w);
 }
 
 void contrcurr_set_restricted(bool restricted)
 {
-	current_contr_restricted = restricted;
+	contrcurr.restricted = restricted;
 }
 
 void contrcurr_set_enabled(bool enable,
@@ -65,11 +69,11 @@ void contrcurr_set_enabled(bool enable,
 {
 	fixpt_t y;
 
-	if (enable != current_contr_enabled) {
-		current_contr_enabled = enable;
+	if (enable != contrcurr.enabled) {
+		contrcurr.enabled = enable;
 		pwmcurr_set(int_to_fixpt(0));
-		pid_reset(&current_pid);
-		timer_arm(&current_timer, 0);
+		pid_reset(&contrcurr.pid);
+		timer_arm(&contrcurr.timer, 0);
 	}
 
 	if (!enable) {
@@ -83,8 +87,8 @@ void contrcurr_set_enabled(bool enable,
 
 void contrcurr_set_emerg(bool emergency)
 {
-	if (emergency != current_contr_emergency) {
-		current_contr_emergency = emergency;
+	if (emergency != contrcurr.emergency) {
+		contrcurr.emergency = emergency;
 		if (emergency) {
 			/* In an emergency situation, disable the
 			 * heater current to avoid damage.
@@ -96,37 +100,39 @@ void contrcurr_set_emerg(bool emergency)
 
 bool contrcurr_in_emerg(void)
 {
-	return current_contr_emergency;
+	return contrcurr.emergency;
 }
 
 void contrcurr_work(void)
 {
 	fixpt_t dt, r, y;
 
-	if (!current_contr_enabled)
+	if (!contrcurr.enabled)
 		return;
-	if (current_contr_emergency)
+	if (contrcurr.emergency)
 		return;
-	if (!timer_expired(&current_timer))
+	if (!timer_expired(&contrcurr.timer))
 		return;
-	timer_add(&current_timer, CONTRCURR_PERIOD_MS);
+	timer_add(&contrcurr.timer, CONTRCURR_PERIOD_MS);
 
 	/* Get the feedback (r) */
-	r = current_feedback;
-	debug_report_int24(PSTR("cr"), &old_current_feedback, (int24_t)r);
+	r = contrcurr.feedback;
+	debug_report_int24(PSTR("cr"), &contrcurr.old_current_feedback,
+			   (int24_t)r);
 
 	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRCURR_PERIOD_MS / 1000.0f);
 
 	/* Run the PID controller */
-	y = pid_run(&current_pid, dt, r);
+	y = pid_run(&contrcurr.pid, dt, r);
 
-	if (current_contr_restricted) {
+	if (contrcurr.restricted) {
 		if (y > float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR))
 			y = float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR);
 	}
 
-	debug_report_int24(PSTR("cy"), &old_current_control, (int16_t)y);
+	debug_report_int24(PSTR("cy"), &contrcurr.old_current_control,
+			   (int24_t)y);
 
 	/* Reconfigure the PWM unit to output the
 	 * requested heater current (y). */
@@ -135,7 +141,7 @@ void contrcurr_work(void)
 
 void contrcurr_init(void)
 {
-	pid_init(&current_pid,
+	pid_init(&contrcurr.pid,
 		 float_to_fixpt(CONTRCURR_PID_KP),
 		 float_to_fixpt(CONTRCURR_PID_KI),
 		 float_to_fixpt(CONTRCURR_PID_KD),

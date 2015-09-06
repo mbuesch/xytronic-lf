@@ -36,35 +36,39 @@
 #define CONTRTEMP_PERIOD_MS	50	/* milliseconds */
 
 
-static bool temp_contr_enabled;
-static bool temp_contr_emergency;
-static struct pid temp_pid;
-static fixpt_t temp_feedback;
-static struct timer temp_timer;
+struct temp_contr_context {
+	bool enabled;
+	bool emergency;
+	struct pid pid;
+	fixpt_t feedback;
+	struct timer timer;
 
-static int24_t old_temp_feedback;
-static int24_t old_temp_control1;
-static int24_t old_temp_control2;
+	int24_t old_temp_feedback;
+	int24_t old_temp_control1;
+	int24_t old_temp_control2;
+};
+
+static struct temp_contr_context contrtemp;
 
 
 void contrtemp_set_feedback(fixpt_t r)
 {
-	if (r != temp_feedback) {
-		temp_feedback = r;
+	if (r != contrtemp.feedback) {
+		contrtemp.feedback = r;
 		menu_request_display_update();
 	}
 }
 
 fixpt_t contrtemp_get_feedback(void)
 {
-	return temp_feedback;
+	return contrtemp.feedback;
 }
 
 void contrtemp_set_setpoint(fixpt_t w)
 {
 	struct settings *settings;
 
-	pid_set_setpoint(&temp_pid, w);
+	pid_set_setpoint(&contrtemp.pid, w);
 
 	settings = get_settings();
 	settings->temp_setpoint = w;
@@ -73,7 +77,7 @@ void contrtemp_set_setpoint(fixpt_t w)
 
 fixpt_t contrtemp_get_setpoint(void)
 {
-	return pid_get_setpoint(&temp_pid);
+	return pid_get_setpoint(&contrtemp.pid);
 }
 
 static fixpt_t temp_to_amps(fixpt_t temp)
@@ -91,17 +95,17 @@ static fixpt_t temp_to_amps(fixpt_t temp)
 
 void contrtemp_set_enabled(bool enabled)
 {
-	if (temp_contr_enabled != enabled) {
-		temp_contr_enabled = enabled;
-		pid_reset(&temp_pid);
-		timer_arm(&temp_timer, 0);
+	if (contrtemp.enabled != enabled) {
+		contrtemp.enabled = enabled;
+		pid_reset(&contrtemp.pid);
+		timer_arm(&contrtemp.timer, 0);
 	}
 }
 
 void contrtemp_set_emerg(bool emergency)
 {
-	if (emergency != temp_contr_emergency) {
-		temp_contr_emergency = emergency;
+	if (emergency != contrtemp.emergency) {
+		contrtemp.emergency = emergency;
 		if (emergency) {
 			/* In an emergency situation, disable the
 			 * heater current to avoid damage.
@@ -113,7 +117,7 @@ void contrtemp_set_emerg(bool emergency)
 
 bool contrtemp_in_emerg(void)
 {
-	return temp_contr_emergency;
+	return contrtemp.emergency;
 }
 
 bool contrtemp_is_heating_up(void)
@@ -121,7 +125,7 @@ bool contrtemp_is_heating_up(void)
 	bool heating;
 	fixpt_t diff;
 
-	diff = fixpt_sub(contrtemp_get_setpoint(), temp_feedback);
+	diff = fixpt_sub(contrtemp_get_setpoint(), contrtemp.feedback);
 	heating = (diff > float_to_fixpt(2.0));
 
 	return heating;
@@ -131,30 +135,33 @@ void contrtemp_work(void)
 {
 	fixpt_t dt, r, y, y_current;
 
-	if (!temp_contr_enabled)
+	if (!contrtemp.enabled)
 		return;
-	if (temp_contr_emergency)
+	if (contrtemp.emergency)
 		return;
-	if (!timer_expired(&temp_timer))
+	if (!timer_expired(&contrtemp.timer))
 		return;
-	timer_add(&temp_timer, CONTRTEMP_PERIOD_MS);
+	timer_add(&contrtemp.timer, CONTRTEMP_PERIOD_MS);
 
 	/* Get the feedback (r) */
-	r = temp_feedback;
-	debug_report_int24(PSTR("tr"), &old_temp_feedback, (int24_t)r);
+	r = contrtemp.feedback;
+	debug_report_int24(PSTR("tr"), &contrtemp.old_temp_feedback,
+			   (int24_t)r);
 
 	/* Get delta-t that elapsed since last run, in seconds */
 	dt = float_to_fixpt((float)CONTRTEMP_PERIOD_MS / 1000.0f);
 
 	/* Run the PID controller */
-	y = pid_run(&temp_pid, dt, r);
+	y = pid_run(&contrtemp.pid, dt, r);
 
-	debug_report_int24(PSTR("ty1"), &old_temp_control1, (int16_t)y);
+	debug_report_int24(PSTR("ty1"), &contrtemp.old_temp_control1,
+			   (int24_t)y);
 
 	/* Map the requested temperature to a heater current. */
 	y_current = temp_to_amps(y);
 
-	debug_report_int24(PSTR("ty2"), &old_temp_control2, (int16_t)y_current);
+	debug_report_int24(PSTR("ty2"), &contrtemp.old_temp_control2,
+			   (int24_t)y_current);
 
 	/* Set the current controller setpoint to the requested current. */
 	contrcurr_set_setpoint(y_current);
@@ -164,7 +171,7 @@ void contrtemp_init(void)
 {
 	struct settings *settings;
 
-	pid_init(&temp_pid,
+	pid_init(&contrtemp.pid,
 		 float_to_fixpt(CONTRTEMP_PID_KP),
 		 float_to_fixpt(CONTRTEMP_PID_KI),
 		 float_to_fixpt(CONTRTEMP_PID_KD),
@@ -172,7 +179,7 @@ void contrtemp_init(void)
 		 float_to_fixpt(CONTRTEMP_POSLIM));
 
 	settings = get_settings();
-	pid_set_setpoint(&temp_pid, settings->temp_setpoint);
+	pid_set_setpoint(&contrtemp.pid, settings->temp_setpoint);
 
 	contrtemp_set_enabled(true);
 	contrtemp_set_emerg(false);
