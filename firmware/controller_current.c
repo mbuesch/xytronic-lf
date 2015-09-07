@@ -33,7 +33,6 @@
 #define CONTRCURR_PID_KP	2.5
 #define CONTRCURR_PID_KI	0.05
 #define CONTRCURR_PID_KD	0.0
-#define CONTRCURR_PERIOD_MS	100	/* milliseconds */
 
 
 struct current_contr_context {
