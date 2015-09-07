@@ -26,16 +26,19 @@
 #include "scale.h"
 #include "settings.h"
 #include "menu.h"
+#include "buttons.h"
 #include "debug_uart.h"
 
 #include <string.h>
 
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP	1.5
-#define CONTRTEMP_PID_KI	0.05
-#define CONTRTEMP_PID_KD	0.2
-#define CONTRTEMP_PERIOD_MS	50	/* milliseconds */
+#define CONTRTEMP_PID_KP_NORMAL		1.5
+#define CONTRTEMP_PID_KI_NORMAL		0.05
+#define CONTRTEMP_PID_KD_NORMAL		0.2
+#define CONTRTEMP_PID_KP_BOOST		3.0
+#define CONTRTEMP_PID_KI_BOOST		0.1
+#define CONTRTEMP_PID_KD_BOOST		0.5
 
 
 struct temp_contr_context {
@@ -171,16 +174,40 @@ bool contrtemp_is_heating_up(void)
 	return heating;
 }
 
+static void contrtemp_iron_button_handler(enum button_id button,
+					  enum button_state bstate)
+{
+	if (bstate == BSTATE_POSEDGE) {
+		pid_set_factors(&contrtemp.pid,
+				float_to_fixpt(CONTRTEMP_PID_KP_BOOST),
+				float_to_fixpt(CONTRTEMP_PID_KI_BOOST),
+				float_to_fixpt(CONTRTEMP_PID_KD_BOOST));
+		return;
+	}
+	if (bstate == BSTATE_NEGEDGE) {
+		pid_set_factors(&contrtemp.pid,
+				float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
+				float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
+				float_to_fixpt(CONTRTEMP_PID_KD_NORMAL));
+		return;
+	}
+}
+
 void contrtemp_init(void)
 {
 	struct settings *settings;
+	uint8_t boost;
 
 	memset(&contrtemp, 0, sizeof(contrtemp));
 
+	boost = button_is_pressed(BUTTON_IRON);
 	pid_init(&contrtemp.pid,
-		 float_to_fixpt(CONTRTEMP_PID_KP),
-		 float_to_fixpt(CONTRTEMP_PID_KI),
-		 float_to_fixpt(CONTRTEMP_PID_KD),
+		 boost ? float_to_fixpt(CONTRTEMP_PID_KP_BOOST) :
+			 float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
+		 boost ? float_to_fixpt(CONTRTEMP_PID_KI_BOOST) :
+			 float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
+		 boost ? float_to_fixpt(CONTRTEMP_PID_KD_BOOST) :
+			 float_to_fixpt(CONTRTEMP_PID_KD_NORMAL),
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
 
@@ -191,4 +218,8 @@ void contrtemp_init(void)
 	/* Enable the controller. */
 	contrtemp_set_enabled(true);
 	contrtemp_set_emerg(false);
+
+	/* Register handler for the iron button. */
+	buttons_register_handler(BUTTON_IRON,
+				 contrtemp_iron_button_handler);
 }
