@@ -26,7 +26,10 @@ void pid_init(struct pid *pid,
 	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
 	      fixpt_t y_neglim, fixpt_t y_poslim);
 
-void pid_set_setpoint(struct pid *pid, fixpt_t setpoint);
+static inline void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)
+{
+	pid->setpoint = setpoint;
+}
 
 static inline fixpt_t pid_get_setpoint(struct pid *pid)
 {

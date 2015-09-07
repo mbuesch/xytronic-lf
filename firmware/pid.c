@@ -39,13 +39,6 @@ void pid_set_factors(struct pid *pid,
 	pid_reset(pid);
 }
 
-void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)
-{
-	pid->setpoint = setpoint;
-	//FIXME should we reset here?
-	pid_reset(pid);
-}
-
 fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 {
 	fixpt_t e, de;
