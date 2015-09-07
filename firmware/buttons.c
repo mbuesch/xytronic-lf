@@ -29,11 +29,13 @@
 #define BUTTONS_PORT		PORTB
 #define BUTTONS_PIN		PINB
 
+#define BUTTON_BIT_IRON		PB0
 #define BUTTON_BIT_SET		PB2
 #define BUTTON_BIT_MINUS	PB3
 #define BUTTON_BIT_PLUS		PB4
 
-#define BUTTONS_MASK		((uint8_t)((1 << BUTTON_BIT_SET) |\
+#define BUTTONS_MASK		((uint8_t)((1 << BUTTON_BIT_IRON) |\
+					   (1 << BUTTON_BIT_SET) |\
 					   (1 << BUTTON_BIT_MINUS) |\
 					   (1 << BUTTON_BIT_PLUS)))
 
@@ -53,7 +55,7 @@ static const uint8_t __flash button_id_to_port_mask[] = {
 	[BUTTON_SET]	= 1u << BUTTON_BIT_SET,
 	[BUTTON_MINUS]	= 1u << BUTTON_BIT_MINUS,
 	[BUTTON_PLUS]	= 1u << BUTTON_BIT_PLUS,
-	//TODO iron button
+	[BUTTON_IRON]	= 1u << BUTTON_BIT_IRON,
 };
 
 

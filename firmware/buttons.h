@@ -8,7 +8,7 @@ enum button_id {
 	BUTTON_SET,
 	BUTTON_MINUS,
 	BUTTON_PLUS,
-	//TODO iron button
+	BUTTON_IRON,
 
 	NR_BUTTONS,
 };
