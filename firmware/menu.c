@@ -37,7 +37,6 @@ enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
-	MENU_MANUAL,		/* Manual mode */
 };
 
 enum ramp_state {
@@ -55,15 +54,10 @@ struct menu_context {
 	enum menu_state state;
 	struct timer timeout;
 
-	struct timer delay_timer;
-	bool delay_running;
-
 	enum ramp_state ramp;
 	struct timer ramp_timer;
 	ramp_handler_t ramp_handler;
 	int32_t ramp_period;
-
-	uint8_t manmode_percentage;
 
 	uint8_t displayed_error;
 	bool displayed_heating;
@@ -132,12 +126,6 @@ static void menu_update_display(void)
 		case MENU_DEBUG:
 			strcpy_P(disp, PSTR("DBG"));
 			break;
-		case MENU_MANUAL:
-			int_to_ascii_align_right(disp, 2,
-						 menu.manmode_percentage,
-						 0, 100);
-			strcpy_P(disp + 3, PSTR("P"));
-			break;
 		}
 	}
 
@@ -204,7 +192,6 @@ static void menu_button_handler(enum button_id button,
 
 	switch (menu.state) {
 	case MENU_CURTEMP:
-		menu.delay_running = false;
 		if (bstate == BSTATE_POSEDGE) {
 			if (button == BUTTON_MINUS ||
 			    button == BUTTON_PLUS) {
@@ -224,7 +211,6 @@ static void menu_button_handler(enum button_id button,
 		}
 		break;
 	case MENU_SETTEMP:
-		menu.delay_running = false;
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
 		if (bstate == BSTATE_POSEDGE) {
 			if (button == BUTTON_MINUS) {
@@ -255,11 +241,6 @@ static void menu_button_handler(enum button_id button,
 				menu_request_display_update();
 				break;
 			}
-			if (button == BUTTON_SET) {
-				timer_arm(&menu.delay_timer, 1000);
-				menu.delay_running = true;
-				break;
-			}
 		}
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
@@ -267,54 +248,6 @@ static void menu_button_handler(enum button_id button,
 					menu_set_state(MENU_CURTEMP);
 					break;
 				}
-			}
-		}
-		if (bstate == BSTATE_PRESSED) {
-			if (button == BUTTON_SET) {
-				if (!debug_is_enabled() &&
-				    menu.delay_running &&
-				    timer_expired(&menu.delay_timer)) {
-					menu.manmode_percentage = 0;
-					contrcurr_set_enabled(false, menu.manmode_percentage);
-					contrtemp_set_enabled(false);
-					menu_set_state(MENU_MANUAL);
-					break;
-				}
-			}
-		}
-		break;
-	case MENU_MANUAL:
-		if (menu.delay_running) {
-			if (bstate == BSTATE_NEGEDGE) {
-				menu.delay_running = false;
-				break;
-			}
-			break;
-		}
-		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_PLUS) {
-				if (menu.manmode_percentage <= 90) {
-					menu.manmode_percentage = (uint8_t)(menu.manmode_percentage + 10);
-					contrcurr_set_enabled(false, menu.manmode_percentage);
-					menu_request_display_update();
-				}
-				break;
-			}
-			if (button == BUTTON_MINUS) {
-				if (menu.manmode_percentage >= 10) {
-					menu.manmode_percentage = (uint8_t)(menu.manmode_percentage - 10);
-					contrcurr_set_enabled(false, menu.manmode_percentage);
-					menu_request_display_update();
-				}
-				break;
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			if (button == BUTTON_SET) {
-				contrcurr_set_enabled(true, 0);
-				contrtemp_set_enabled(true);
-				menu_set_state(MENU_CURTEMP);
-				break;
 			}
 		}
 		break;
@@ -331,7 +264,6 @@ void menu_work(void)
 	switch (menu.state) {
 	case MENU_CURTEMP:
 	case MENU_DEBUG:
-	case MENU_MANUAL:
 		break;
 	case MENU_SETTEMP:
 		if (timer_expired(&menu.timeout)) {
