@@ -30,7 +30,7 @@
 
 
 /* Low pass filter time. */
-#define MEASCURR_FILTER_SHIFT		6
+#define MEASCURR_FILTER_SHIFT		4
 
 
 struct meascurr_context {
@@ -41,6 +41,11 @@ struct meascurr_context {
 
 static struct meascurr_context meascurr;
 
+
+void meascurr_filter_reset(void)
+{
+	meascurr.filter_buf = 0u;
+}
 
 static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 {

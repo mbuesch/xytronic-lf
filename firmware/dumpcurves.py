@@ -13,7 +13,9 @@ s = serial.Serial(port = inDev, baudrate = 9600, bytesize = 8,
 outFd = open(outFile, "wb")
 outFd.write(b"time (ticks);current r (A);current y (A);"
 	    b"temp r (*C);temp y1 (*C);temp y2 (A);"
-	    b"measured current (ADC); measured temp (ADC)\r\n")
+	    b"measured current (ADC);filtered current (ADC);"
+	    b"measured temp (ADC);"
+	    b"calib current percent\r\n")
 
 def reset():
 	global outLines
@@ -24,7 +26,9 @@ def reset():
 	global val_tempY1
 	global val_tempY2
 	global val_measCurr
+	global val_filtCurr
 	global val_measTemp
+	global val_calCurrPercent
 
 	print("RESET")
 	outLines = []
@@ -35,10 +39,12 @@ def reset():
 	val_tempY1 = 0.0
 	val_tempY2 = 0.0
 	val_measCurr = 0
+	val_filtCurr = 0
 	val_measTemp = 0
+	val_calCurrPercent = 0
 
 def putLine(timeStamp):
-	csvLine = "%d;%f;%f;%f;%f;%f;%d;%d\r\n" % (
+	csvLine = "%d;%f;%f;%f;%f;%f;%d;%d;%d;%d\r\n" % (
 		timeStamp,
 		val_currentR,
 		val_currentY,
@@ -46,7 +52,9 @@ def putLine(timeStamp):
 		val_tempY1,
 		val_tempY2,
 		val_measCurr,
+		val_filtCurr,
 		val_measTemp,
+		val_calCurrPercent,
 	)
 	outLines.append(csvLine)
 
@@ -101,8 +109,12 @@ try:
 			val_tempY2 = parseFixpt(elems[1], "ty2")
 		elif elems[0] == "mc":
 			val_measCurr = parseInt(elems[1], "mc")
+		elif elems[0] == "fc":
+			val_filtCurr = parseInt(elems[1], "fc")
 		elif elems[0] == "mt":
 			val_measTemp = parseInt(elems[1], "mt")
+		elif elems[0] == "cc":
+			val_calCurrPercent = parseInt(elems[1], "cc")
 		else:
 			print("Unknown elem: %s" % elems[0])
 			continue

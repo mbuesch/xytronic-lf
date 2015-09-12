@@ -26,6 +26,7 @@
 #include "controller_temp.h"
 #include "controller_current.h"
 #include "debug_uart.h"
+#include "calib_current.h"
 
 #include <string.h>
 
@@ -37,6 +38,9 @@ enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
+#ifdef CONF_CALIB
+	MENU_CALIB,		/* Current calibration. */
+#endif
 };
 
 enum ramp_state {
@@ -126,6 +130,11 @@ static void menu_update_display(void)
 		case MENU_DEBUG:
 			strcpy_P(disp, PSTR("DBG"));
 			break;
+#ifdef CONF_CALIB
+		case MENU_CALIB:
+			strcpy_P(disp, PSTR("CAL"));
+			break;
+#endif
 		}
 	}
 
@@ -245,12 +254,35 @@ static void menu_button_handler(enum button_id button,
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
 				if (!debug_is_enabled()) {
+#ifdef CONF_CALIB
+					menu_set_state(MENU_CALIB);
+#else
 					menu_set_state(MENU_CURTEMP);
+#endif
 					break;
 				}
 			}
 		}
 		break;
+#ifdef CONF_CALIB
+	case MENU_CALIB:
+		if (bstate == BSTATE_POSEDGE) {
+			if (button == BUTTON_PLUS ||
+			    button == BUTTON_MINUS) {
+				calcurr_set_enabled(!calcurr_is_enabled());
+				menu_request_display_update();
+				break;
+			}
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_SET) {
+				calcurr_set_enabled(false);
+				menu_set_state(MENU_CURTEMP);
+				break;
+			}
+		}
+		break;
+#endif
 	}
 }
 
@@ -264,6 +296,9 @@ void menu_work(void)
 	switch (menu.state) {
 	case MENU_CURTEMP:
 	case MENU_DEBUG:
+#ifdef CONF_CALIB
+	case MENU_CALIB:
+#endif
 		break;
 	case MENU_SETTEMP:
 		if (timer_expired(&menu.timeout)) {

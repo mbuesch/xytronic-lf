@@ -33,6 +33,7 @@
 #include "buttons.h"
 #include "menu.h"
 #include "settings.h"
+#include "calib_current.h"
 
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -89,5 +90,6 @@ int main(void)
 		display_work();
 		buttons_work();
 		settings_work();
+		calcurr_work();
 	}
 }
