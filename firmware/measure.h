@@ -33,7 +33,7 @@
 #define MEAS_REF_RESERVED	((1 << REFS1) | (0 << REFS0))
 #define MEAS_REF_INT1P1V	((1 << REFS1) | (1 << REFS0))
 
-#define MEASURE_MAX_RESULT	0x3FF
+#define MEASURE_MAX_RESULT	0x3FFu
 
 enum measure_chan {
 	MEAS_CHAN_0,
@@ -48,8 +48,9 @@ enum measure_plausibility {
 	MEAS_PLAUS_TIMEOUT,
 };
 
-typedef void (*measure_cb_t)(fixpt_t measured_phys_value,
-			     enum measure_plausibility plaus);
+typedef void (*measure_result_cb_t)(fixpt_t measured_phys_value,
+				    enum measure_plausibility plaus);
+typedef uint16_t (*measure_filter_cb_t)(uint16_t raw_adc);
 
 struct measure_config {
 	/* A short two-character name. Just for debugging. */
@@ -81,7 +82,9 @@ struct measure_config {
 	uint16_t plaus_timeout_ms;
 
 	/* Result callback function. */
-	measure_cb_t callback;
+	measure_result_cb_t result_callback;
+	/* Filter callback function. */
+	measure_filter_cb_t filter_callback;
 };
 
 

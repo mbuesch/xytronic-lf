@@ -155,6 +155,10 @@ static void measure_handle_result(void)
 	debug_report_int16(config->name, &active_chan->old_report_value,
 			   (int16_t)raw_adc);
 
+	/* Filter the raw adc value, if we have a filter. */
+	if (config->filter_callback)
+		raw_adc = config->filter_callback(raw_adc);
+
 	/* Scale raw to phys. */
 	phys = scale((int16_t)raw_adc,
 		     (int16_t)config->scale_raw_lo,
@@ -188,7 +192,7 @@ static void measure_handle_result(void)
 	    timer_expired(&active_chan->plaus_timeout_timer))
 		active_chan->plaus_timeout = true;
 
-	/* Call the callback. */
+	/* Call the result callback. */
 	if (is_plausible) {
 		plaus = MEAS_PLAUSIBLE;
 	} else {
@@ -197,7 +201,7 @@ static void measure_handle_result(void)
 		else
 			plaus = MEAS_NOT_PLAUSIBLE;
 	}
-	config->callback(phys, plaus);
+	config->result_callback(phys, plaus);
 }
 
 ISR(ADC_vect)

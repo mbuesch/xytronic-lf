@@ -28,8 +28,8 @@
 #include "debug_uart.h"
 
 
-static void meastemp_meas_callback(fixpt_t measured_phys_value,
-				   enum measure_plausibility plaus)
+static void meastemp_result_callback(fixpt_t measured_phys_value,
+				     enum measure_plausibility plaus)
 {
 	switch (plaus) {
 	case MEAS_PLAUSIBLE:
@@ -60,7 +60,8 @@ static const struct measure_config __flash meastemp_config = {
 	.plaus_neglim		= FLOAT_TO_FIXPT(20.0),
 	.plaus_poslim		= FLOAT_TO_FIXPT(480.0),
 	.plaus_timeout_ms	= 1000,
-	.callback		= meastemp_meas_callback,
+	.filter_callback	= NULL,
+	.result_callback	= meastemp_result_callback,
 };
 
 void meastemp_init(void)

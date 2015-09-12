@@ -26,11 +26,45 @@
 #include "controller_current.h"
 #include "debug_uart.h"
 
+#include <string.h>
 
-static void meascurr_meas_callback(fixpt_t measured_phys_value,
-				   enum measure_plausibility plaus)
+
+/* Low pass filter time. */
+#define MEASCURR_FILTER_SHIFT		6
+
+
+struct meascurr_context {
+	uint24_t filter_buf;
+	int16_t old_filter_report_value;
+};
+
+
+static struct meascurr_context meascurr;
+
+
+static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 {
-measured_phys_value = fixpt_div(measured_phys_value, int_to_fixpt(6));//FIXME
+	uint24_t buf, out;
+	uint16_t filtered_adc;
+
+	/* Run a simple low pass filter. */
+	buf = meascurr.filter_buf;
+	buf -= buf >> MEASCURR_FILTER_SHIFT;
+	buf += raw_adc;
+	meascurr.filter_buf = buf;
+	out = buf >> MEASCURR_FILTER_SHIFT;
+
+	filtered_adc = (uint16_t)clamp(out, 0u, MEASURE_MAX_RESULT);
+
+	debug_report_int16(PSTR("fc"), &meascurr.old_filter_report_value,
+			   (int16_t)filtered_adc);
+
+	return filtered_adc;
+}
+
+static void meascurr_result_callback(fixpt_t measured_phys_value,
+				     enum measure_plausibility plaus)
+{
 	switch (plaus) {
 	case MEAS_PLAUSIBLE:
 		contrcurr_set_emerg(false);
@@ -49,18 +83,20 @@ static const struct measure_config __flash meascurr_config = {
 	.mux			= MEAS_MUX_ADC2,
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
-	.averaging_timeout_ms	= 150,
-	.scale_raw_lo		= 80,
-	.scale_raw_hi		= 140,
-	.scale_phys_lo		= FLOAT_TO_FIXPT(2.5),
-	.scale_phys_hi		= FLOAT_TO_FIXPT(4.0),
+	.averaging_timeout_ms	= 5,
+	.scale_raw_lo		= 40,
+	.scale_raw_hi		= 200,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(1.0),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(5.0),
 	.plaus_neglim		= FLOAT_TO_FIXPT(CONTRCURR_NEGLIM),
 	.plaus_poslim		= FLOAT_TO_FIXPT(CONTRCURR_POSLIM),
 	.plaus_timeout_ms	= 1000,
-	.callback		= meascurr_meas_callback,
+	.filter_callback	= meascurr_filter_callback,
+	.result_callback	= meascurr_result_callback,
 };
 
 void meascurr_init(void)
 {
+	memset(&meascurr, 0, sizeof(meascurr));
 	measure_register_channel(MEAS_CHAN_0, &meascurr_config);
 }
