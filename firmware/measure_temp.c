@@ -27,23 +27,36 @@
 #include "controller_current.h"
 #include "debug_uart.h"
 
+#include <string.h>
+
+
+struct meastemp_context {
+	fixpt_t prev_feedback;
+};
+
+
+static struct meastemp_context meastemp;
+
 
 static void meastemp_result_callback(fixpt_t measured_phys_value,
 				     enum measure_plausibility plaus)
 {
-	switch (plaus) {
-	case MEAS_PLAUSIBLE:
+	/* Set/reset emergency status. */
+	if (plaus == MEAS_PLAUSIBLE)
 		contrtemp_set_emerg(false);
-		contrtemp_set_feedback(measured_phys_value);
+	else if (plaus == MEAS_PLAUS_TIMEOUT)
+		contrtemp_set_emerg(true);
+
+	/* Set the controller feedback. */
+	if (plaus == MEAS_PLAUSIBLE) {
+		meastemp.prev_feedback = measured_phys_value;
 		contrcurr_set_restricted(
 			measured_phys_value < float_to_fixpt(CONTRCURR_RESTRICT_TOTEMP)
 		);
-		break;
-	case MEAS_NOT_PLAUSIBLE:
-		break;
-	case MEAS_PLAUS_TIMEOUT:
-		contrtemp_set_emerg(true);
-		break;
+		contrtemp_set_feedback(measured_phys_value);
+	} else if (plaus == MEAS_NOT_PLAUSIBLE) {
+		/* Just run the controller with the previous feedback. */
+		contrtemp_set_feedback(meastemp.prev_feedback);
 	}
 }
 
@@ -66,5 +79,6 @@ static const struct measure_config __flash meastemp_config = {
 
 void meastemp_init(void)
 {
+	memset(&meastemp, 0, sizeof(meastemp));
 	measure_register_channel(MEAS_CHAN_1, &meastemp_config);
 }

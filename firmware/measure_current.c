@@ -34,6 +34,7 @@
 
 
 struct meascurr_context {
+	fixpt_t prev_feedback;
 	uint24_t filter_buf;
 	int16_t old_filter_report_value;
 };
@@ -70,16 +71,19 @@ static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 static void meascurr_result_callback(fixpt_t measured_phys_value,
 				     enum measure_plausibility plaus)
 {
-	switch (plaus) {
-	case MEAS_PLAUSIBLE:
+	/* Set/reset emergency status. */
+	if (plaus == MEAS_PLAUSIBLE)
 		contrcurr_set_emerg(false);
-		contrcurr_set_feedback(measured_phys_value);
-		break;
-	case MEAS_NOT_PLAUSIBLE:
-		break;
-	case MEAS_PLAUS_TIMEOUT:
+	else if (plaus == MEAS_PLAUS_TIMEOUT)
 		contrcurr_set_emerg(true);
-		break;
+
+	/* Set the controller feedback. */
+	if (plaus == MEAS_PLAUSIBLE) {
+		meascurr.prev_feedback = measured_phys_value;
+		contrcurr_set_feedback(measured_phys_value);
+	} else if (plaus == MEAS_NOT_PLAUSIBLE) {
+		/* Just run the controller with the previous feedback. */
+		contrcurr_set_feedback(meascurr.prev_feedback);
 	}
 }
 
@@ -89,10 +93,10 @@ static const struct measure_config __flash meascurr_config = {
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
 	.averaging_timeout_ms	= 5,
-	.scale_raw_lo		= 40,
-	.scale_raw_hi		= 200,
-	.scale_phys_lo		= FLOAT_TO_FIXPT(1.0),
-	.scale_phys_hi		= FLOAT_TO_FIXPT(5.0),
+	.scale_raw_lo		= 51,
+	.scale_raw_hi		= 85,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(0.5),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(1.5),
 	.plaus_neglim		= FLOAT_TO_FIXPT(CONTRCURR_NEGLIM),
 	.plaus_poslim		= FLOAT_TO_FIXPT(CONTRCURR_POSLIM),
 	.plaus_timeout_ms	= 1000,
