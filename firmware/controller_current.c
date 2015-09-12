@@ -29,14 +29,28 @@
 #include <string.h>
 
 
+/* Design note:
+ *
+ * The current controller is a PID controller in the lower
+ * setpoint area. However in the upper area the current is
+ * set without feedback evaluation. This is due to our feedback
+ * hardware not working correctly for high currents.
+ * The cut-off-setpoint where the PID is switched off
+ * is defined via CONTRCURR_PID_CUTOFF.
+ */
+
+
 /* Current controller PID parameters */
 #define CONTRCURR_PID_KP	0.5
 #define CONTRCURR_PID_KI	0.2
 #define CONTRCURR_PID_KD	0.0
+/* PID cut off current. PID is only active below this setpoint. */
+#define CONTRCURR_PID_CUTOFF	1.7
 
 
 struct current_contr_context {
 	bool enabled;
+	bool pid_disabled;
 	bool emergency;
 	bool restricted;
 	struct pid pid;
@@ -52,7 +66,8 @@ static struct current_contr_context contrcurr;
 
 static void contrcurr_run(fixpt_t r)
 {
-	fixpt_t dt, y;
+	fixpt_t dt, y, w;
+	bool pid_should_be_disabled;
 
 	if (!contrcurr.enabled)
 		return;
@@ -64,10 +79,27 @@ static void contrcurr_run(fixpt_t r)
 		       int_to_fixpt(1000));
 	timer_set_now(&contrcurr.timer);
 
-	/* Run the PID controller */
-	y = pid_run(&contrcurr.pid, dt, r);
+	/* Check whether the PID should be enabled or disabled. */
+	w = pid_get_setpoint(&contrcurr.pid);
+	pid_should_be_disabled = (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF));
+	if (contrcurr.pid_disabled != pid_should_be_disabled) {
+		/* PID enable state changed. Reset it. */
+		contrcurr.pid_disabled = pid_should_be_disabled;
+		pid_reset(&contrcurr.pid);
+	}
+
+	if (contrcurr.pid_disabled) {
+		/* We are in the upper setpoint area.
+		 * Do not run the controller. */
+		y = w;
+	} else {
+		/* Run the PID controller */
+		y = pid_run(&contrcurr.pid, dt, r);
+	}
 
 	if (contrcurr.restricted) {
+		/* We are in restricted mode.
+		 * Limit current to the restricted lower area. */
 		if (y > float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR))
 			y = float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR);
 	}
