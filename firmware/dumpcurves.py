@@ -130,8 +130,9 @@ try:
 		# Put the current line into the CSV.
 		putLine(timeStamp)
 
-		print("temp-r: %.02f   current-r: %.02f" % (
+		print("temp-r: %.02f   current-y: %.02f   current-r: %.02f" % (
 			val_tempR,
+			val_currentY,
 			val_currentR,
 		))
 except KeyboardInterrupt as e:
