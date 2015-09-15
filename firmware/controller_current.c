@@ -35,17 +35,18 @@
  * setpoint area. However in the upper area the current is
  * set without feedback evaluation. This is due to our feedback
  * hardware not working correctly for high currents.
- * The cut-off-setpoint where the PID is switched off
- * is defined via CONTRCURR_PID_CUTOFF.
+ * The cut-off-setpoint where the PID is switched off/on
+ * is defined via CONTRCURR_PID_CUTOFF_HI/LO.
  */
 
 
 /* Current controller PID parameters */
-#define CONTRCURR_PID_KP	0.5
-#define CONTRCURR_PID_KI	0.2
+#define CONTRCURR_PID_KP	0.2
+#define CONTRCURR_PID_KI	0.5
 #define CONTRCURR_PID_KD	0.0
 /* PID cut off current. PID is only active below this setpoint. */
-#define CONTRCURR_PID_CUTOFF	1.7
+#define CONTRCURR_PID_CUTOFF_HI	1.7
+#define CONTRCURR_PID_CUTOFF_LO	1.0
 
 
 struct current_contr_context {
@@ -55,6 +56,7 @@ struct current_contr_context {
 	bool restricted;
 	struct pid pid;
 	fixpt_t feedback;
+	fixpt_t prev_y;
 	struct timer timer;
 
 	int24_t old_current_feedback;
@@ -67,7 +69,6 @@ static struct current_contr_context contrcurr;
 static void contrcurr_run(fixpt_t r)
 {
 	fixpt_t dt, y, w;
-	bool pid_should_be_disabled;
 
 	if (!contrcurr.enabled)
 		return;
@@ -81,21 +82,21 @@ static void contrcurr_run(fixpt_t r)
 
 	/* Check whether the PID should be enabled or disabled. */
 	w = pid_get_setpoint(&contrcurr.pid);
-	pid_should_be_disabled = (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF));
-	if (contrcurr.pid_disabled != pid_should_be_disabled) {
-		/* PID enable state changed. Reset it. */
-		contrcurr.pid_disabled = pid_should_be_disabled;
-		pid_reset(&contrcurr.pid);
+	if (contrcurr.pid_disabled) {
+		if (w <= float_to_fixpt(CONTRCURR_PID_CUTOFF_LO))
+			contrcurr.pid_disabled = false;
+	} else {
+		if (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF_HI))
+			contrcurr.pid_disabled = true;
 	}
 
 	if (contrcurr.pid_disabled) {
 		/* We are in the upper setpoint area.
-		 * Do not run the controller. */
-		y = w;
-	} else {
-		/* Run the PID controller */
-		y = pid_run(&contrcurr.pid, dt, r);
+		 * Do not use the real feedback. */
+		r = contrcurr.prev_y;
 	}
+	/* Run the PID controller */
+	y = pid_run(&contrcurr.pid, dt, r);
 
 	if (contrcurr.restricted) {
 		/* We are in restricted mode.
@@ -109,6 +110,7 @@ static void contrcurr_run(fixpt_t r)
 
 	/* Reconfigure the PWM unit to output the
 	 * requested heater current (y). */
+	contrcurr.prev_y = y;
 	pwmcurr_set(y);
 }
 
@@ -146,6 +148,8 @@ void contrcurr_set_enabled(bool enable,
 		/* Reset the controller. */
 		pwmcurr_set(int_to_fixpt(0));
 		pid_reset(&contrcurr.pid);
+		contrcurr.pid_disabled = false;
+		contrcurr.prev_y = int_to_fixpt(0);
 		timer_set_now(&contrcurr.timer);
 	}
 
