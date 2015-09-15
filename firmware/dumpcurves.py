@@ -62,7 +62,7 @@ def parseInt(valStr, valIdent):
 	try:
 		val = int(valStr, 10)
 	except ValueError:
-		print("Invalid %d" % valIdent)
+		print("Invalid %s" % valIdent)
 	return val
 
 def parseFixpt(valStr, valIdent):
