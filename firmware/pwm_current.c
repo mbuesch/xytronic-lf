@@ -20,7 +20,6 @@
  */
 
 #include "pwm_current.h"
-#include "timer.h"
 #include "scale.h"
 #include "controller_current.h"
 #include "util.h"
@@ -33,28 +32,6 @@
  */
 #define PWMCURR_MAX_DUTY	0x1FFF
 
-/* The ramping step size. */
-#define PWMCURR_RAMP_STEP	PWMCURR_MAX_DUTY
-
-
-static struct timer pwmcurr_timer;
-static uint16_t pwmcurr_desired_ocr;
-
-
-static void pwmcurr_ocr_ramp_handle(void)
-{
-	uint16_t cur_ocr;
-	int16_t diff;
-	int16_t step;
-
-	cur_ocr = OCR1A;
-	diff = (int16_t)pwmcurr_desired_ocr - (int16_t)cur_ocr;
-	if (diff >= 0)
-		step = min((int16_t)PWMCURR_RAMP_STEP, diff);
-	else
-		step = max(-((int16_t)PWMCURR_RAMP_STEP), diff);
-	OCR1A = (uint16_t)((int16_t)cur_ocr + step);
-}
 
 void pwmcurr_set(fixpt_t current_amps)
 {
@@ -76,17 +53,7 @@ void pwmcurr_set(fixpt_t current_amps)
 	duty = clamp(duty, (uint16_t)0, (uint16_t)PWMCURR_MAX_DUTY);
 
 	/* Program the hardware */
-	pwmcurr_desired_ocr = duty;
-	pwmcurr_ocr_ramp_handle();
-}
-
-void pwmcurr_work(void)
-{
-	if (!timer_expired(&pwmcurr_timer))
-		return;
-	timer_add(&pwmcurr_timer, 1);
-
-	pwmcurr_ocr_ramp_handle();
+	OCR1A = duty;
 }
 
 void pwmcurr_init(void)
@@ -103,7 +70,6 @@ void pwmcurr_init(void)
 	/* Set frequency and initial duty cycle. */
 	ICR1 = PWMCURR_MAX_DUTY;
 	OCR1A = PWMCURR_MAX_DUTY;
-	pwmcurr_desired_ocr = PWMCURR_MAX_DUTY;
 	OCR1B = 0;
 	TCNT1 = 0;
 	/* Disable all interrupts */
@@ -117,6 +83,4 @@ void pwmcurr_init(void)
 	TCCR1C = 0;
 	TCCR1B = (1 << WGM13) | (1 << WGM12) |
 		 (0 << CS12) | (1 << CS11) | (1 << CS10);
-
-	timer_arm(&pwmcurr_timer, 0);
 }
