@@ -72,7 +72,7 @@ static const struct measure_config __flash meastemp_config = {
 	.scale_phys_hi		= FLOAT_TO_FIXPT(480.0),
 	.plaus_neglim		= FLOAT_TO_FIXPT(-20.0),
 	.plaus_poslim		= FLOAT_TO_FIXPT(480.0),
-	.plaus_timeout_ms	= 1000,
+	.plaus_timeout_ms	= 3000,
 	.filter_callback	= NULL,
 	.result_callback	= meastemp_result_callback,
 };
