@@ -39,7 +39,7 @@ static struct settings settings_cache;
 #define NR_EE_SETTINGS	((E2END + 1) / sizeof(struct settings))
 static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 	[0 ... NR_EE_SETTINGS - 1] = {
-		.temp_setpoint	= 150u << FIXPT_SHIFT,
+		.temp_setpoint	= FLOAT_TO_FIXPT(330.0),
 		.serial		= 0,
 	},
 };
