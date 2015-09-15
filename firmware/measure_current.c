@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "scale.h"
 #include "controller_current.h"
+#include "filter.h"
 #include "debug_uart.h"
 
 #include <string.h>
@@ -35,7 +36,7 @@
 
 struct meascurr_context {
 	fixpt_t prev_feedback;
-	uint24_t filter_buf;
+	struct lp_filter_u16 filter;
 	int16_t old_filter_report_value;
 };
 
@@ -45,22 +46,17 @@ static struct meascurr_context meascurr;
 
 void meascurr_filter_reset(void)
 {
-	meascurr.filter_buf = 0u;
+	lp_filter_u16_reset(&meascurr.filter);
 }
 
 static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 {
-	uint24_t buf, out;
 	uint16_t filtered_adc;
 
 	/* Run a simple low pass filter. */
-	buf = meascurr.filter_buf;
-	buf -= buf >> MEASCURR_FILTER_SHIFT;
-	buf += raw_adc;
-	meascurr.filter_buf = buf;
-	out = buf >> MEASCURR_FILTER_SHIFT;
-
-	filtered_adc = (uint16_t)clamp(out, 0u, MEASURE_MAX_RESULT);
+	filtered_adc = lp_filter_u16_run(&meascurr.filter, raw_adc,
+					 MEASCURR_FILTER_SHIFT);
+	filtered_adc = min(filtered_adc, MEASURE_MAX_RESULT);
 
 	debug_report_int16(PSTR("fc"), &meascurr.old_filter_report_value,
 			   (int16_t)filtered_adc);
