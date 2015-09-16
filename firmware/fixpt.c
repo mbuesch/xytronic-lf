@@ -38,10 +38,10 @@ int32_t fixpt_big_to_int(fixpt_big_t p)
 
 	if (p < 0) {
 		p = -p;
-		i = ((int32_t)p + (1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT;
+		i = ((int32_t)p + (int32_t)(1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT;
 		i = -i;
 	} else {
-		i = ((int32_t)p + (1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT;
+		i = ((int32_t)p + (int32_t)(1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT;
 	}
 
 	return i;
