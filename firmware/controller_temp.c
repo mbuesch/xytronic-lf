@@ -33,13 +33,15 @@
 
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP_NORMAL		3.0
-#define CONTRTEMP_PID_KI_NORMAL		0.1
-#define CONTRTEMP_PID_KD_NORMAL		0.2
+#define CONTRTEMP_PID_KP_NORMAL		4.5
+#define CONTRTEMP_PID_KI_NORMAL		0.06
+#define CONTRTEMP_PID_KD_NORMAL		1.0
+#define CONTRTEMP_PID_D_DECAY_NORMAL	1.0
 /* Temperature controller boost PID parameters */
-#define CONTRTEMP_PID_KP_BOOST		4.0
-#define CONTRTEMP_PID_KI_BOOST		0.2
-#define CONTRTEMP_PID_KD_BOOST		0.5
+#define CONTRTEMP_PID_KP_BOOST		6.0
+#define CONTRTEMP_PID_KI_BOOST		0.06
+#define CONTRTEMP_PID_KD_BOOST		1.5
+#define CONTRTEMP_PID_D_DECAY_BOOST	1.0
 
 
 struct temp_contr_context {
@@ -70,6 +72,7 @@ static fixpt_t temp_to_amps(fixpt_t temp)
 	return current;
 }
 
+//TODO add a current cut-off at max temp
 static void contrtemp_run(fixpt_t r)
 {
 	fixpt_t dt, y, y_current;
@@ -183,6 +186,8 @@ static void contrtemp_iron_button_handler(enum button_id button,
 				float_to_fixpt(CONTRTEMP_PID_KP_BOOST),
 				float_to_fixpt(CONTRTEMP_PID_KI_BOOST),
 				float_to_fixpt(CONTRTEMP_PID_KD_BOOST));
+		pid_set_d_decay_div(&contrtemp.pid,
+				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_BOOST));
 		return;
 	}
 	if (bstate == BSTATE_NEGEDGE) {
@@ -190,6 +195,8 @@ static void contrtemp_iron_button_handler(enum button_id button,
 				float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
 				float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
 				float_to_fixpt(CONTRTEMP_PID_KD_NORMAL));
+		pid_set_d_decay_div(&contrtemp.pid,
+				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_NORMAL));
 		return;
 	}
 }
@@ -201,16 +208,16 @@ void contrtemp_init(void)
 
 	memset(&contrtemp, 0, sizeof(contrtemp));
 
-	boost = button_is_pressed(BUTTON_IRON);
 	pid_init(&contrtemp.pid,
-		 boost ? float_to_fixpt(CONTRTEMP_PID_KP_BOOST) :
-			 float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
-		 boost ? float_to_fixpt(CONTRTEMP_PID_KI_BOOST) :
-			 float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
-		 boost ? float_to_fixpt(CONTRTEMP_PID_KD_BOOST) :
-			 float_to_fixpt(CONTRTEMP_PID_KD_NORMAL),
+		 float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
+		 float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
+		 float_to_fixpt(CONTRTEMP_PID_KD_NORMAL),
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
+
+	boost = button_is_pressed(BUTTON_IRON);
+	contrtemp_iron_button_handler(BUTTON_IRON,
+				      boost ? BSTATE_POSEDGE : BSTATE_NEGEDGE);
 
 	/* Get the initial setpoint from EEPROM. */
 	settings = get_settings();
