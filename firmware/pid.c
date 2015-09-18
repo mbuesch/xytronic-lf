@@ -81,7 +81,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 			else
 				d = y_poslim;
 		}
-		pid->prev_e = e;
+		pid->prev_e = fixpt_div(e, pid->d_decay_div);
 
 		pid_result = fixpt_add(pid_result, d);
 	}
@@ -99,4 +99,5 @@ void pid_init(struct pid *pid,
 	pid->y_neglim = y_neglim;
 	pid->y_poslim = y_poslim;
 	pid_set_factors(pid, kp, ki, kd);
+	pid->d_decay_div = int_to_fixpt(1);
 }
