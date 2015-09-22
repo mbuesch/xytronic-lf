@@ -321,7 +321,7 @@ void menu_work(void)
 
 	/* Evaluate error conditions. */
 	error = 0;
-	if (contrcurr_in_emerg())
+	if (contrcurr_get_emerg() & CONTRCURR_EMERG_UNPLAUS_FEEDBACK)
 		error |= 1;
 	if (contrtemp_in_emerg())
 		error |= 2;

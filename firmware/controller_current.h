@@ -18,8 +18,14 @@ void contrcurr_set_setpoint(fixpt_t w);
 void contrcurr_set_restricted(bool restricted);
 void contrcurr_set_enabled(bool enable,
 			   uint8_t disabled_curr_percent);
-void contrcurr_set_emerg(bool emergency);
-bool contrcurr_in_emerg(void);
+
+enum contrcurr_emerg_flags {
+	CONTRCURR_EMERG_UNPLAUS_FEEDBACK	= 1 << 0,
+	CONTRCURR_EMERG_HIGH_TEMP		= 1 << 1,
+};
+
+void contrcurr_set_emerg(uint8_t emergency_flags);
+uint8_t contrcurr_get_emerg(void);
 
 void contrcurr_init(void);
 

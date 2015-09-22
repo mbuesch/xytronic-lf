@@ -67,11 +67,15 @@ static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 static void meascurr_result_callback(fixpt_t measured_phys_value,
 				     enum measure_plausibility plaus)
 {
+	uint8_t emergency_flags;
+
 	/* Set/reset emergency status. */
+	emergency_flags = contrcurr_get_emerg();
 	if (plaus == MEAS_PLAUSIBLE)
-		contrcurr_set_emerg(false);
+		emergency_flags &= (uint8_t)~CONTRCURR_EMERG_UNPLAUS_FEEDBACK;
 	else if (plaus == MEAS_PLAUS_TIMEOUT)
-		contrcurr_set_emerg(true);
+		emergency_flags |= CONTRCURR_EMERG_UNPLAUS_FEEDBACK;
+	contrcurr_set_emerg(emergency_flags);
 
 	/* Set the controller feedback. */
 	if (plaus == MEAS_PLAUSIBLE) {

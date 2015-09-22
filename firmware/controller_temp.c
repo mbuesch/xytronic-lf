@@ -72,10 +72,10 @@ static fixpt_t temp_to_amps(fixpt_t temp)
 	return current;
 }
 
-//TODO add a current cut-off at max temp
 static void contrtemp_run(fixpt_t r)
 {
 	fixpt_t dt, y, y_current;
+	uint8_t emergency_flags;
 
 	if (!contrtemp.enabled)
 		return;
@@ -95,6 +95,20 @@ static void contrtemp_run(fixpt_t r)
 
 	/* Map the requested temperature to a heater current. */
 	y_current = temp_to_amps(y);
+
+	emergency_flags = contrcurr_get_emerg();
+	if (r > float_to_fixpt(CONTRTEMP_POSLIM)) {
+		/* The measured temperature is higher than the maximum.
+		 * We need to avoid damage.
+		 * Disable current by requesting an emergency in
+		 * the current controller.
+		 */
+		emergency_flags |= CONTRCURR_EMERG_HIGH_TEMP;
+		y_current = float_to_fixpt(CONTRCURR_NEGLIM);
+	} else {
+		emergency_flags &= (uint8_t)~CONTRCURR_EMERG_HIGH_TEMP;
+	}
+	contrcurr_set_emerg(emergency_flags);
 
 	debug_report_int24(PSTR("ty2"), &contrtemp.old_temp_control2,
 			   (int24_t)y_current);

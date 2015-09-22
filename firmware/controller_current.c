@@ -52,8 +52,8 @@
 struct current_contr_context {
 	bool enabled;
 	bool pid_disabled;
-	bool emergency;
 	bool restricted;
+	uint8_t emergency_flags;
 	struct pid pid;
 	fixpt_t feedback;
 	fixpt_t prev_y;
@@ -72,7 +72,7 @@ static void contrcurr_run(fixpt_t r)
 
 	if (!contrcurr.enabled)
 		return;
-	if (contrcurr.emergency)
+	if (contrcurr.emergency_flags)
 		return;
 
 	/* Get delta-t that elapsed since last run, in seconds */
@@ -165,11 +165,11 @@ void contrcurr_set_enabled(bool enable,
 	}
 }
 
-void contrcurr_set_emerg(bool emergency)
+void contrcurr_set_emerg(uint8_t emergency_flags)
 {
-	if (emergency != contrcurr.emergency) {
-		contrcurr.emergency = emergency;
-		if (emergency) {
+	if (emergency_flags != contrcurr.emergency_flags) {
+		contrcurr.emergency_flags = emergency_flags;
+		if (emergency_flags) {
 			/* In an emergency situation, disable the
 			 * heater current to avoid damage.
 			 */
@@ -178,9 +178,9 @@ void contrcurr_set_emerg(bool emergency)
 	}
 }
 
-bool contrcurr_in_emerg(void)
+uint8_t contrcurr_get_emerg(void)
 {
-	return contrcurr.emergency;
+	return contrcurr.emergency_flags;
 }
 
 void contrcurr_init(void)
