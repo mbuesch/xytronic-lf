@@ -116,7 +116,10 @@ static void menu_update_display(void)
 						 temp_int,
 						 (int16_t)CONTRTEMP_NEGLIM,
 						 (int16_t)CONTRTEMP_POSLIM);
-			strcpy_P(disp + 3, PSTR("C."));
+			if (contrtemp_boost_enabled())
+				strcpy_P(disp + 3, PSTR("B"));
+			else
+				strcpy_P(disp + 3, PSTR("C."));
 			break;
 		case MENU_SETTEMP:
 			temp_fixpt = contrtemp_get_setpoint();

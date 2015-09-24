@@ -19,6 +19,7 @@ void contrtemp_set_enabled(bool enabled);
 void contrtemp_set_emerg(bool emergency);
 bool contrtemp_in_emerg(void);
 bool contrtemp_is_heating_up(void);
+bool contrtemp_boost_enabled(void);
 
 void contrtemp_init(void);
 

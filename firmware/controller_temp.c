@@ -46,6 +46,7 @@
 
 struct temp_contr_context {
 	bool enabled;
+	bool boost_enabled;
 	bool emergency;
 	struct pid pid;
 	fixpt_t feedback;
@@ -192,6 +193,11 @@ bool contrtemp_is_heating_up(void)
 	return heating;
 }
 
+bool contrtemp_boost_enabled(void)
+{
+	return contrtemp.boost_enabled;
+}
+
 static void contrtemp_iron_button_handler(enum button_id button,
 					  enum button_state bstate)
 {
@@ -202,17 +208,17 @@ static void contrtemp_iron_button_handler(enum button_id button,
 				float_to_fixpt(CONTRTEMP_PID_KD_BOOST));
 		pid_set_d_decay_div(&contrtemp.pid,
 				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_BOOST));
-		return;
-	}
-	if (bstate == BSTATE_NEGEDGE) {
+		contrtemp.boost_enabled = true;
+	} else if (bstate == BSTATE_NEGEDGE) {
 		pid_set_factors(&contrtemp.pid,
 				float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
 				float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
 				float_to_fixpt(CONTRTEMP_PID_KD_NORMAL));
 		pid_set_d_decay_div(&contrtemp.pid,
 				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_NORMAL));
-		return;
+		contrtemp.boost_enabled = false;
 	}
+	menu_request_display_update();
 }
 
 void contrtemp_init(void)
