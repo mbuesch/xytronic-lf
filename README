@@ -1,0 +1,26 @@
+=====================================
+Xytronic LF-1600 Open Source Firmware
+=====================================
+
+Copyright (c) 2015 Michael Buesch <m@bues.ch>
+
+Licensed under the terms of the GNU General Public License version 2 or
+(at your option) any later version. 
+
+
+
+Installing the firmware:
+------------------------
+
+1) Set the fuse bits of the AtMega88 to:
+   LFUSE = %%LFUSE%%
+   HFUSE = %%HFUSE%%
+   EFUSE = %%EFUSE%%
+   Note that the original firmware uses different fuses. So this step must
+   not be omitted.
+
+2) Flash the binary firmware file xytronic-lf.hex to the program memory
+   of the AtMega88.
+
+3) Write the binary EEPROM image file xytronic-lf.eep.hex to the EEPROM
+   memory of the AtMega88.
