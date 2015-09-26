@@ -19,8 +19,8 @@ Installing the firmware:
    Note that the original firmware uses different fuses. So this step must
    not be omitted.
 
-2) Flash the binary firmware file xytronic-lf.hex to the program memory
+2) Flash the firmware image file xytronic-lf.hex to the program memory
    of the AtMega88.
 
-3) Write the binary EEPROM image file xytronic-lf.eep.hex to the EEPROM
-   memory of the AtMega88.
+3) Write the EEPROM image file xytronic-lf.eep.hex to the EEPROM memory
+   of the AtMega88.
