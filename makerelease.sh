@@ -53,4 +53,5 @@ hook_pre_archives()
 }
 
 project=xytronic-lf
+default_archives="tar.xz"
 makerelease "$@"
