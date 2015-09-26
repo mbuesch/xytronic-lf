@@ -2,7 +2,7 @@
 CONF_CALIB		:= 0
 
 # Project name
-NAME			:= xylf
+NAME			:= xytronic-lf
 
 # Project source files
 SRCS			:= bitmap.c \
