@@ -198,4 +198,8 @@ static inline fixpt_t fixpt_neg(fixpt_t a)
 	return (fixpt_t)-a;
 }
 
+/* Calculate: Absolute value of a
+ */
+fixpt_t fixpt_abs(fixpt_t a);
+
 #endif /* FIXEDPOINT_H_ */

@@ -87,3 +87,10 @@ fixpt_big_t fixpt_big_mul_div(fixpt_big_t a, fixpt_big_t b, fixpt_big_t c)
 
 	return tmp;
 }
+
+fixpt_t fixpt_abs(fixpt_t a)
+{
+	if (a < int_to_fixpt(0))
+		return fixpt_neg(a);
+	return a;
+}
