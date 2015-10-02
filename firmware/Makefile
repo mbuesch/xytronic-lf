@@ -1,5 +1,6 @@
 # Build configuration
 CONF_CALIB		:= 0
+CONF_DEBUG		:= 1
 
 # Project name
 NAME			:= xytronic-lf
@@ -10,7 +11,7 @@ SRCS			:= bitmap.c \
 			   $(if $(filter 1,$(CONF_CALIB)),calib_current.c) \
 			   controller_current.c \
 			   controller_temp.c \
-			   debug_uart.c \
+			   $(if $(filter 1,$(CONF_DEBUG)),debug_uart.c) \
 			   display.c \
 			   filter.c \
 			   fixpt.c \
@@ -46,7 +47,8 @@ FUNC_STACK_LIMIT	:= 64
 PROGRAMMER		:= avrisp2
 
 # Additional compiler flags
-CFLAGS			:= $(if $(filter 1,$(CONF_CALIB)),-DCONF_CALIB)
+CFLAGS			:= $(if $(filter 1,$(CONF_CALIB)),-DCONF_CALIB) \
+			   $(if $(filter 1,$(CONF_DEBUG)),-DCONF_DEBUG)
 LDFLAGS			:=
 
 # Additional "clean" and "distclean" target files
