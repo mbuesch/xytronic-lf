@@ -108,7 +108,7 @@ void settings_init(void)
 	settings_ee_index = found_index;
 
 	/* Read it from eeprom. */
-	eeprom_read_block_wdtsafe(&settings_cache,
-				  &ee_settings[found_index],
-				  sizeof(settings_cache));
+	eeprom_read_block(&settings_cache,
+			  &ee_settings[found_index],
+			  sizeof(settings_cache));
 }
