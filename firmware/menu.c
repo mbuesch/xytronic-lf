@@ -37,7 +37,9 @@
 enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
+#ifdef CONF_DEBUG
 	MENU_DEBUG,		/* Debug enable. */
+#endif
 #ifdef CONF_CALIB
 	MENU_CALIB,		/* Current calibration. */
 #endif
@@ -130,9 +132,11 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_POSLIM);
 			strcpy_P(disp + 3, PSTR("S"));
 			break;
+#ifdef CONF_DEBUG
 		case MENU_DEBUG:
 			strcpy_P(disp, PSTR("DBG"));
 			break;
+#endif
 #ifdef CONF_CALIB
 		case MENU_CALIB:
 			strcpy_P(disp, PSTR("CAL"));
@@ -217,7 +221,9 @@ static void menu_button_handler(enum button_id button,
 		}
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
+#ifdef CONF_DEBUG
 				menu_set_state(MENU_DEBUG);
+#endif
 				break;
 			}
 		}
@@ -242,6 +248,7 @@ static void menu_button_handler(enum button_id button,
 			}
 		}
 		break;
+#ifdef CONF_DEBUG
 	case MENU_DEBUG:
 		if (bstate == BSTATE_POSEDGE) {
 			if (button == BUTTON_PLUS) {
@@ -259,14 +266,15 @@ static void menu_button_handler(enum button_id button,
 				if (!debug_is_enabled()) {
 #ifdef CONF_CALIB
 					menu_set_state(MENU_CALIB);
-#else
+#else /* CONF_CALIB */
 					menu_set_state(MENU_CURTEMP);
-#endif
+#endif /* CONF_CALIB */
 					break;
 				}
 			}
 		}
 		break;
+#endif /* CONF_DEBUG */
 #ifdef CONF_CALIB
 	case MENU_CALIB:
 		if (bstate == BSTATE_POSEDGE) {
@@ -285,7 +293,7 @@ static void menu_button_handler(enum button_id button,
 			}
 		}
 		break;
-#endif
+#endif /* CONF_CALIB */
 	}
 }
 
@@ -298,7 +306,9 @@ void menu_work(void)
 	/* Menu timeouts */
 	switch (menu.state) {
 	case MENU_CURTEMP:
+#ifdef CONF_DEBUG
 	case MENU_DEBUG:
+#endif
 #ifdef CONF_CALIB
 	case MENU_CALIB:
 #endif
@@ -357,10 +367,14 @@ void menu_init(void)
 	buttons_register_handler(BUTTON_PLUS, menu_button_handler);
 	buttons_register_handler(BUTTON_MINUS, menu_button_handler);
 
+#ifdef CONF_DEBUG
 	if (button_is_pressed(BUTTON_SET)) {
 		debug_enable(true);
 		menu_set_state(MENU_DEBUG);
 	} else {
 		menu_set_state(MENU_CURTEMP);
 	}
+#else /* CONF_DEBUG */
+	menu_set_state(MENU_CURTEMP);
+#endif /* CONF_DEBUG */
 }
