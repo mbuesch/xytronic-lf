@@ -67,11 +67,11 @@ void settings_work(void)
 	settings_store_request = false;
 
 	/* Increment the serial number. This might wrap. */
-	settings_cache.serial = (uint8_t)(settings_cache.serial + 1u);
+	settings_cache.serial++;
 
 	/* Get the store index. */
 	index = settings_ee_index;
-	index = (uint8_t)(index + 1u);
+	index++;
 	if (index >= ARRAY_SIZE(ee_settings))
 		index = 0;
 	settings_ee_index = index;
@@ -95,7 +95,7 @@ void settings_init(void)
 	do {
 		found_index = next_index;
 
-		next_index = (uint8_t)(next_index + 1u);
+		next_index++;
 		if (next_index >= ARRAY_SIZE(ee_settings))
 			next_index = 0u;
 
