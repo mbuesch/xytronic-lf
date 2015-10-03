@@ -131,7 +131,6 @@ typedef __int24		int24_t;
 typedef __uint24	uint24_t;
 
 
-void eeprom_read_block_wdtsafe(void *_dst, const void *_src, size_t n);
 void eeprom_update_block_wdtsafe(const void *_src, void *dst, size_t n);
 
 
