@@ -26,10 +26,10 @@
 # define SCALE_IMPL	2
 #endif
 #ifndef UNSCALE_IMPL
-# define UNSCALE_IMPL	2
+# define UNSCALE_IMPL	1
 #endif
 #ifndef RESCALE_IMPL
-# define RESCALE_IMPL	2
+# define RESCALE_IMPL	1
 #endif
 
 
