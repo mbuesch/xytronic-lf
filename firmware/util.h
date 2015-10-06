@@ -131,9 +131,6 @@ typedef __int24		int24_t;
 typedef __uint24	uint24_t;
 
 
-void eeprom_update_block_wdtsafe(const void *_src, void *dst, size_t n);
-
-
 /* Disable interrupts globally. */
 static inline void irq_disable(void)
 {

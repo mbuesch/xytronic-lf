@@ -20,20 +20,4 @@
 
 #include "util.h"
 
-#include <avr/wdt.h>
-#include <avr/eeprom.h>
 
-
-/* Update a block of data in the EEPROM.
- * This function resets the watchdog timer after each processed byte.
- */
-void eeprom_update_block_wdtsafe(const void *_src, void *_dst, size_t n)
-{
-	const uint8_t *src = _src;
-	uint8_t *dst = _dst;
-
-	for ( ; n; n--, dst++, src++) {
-		eeprom_update_byte(dst, *src);
-		wdt_reset();
-	}
-}
