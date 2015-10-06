@@ -7,7 +7,7 @@
 
 struct settings {
 	fixpt_t temp_setpoint;
-	uint8_t reserved[13];
+	uint8_t reserved[12];
 	uint8_t serial;
 } _packed;
 

@@ -28,12 +28,18 @@
 #include <avr/eeprom.h>
 
 
-static struct timer settings_timer;
-static bool settings_store_request;
-static uint8_t settings_ee_index;
+struct settings_context {
+	struct timer store_timer;
+	bool store_request;
 
-static struct settings settings_cache;
+	struct settings cache;
 
+	uint8_t ee_index;
+	uint8_t ee_write_offset;
+};
+
+
+static struct settings_context settings;
 
 /* The permanent EEPROM storage. */
 #define NR_EE_SETTINGS	((E2END + 1) / sizeof(struct settings))
@@ -45,41 +51,109 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 };
 
 
+static uint8_t ee_read_byte(uint16_t addr)
+{
+	uint8_t sreg, data;
+
+	sreg = irq_disable_save();
+
+	eeprom_busy_wait();
+	EEAR = addr;
+	EECR |= (1 << EERE);
+	data = EEDR;
+
+	irq_restore(sreg);
+
+	return data;
+}
+
+static void ee_read_block(void *dest, uint16_t addr, uint8_t count)
+{
+	uint8_t *d = dest;
+
+	for ( ; count; count--, d++, addr++)
+		*d = ee_read_byte(addr);
+}
+
+ISR(EE_READY_vect)
+{
+	uint16_t address;
+	uint8_t data;
+	uint8_t index, offset;
+
+	index = settings.ee_index;
+	offset = settings.ee_write_offset;
+
+	address = (uint16_t)((uint8_t *)&ee_settings[index] + offset);
+	data = *((uint8_t *)&settings.cache + offset);
+
+	EEAR = address;
+	/* Read the byte. */
+	EECR |= (1 << EERE);
+	if (EEDR == data) {
+		/* The data in EEPROM matches the data to be written.
+		 * No write is needed.
+		 * This interrupt will trigger again immediately.
+		 */
+	} else {
+		/* Start programming of the byte.
+		 * This interrupt will trigger again when programming finished.
+		 */
+		EEDR = data;
+		EECR |= (1 << EEMPE);
+		EECR |= (1 << EEPE);
+	}
+
+	offset++;
+	settings.ee_write_offset = offset;
+	if (offset >= sizeof(struct settings)) {
+		/* Done writing. Disable the interrupt. */
+		EECR &= (uint8_t)~(1 << EERIE);
+	}
+}
+
 struct settings * get_settings(void)
 {
-	return &settings_cache;
+	return &settings.cache;
 }
 
 void store_settings(void)
 {
-	settings_store_request = true;
-	timer_arm(&settings_timer, 1000);
+	settings.store_request = true;
+	timer_arm(&settings.store_timer, 1000);
 }
 
 void settings_work(void)
 {
-	uint8_t index;
+	uint8_t sreg, index;
 
-	if (!settings_store_request)
+	if (!settings.store_request)
 		return;
-	if (!timer_expired(&settings_timer))
+	if (!timer_expired(&settings.store_timer))
 		return;
-	settings_store_request = false;
+	settings.store_request = false;
 
 	/* Increment the serial number. This might wrap. */
-	settings_cache.serial++;
+	settings.cache.serial++;
 
-	/* Get the store index. */
-	index = settings_ee_index;
+	sreg = irq_disable_save();
+
+	/* Increment the store index. */
+	index = settings.ee_index;
 	index++;
 	if (index >= ARRAY_SIZE(ee_settings))
 		index = 0;
-	settings_ee_index = index;
+	settings.ee_index = index;
 
-	/* Store the settings in eeprom. */
-	eeprom_update_block_wdtsafe(&settings_cache,
-				    &ee_settings[index],
-				    sizeof(settings_cache));
+	/* Reset the store byte offset. */
+	settings.ee_write_offset = 0;
+
+	/* Enable the eeprom-ready interrupt.
+	 * It will fire, if the EEPROM is ready.
+	 */
+	EECR |= (1 << EERIE);
+
+	irq_restore(sreg);
 }
 
 void settings_init(void)
@@ -87,10 +161,15 @@ void settings_init(void)
 	uint8_t next_index, found_index;
 	uint8_t serial, next_serial;
 
+	build_assert(sizeof(struct settings) == 16);
+
+	memset(&settings, 0, sizeof(settings));
+
 	/* Find the latest settings in the eeprom.
 	 * The latest setting is the one with the largest
-	 * index. However, wrap around must be considered. */
-	serial = eeprom_read_byte(&ee_settings[0].serial);
+	 * index. However, wrap around must be considered.
+	 */
+	serial = ee_read_byte((uint16_t)&ee_settings[0].serial);
 	next_index = 0;
 	do {
 		found_index = next_index;
@@ -99,16 +178,16 @@ void settings_init(void)
 		if (next_index >= ARRAY_SIZE(ee_settings))
 			next_index = 0u;
 
-		next_serial = eeprom_read_byte(&ee_settings[next_index].serial);
+		next_serial = ee_read_byte((uint16_t)&ee_settings[next_index].serial);
 		if (next_serial != ((serial + 1u) & 0xFFu))
 			break;
 
 		serial = next_serial;
 	} while (next_index != 0);
-	settings_ee_index = found_index;
+	settings.ee_index = found_index;
 
-	/* Read it from eeprom. */
-	eeprom_read_block(&settings_cache,
-			  &ee_settings[found_index],
-			  sizeof(settings_cache));
+	/* Read settings from EEPROM. */
+	ee_read_block(&settings.cache,
+		      (uint16_t)&ee_settings[found_index],
+		      sizeof(settings.cache));
 }
