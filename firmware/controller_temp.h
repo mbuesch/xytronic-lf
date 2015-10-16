@@ -9,6 +9,15 @@
 #define CONTRTEMP_POSLIM	480.0
 
 
+enum contrtemp_boostmode {
+	TEMPBOOST_NORMAL,
+	TEMPBOOST_BOOST1,
+	TEMPBOOST_BOOST2,
+
+	NR_BOOST_MODES,
+};
+
+
 void contrtemp_set_feedback(fixpt_t r);
 fixpt_t contrtemp_get_feedback(void);
 
@@ -19,7 +28,7 @@ void contrtemp_set_enabled(bool enabled);
 void contrtemp_set_emerg(bool emergency);
 bool contrtemp_in_emerg(void);
 bool contrtemp_is_heating_up(void);
-bool contrtemp_boost_enabled(void);
+enum contrtemp_boostmode contrtemp_get_boost_mode(void);
 
 void contrtemp_init(void);
 

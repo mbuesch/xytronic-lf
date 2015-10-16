@@ -118,10 +118,20 @@ static void menu_update_display(void)
 						 temp_int,
 						 (int16_t)CONTRTEMP_NEGLIM,
 						 (int16_t)CONTRTEMP_POSLIM);
-			if (contrtemp_boost_enabled())
-				strcpy_P(disp + 3, PSTR("B"));
-			else
+			switch (contrtemp_get_boost_mode()) {
+			case TEMPBOOST_NORMAL:
 				strcpy_P(disp + 3, PSTR("C."));
+				break;
+			case TEMPBOOST_BOOST1:
+				strcpy_P(disp + 3, PSTR("b."));
+				break;
+			case TEMPBOOST_BOOST2:
+				strcpy_P(disp + 3, PSTR("8."));
+				break;
+			case NR_BOOST_MODES:
+			default:
+				break;
+			}
 			break;
 		case MENU_SETTEMP:
 			temp_fixpt = contrtemp_get_setpoint();

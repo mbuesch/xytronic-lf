@@ -34,23 +34,30 @@
 
 /* Temperature controller PID parameters */
 #define CONTRTEMP_PID_KP_NORMAL		4.5
-#define CONTRTEMP_PID_KI_NORMAL		0.06
+#define CONTRTEMP_PID_KI_NORMAL		0.08
 #define CONTRTEMP_PID_KD_NORMAL		1.0
-#define CONTRTEMP_PID_D_DECAY_NORMAL	1.0
-/* Temperature controller boost PID parameters */
-#define CONTRTEMP_PID_KP_BOOST		12.0
-#define CONTRTEMP_PID_KI_BOOST		0.1
-#define CONTRTEMP_PID_KD_BOOST		1.5
-#define CONTRTEMP_PID_D_DECAY_BOOST	1.0
+#define CONTRTEMP_PID_D_DECAY_NORMAL	1.2
+/* Temperature controller boost (1) PID parameters */
+#define CONTRTEMP_PID_KP_BOOST1		6.0
+#define CONTRTEMP_PID_KI_BOOST1		0.08
+#define CONTRTEMP_PID_KD_BOOST1		1.0
+#define CONTRTEMP_PID_D_DECAY_BOOST1	1.5
+/* Temperature controller boost (2) PID parameters */
+#define CONTRTEMP_PID_KP_BOOST2		12.0
+#define CONTRTEMP_PID_KI_BOOST2		0.1
+#define CONTRTEMP_PID_KD_BOOST2		1.5
+#define CONTRTEMP_PID_D_DECAY_BOOST2	1.5
 
 
 struct temp_contr_context {
 	bool enabled;
-	bool boost_enabled;
 	bool emergency;
+
+	enum contrtemp_boostmode boost_mode;
+
 	struct pid pid;
 	fixpt_t feedback;
-	struct timer timer;
+	struct timer dt_timer;
 
 	int24_t old_temp_feedback;
 	int24_t old_temp_control1;
@@ -59,6 +66,50 @@ struct temp_contr_context {
 
 static struct temp_contr_context contrtemp;
 
+
+enum contrtemp_boostmode contrtemp_get_boost_mode(void)
+{
+	return contrtemp.boost_mode;
+}
+
+static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
+{
+	switch (new_boost_mode) {
+	case TEMPBOOST_NORMAL:
+		pid_set_factors(&contrtemp.pid,
+				float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
+				float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
+				float_to_fixpt(CONTRTEMP_PID_KD_NORMAL));
+		pid_set_d_decay_div(&contrtemp.pid,
+				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_NORMAL));
+		break;
+	case TEMPBOOST_BOOST1:
+		pid_set_factors(&contrtemp.pid,
+				float_to_fixpt(CONTRTEMP_PID_KP_BOOST1),
+				float_to_fixpt(CONTRTEMP_PID_KI_BOOST1),
+				float_to_fixpt(CONTRTEMP_PID_KD_BOOST1));
+		pid_set_d_decay_div(&contrtemp.pid,
+				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_BOOST1));
+		break;
+	case TEMPBOOST_BOOST2:
+		pid_set_factors(&contrtemp.pid,
+				float_to_fixpt(CONTRTEMP_PID_KP_BOOST2),
+				float_to_fixpt(CONTRTEMP_PID_KI_BOOST2),
+				float_to_fixpt(CONTRTEMP_PID_KD_BOOST2));
+		pid_set_d_decay_div(&contrtemp.pid,
+				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_BOOST2));
+		break;
+	case NR_BOOST_MODES:
+	default:
+		return;
+	}
+
+	contrtemp.boost_mode = new_boost_mode;
+
+	debug_print_int16(PSTR("tb"), (int16_t)new_boost_mode);
+
+	menu_request_display_update();
+}
 
 static fixpt_t temp_to_amps(fixpt_t temp)
 {
@@ -84,9 +135,9 @@ static void contrtemp_run(fixpt_t r)
 		return;
 
 	/* Get delta-t that elapsed since last run, in seconds */
-	dt = fixpt_div(int_to_fixpt(timer_ms_since(&contrtemp.timer)),
+	dt = fixpt_div(int_to_fixpt(timer_ms_since(&contrtemp.dt_timer)),
 		       int_to_fixpt(1000));
-	timer_set_now(&contrtemp.timer);
+	timer_set_now(&contrtemp.dt_timer);
 
 	/* Run the PID controller */
 	y = pid_run(&contrtemp.pid, dt, r);
@@ -153,28 +204,37 @@ fixpt_t contrtemp_get_setpoint(void)
 	return pid_get_setpoint(&contrtemp.pid);
 }
 
+static void do_set_enabled(bool enabled)
+{
+	contrtemp.enabled = enabled;
+
+	/* Reset the controller. */
+	pid_reset(&contrtemp.pid);
+	timer_set_now(&contrtemp.dt_timer);
+	contrtemp_set_boost_mode(TEMPBOOST_NORMAL);
+}
+
 void contrtemp_set_enabled(bool enabled)
 {
-	if (contrtemp.enabled != enabled) {
-		contrtemp.enabled = enabled;
+	if (contrtemp.enabled != enabled)
+		do_set_enabled(enabled);
+}
 
-		/* Reset the controller. */
-		pid_reset(&contrtemp.pid);
-		timer_set_now(&contrtemp.timer);
+static void do_set_emerg(bool emergency)
+{
+	contrtemp.emergency = emergency;
+	if (emergency) {
+		/* In an emergency situation, disable the
+		 * heater current to avoid damage.
+		 */
+		contrcurr_set_setpoint(float_to_fixpt(CONTRCURR_NEGLIM));
 	}
 }
 
 void contrtemp_set_emerg(bool emergency)
 {
-	if (emergency != contrtemp.emergency) {
-		contrtemp.emergency = emergency;
-		if (emergency) {
-			/* In an emergency situation, disable the
-			 * heater current to avoid damage.
-			 */
-			contrcurr_set_setpoint(float_to_fixpt(CONTRCURR_NEGLIM));
-		}
-	}
+	if (emergency != contrtemp.emergency)
+		do_set_emerg(emergency);
 }
 
 bool contrtemp_in_emerg(void)
@@ -184,47 +244,27 @@ bool contrtemp_in_emerg(void)
 
 bool contrtemp_is_heating_up(void)
 {
-	bool heating;
-	fixpt_t diff;
-
-	diff = fixpt_sub(contrtemp_get_setpoint(), contrtemp.feedback);
-	heating = (diff > float_to_fixpt(2.0));
-
-	return heating;
-}
-
-bool contrtemp_boost_enabled(void)
-{
-	return contrtemp.boost_enabled;
+	return contrtemp.feedback < contrtemp_get_setpoint();
 }
 
 static void contrtemp_iron_button_handler(enum button_id button,
 					  enum button_state bstate)
 {
+	enum contrtemp_boostmode new_boost_mode;
+
 	if (bstate == BSTATE_POSEDGE) {
-		pid_set_factors(&contrtemp.pid,
-				float_to_fixpt(CONTRTEMP_PID_KP_BOOST),
-				float_to_fixpt(CONTRTEMP_PID_KI_BOOST),
-				float_to_fixpt(CONTRTEMP_PID_KD_BOOST));
-		pid_set_d_decay_div(&contrtemp.pid,
-				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_BOOST));
-		contrtemp.boost_enabled = true;
-	} else if (bstate == BSTATE_NEGEDGE) {
-		pid_set_factors(&contrtemp.pid,
-				float_to_fixpt(CONTRTEMP_PID_KP_NORMAL),
-				float_to_fixpt(CONTRTEMP_PID_KI_NORMAL),
-				float_to_fixpt(CONTRTEMP_PID_KD_NORMAL));
-		pid_set_d_decay_div(&contrtemp.pid,
-				    float_to_fixpt(CONTRTEMP_PID_D_DECAY_NORMAL));
-		contrtemp.boost_enabled = false;
+		new_boost_mode = contrtemp.boost_mode;
+		new_boost_mode++;
+		if (new_boost_mode >= NR_BOOST_MODES)
+			new_boost_mode = 0;
+
+		contrtemp_set_boost_mode(new_boost_mode);
 	}
-	menu_request_display_update();
 }
 
 void contrtemp_init(void)
 {
 	struct settings *settings;
-	uint8_t boost;
 
 	memset(&contrtemp, 0, sizeof(contrtemp));
 
@@ -234,18 +274,16 @@ void contrtemp_init(void)
 		 float_to_fixpt(CONTRTEMP_PID_KD_NORMAL),
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
-
-	boost = button_is_pressed(BUTTON_IRON);
-	contrtemp_iron_button_handler(BUTTON_IRON,
-				      boost ? BSTATE_POSEDGE : BSTATE_NEGEDGE);
+	pid_set_d_decay_div(&contrtemp.pid,
+			    float_to_fixpt(CONTRTEMP_PID_D_DECAY_NORMAL));
 
 	/* Get the initial setpoint from EEPROM. */
 	settings = get_settings();
 	pid_set_setpoint(&contrtemp.pid, settings->temp_setpoint);
 
 	/* Enable the controller. */
-	contrtemp_set_enabled(true);
-	contrtemp_set_emerg(false);
+	do_set_enabled(true);
+	do_set_emerg(false);
 
 	/* Register handler for the iron button. */
 	buttons_register_handler(BUTTON_IRON,
