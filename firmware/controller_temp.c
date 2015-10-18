@@ -69,24 +69,29 @@ static struct temp_contr_context contrtemp;
 static const struct pid_k_set __flash contrtemp_normal_factors = {
 	.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_NORMAL),
 	.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),
-	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),
+	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_NORMAL),
 	.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_NORMAL),
 };
 
 static const struct pid_k_set __flash contrtemp_boost1_factors = {
 	.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST1),
 	.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST1),
-	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST1),
+	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST1),
 	.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST1),
 };
 
 static const struct pid_k_set __flash contrtemp_boost2_factors = {
 	.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST2),
 	.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST2),
-	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST2),
+	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST2),
 	.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST2),
 };
 
+
+void contrtemp_get_pid_factors(enum contrtemp_boostmode for_mode)
+{
+	//TODO
+}
 
 enum contrtemp_boostmode contrtemp_get_boost_mode(void)
 {
