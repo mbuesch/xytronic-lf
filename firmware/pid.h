@@ -4,11 +4,15 @@
 #include "fixpt.h"
 
 
-struct pid {
+struct pid_k_set {
 	fixpt_t kp;
 	fixpt_t ki;
 	fixpt_t kd;
 	fixpt_t d_decay_div;
+};
+
+struct pid {
+	struct pid_k_set k;
 
 	fixpt_t setpoint;
 	fixpt_t y_neglim;
@@ -20,16 +24,10 @@ struct pid {
 
 void pid_reset(struct pid *pid);
 
-void pid_set_factors(struct pid *pid,
-		     fixpt_t kp, fixpt_t ki, fixpt_t kd);
-
-static inline void pid_set_d_decay_div(struct pid *pid, fixpt_t decay_div)
-{
-	pid->d_decay_div = decay_div;
-}
+void pid_set_factors(struct pid *pid, const struct pid_k_set *k);
 
 void pid_init(struct pid *pid,
-	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
+	      const struct pid_k_set *k,
 	      fixpt_t y_neglim, fixpt_t y_poslim);
 
 static inline void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)

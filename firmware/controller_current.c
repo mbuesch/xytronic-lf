@@ -44,6 +44,7 @@
 #define CONTRCURR_PID_KP	0.2
 #define CONTRCURR_PID_KI	0.5
 #define CONTRCURR_PID_KD	0.0
+#define CONTRCURR_PID_D_DECAY	1.0
 /* PID cut off current. PID is only active below this setpoint. */
 #define CONTRCURR_PID_CUTOFF_HI	1.7
 #define CONTRCURR_PID_CUTOFF_LO	1.0
@@ -64,6 +65,13 @@ struct current_contr_context {
 };
 
 static struct current_contr_context contrcurr;
+
+static const struct pid_k_set __flash contrcurr_factors = {
+	.kp		= FLOAT_TO_FIXPT(CONTRCURR_PID_KP),
+	.ki		= FLOAT_TO_FIXPT(CONTRCURR_PID_KI),
+	.kd		= FLOAT_TO_FIXPT(CONTRCURR_PID_KD),
+	.d_decay_div	= FLOAT_TO_FIXPT(CONTRCURR_PID_D_DECAY),
+};
 
 
 static void contrcurr_run(fixpt_t r)
@@ -185,12 +193,12 @@ uint8_t contrcurr_get_emerg(void)
 
 void contrcurr_init(void)
 {
+	struct pid_k_set k_set;
+
 	memset(&contrcurr, 0, sizeof(contrcurr));
 
-	pid_init(&contrcurr.pid,
-		 float_to_fixpt(CONTRCURR_PID_KP),
-		 float_to_fixpt(CONTRCURR_PID_KI),
-		 float_to_fixpt(CONTRCURR_PID_KD),
+	k_set = contrcurr_factors;
+	pid_init(&contrcurr.pid, &k_set,
 		 float_to_fixpt(CONTRCURR_NEGLIM),
 		 float_to_fixpt(CONTRCURR_POSLIM));
 

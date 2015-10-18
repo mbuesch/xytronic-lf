@@ -30,12 +30,9 @@ void pid_reset(struct pid *pid)
 	pid->integr = int_to_fixpt(0);
 }
 
-void pid_set_factors(struct pid *pid,
-		     fixpt_t kp, fixpt_t ki, fixpt_t kd)
+void pid_set_factors(struct pid *pid, const struct pid_k_set *k)
 {
-	pid->kp = kp;
-	pid->ki = ki;
-	pid->kd = kd;
+	pid->k = *k;
 	pid_reset(pid);
 }
 
@@ -52,7 +49,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	e = fixpt_sub(pid->setpoint, r);
 
 	/* P term */
-	kp = pid->kp;
+	kp = pid->k.kp;
 	if (kp != int_to_fixpt(0)) {
 		p = fixpt_mul(kp, e);
 
@@ -60,7 +57,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	}
 
 	/* I term */
-	ki = pid->ki;
+	ki = pid->k.ki;
 	if (ki != int_to_fixpt(0)) {
 		i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(ki, e), dt));
 		i = clamp(i, y_neglim, y_poslim);
@@ -70,7 +67,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	}
 
 	/* D term */
-	kd = pid->kd;
+	kd = pid->k.kd;
 	if (kd != int_to_fixpt(0)) {
 		de = fixpt_sub(e, pid->prev_e);
 		if (dt) {
@@ -81,7 +78,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 			else
 				d = y_poslim;
 		}
-		pid->prev_e = fixpt_div(e, pid->d_decay_div);
+		pid->prev_e = fixpt_div(e, pid->k.d_decay_div);
 
 		pid_result = fixpt_add(pid_result, d);
 	}
@@ -92,12 +89,11 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 }
 
 void pid_init(struct pid *pid,
-	      fixpt_t kp, fixpt_t ki, fixpt_t kd,
+	      const struct pid_k_set *k,
 	      fixpt_t y_neglim, fixpt_t y_poslim)
 {
 	memset(pid, 0, sizeof(*pid));
 	pid->y_neglim = y_neglim;
 	pid->y_poslim = y_poslim;
-	pid_set_factors(pid, kp, ki, kd);
-	pid->d_decay_div = int_to_fixpt(1);
+	pid_set_factors(pid, k);
 }
