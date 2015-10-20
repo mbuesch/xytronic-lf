@@ -3,11 +3,14 @@
 
 #include "util.h"
 #include "fixpt.h"
+#include "pid.h"
+#include "controller_temp.h"
 
 
 struct settings {
 	fixpt_t temp_setpoint;
-	uint8_t reserved[12];
+	struct pid_k_set temp_k[NR_BOOST_MODES];
+	uint8_t reserved[24];
 	uint8_t serial;
 } _packed;
 

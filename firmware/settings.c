@@ -22,6 +22,7 @@
 #include "settings.h"
 #include "util.h"
 #include "timer.h"
+#include "controller_temp.h"
 
 #include <string.h>
 
@@ -46,6 +47,24 @@ static struct settings_context settings;
 static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 	[0 ... NR_EE_SETTINGS - 1] = {
 		.temp_setpoint	= FLOAT_TO_FIXPT(330.0),
+		.temp_k[TEMPBOOST_NORMAL] = {
+			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_NORMAL),
+			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),
+			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_NORMAL),
+			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_NORMAL),
+		},
+		.temp_k[TEMPBOOST_BOOST1] = {
+			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST1),
+			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST1),
+			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST1),
+			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST1),
+		},
+		.temp_k[TEMPBOOST_BOOST2] = {
+			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST2),
+			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST2),
+			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST2),
+			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST2),
+		},
 		.serial		= 0,
 	},
 };
@@ -161,7 +180,7 @@ void settings_init(void)
 	uint8_t next_index, found_index;
 	uint8_t serial, next_serial;
 
-	build_assert(sizeof(struct settings) == 16);
+	build_assert(sizeof(struct settings) == 64);
 
 	memset(&settings, 0, sizeof(settings));
 

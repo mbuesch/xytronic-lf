@@ -32,23 +32,6 @@
 #include <string.h>
 
 
-/* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP_NORMAL		4.0
-#define CONTRTEMP_PID_KI_NORMAL		0.08
-#define CONTRTEMP_PID_KD_NORMAL		1.0
-#define CONTRTEMP_PID_D_DECAY_NORMAL	1.2
-/* Temperature controller boost (1) PID parameters */
-#define CONTRTEMP_PID_KP_BOOST1		6.0
-#define CONTRTEMP_PID_KI_BOOST1		0.08
-#define CONTRTEMP_PID_KD_BOOST1		1.0
-#define CONTRTEMP_PID_D_DECAY_BOOST1	1.5
-/* Temperature controller boost (2) PID parameters */
-#define CONTRTEMP_PID_KP_BOOST2		12.0
-#define CONTRTEMP_PID_KI_BOOST2		0.1
-#define CONTRTEMP_PID_KD_BOOST2		1.5
-#define CONTRTEMP_PID_D_DECAY_BOOST2	1.5
-
-
 struct temp_contr_context {
 	bool enabled;
 	bool emergency;
@@ -66,32 +49,6 @@ struct temp_contr_context {
 
 static struct temp_contr_context contrtemp;
 
-static const struct pid_k_set __flash contrtemp_normal_factors = {
-	.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_NORMAL),
-	.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),
-	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_NORMAL),
-	.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_NORMAL),
-};
-
-static const struct pid_k_set __flash contrtemp_boost1_factors = {
-	.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST1),
-	.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST1),
-	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST1),
-	.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST1),
-};
-
-static const struct pid_k_set __flash contrtemp_boost2_factors = {
-	.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST2),
-	.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST2),
-	.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST2),
-	.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST2),
-};
-
-
-void contrtemp_get_pid_factors(enum contrtemp_boostmode for_mode)
-{
-	//TODO
-}
 
 enum contrtemp_boostmode contrtemp_get_boost_mode(void)
 {
@@ -100,24 +57,13 @@ enum contrtemp_boostmode contrtemp_get_boost_mode(void)
 
 static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
 {
-	struct pid_k_set k_set;
+	struct pid_k_set *k_set;
+	struct settings *settings;
 
-	switch (new_boost_mode) {
-	case TEMPBOOST_NORMAL:
-		k_set = contrtemp_normal_factors;
-		break;
-	case TEMPBOOST_BOOST1:
-		k_set = contrtemp_boost1_factors;
-		break;
-	case TEMPBOOST_BOOST2:
-		k_set = contrtemp_boost2_factors;
-		break;
-	case NR_BOOST_MODES:
-	default:
-		return;
-	}
+	settings = get_settings();
+	k_set = &settings->temp_k[new_boost_mode];
 
-	pid_set_factors(&contrtemp.pid, &k_set);
+	pid_set_factors(&contrtemp.pid, k_set);
 	contrtemp.boost_mode = new_boost_mode;
 
 	debug_print_int16(PSTR("tb"), (int16_t)new_boost_mode);
@@ -278,18 +224,17 @@ static void contrtemp_iron_button_handler(enum button_id button,
 
 void contrtemp_init(void)
 {
-	struct pid_k_set k_set;
+	struct pid_k_set *k_set;
 	struct settings *settings;
 
 	memset(&contrtemp, 0, sizeof(contrtemp));
 
-	k_set = contrtemp_normal_factors;
-	pid_init(&contrtemp.pid, &k_set,
+	settings = get_settings();
+
+	k_set = &settings->temp_k[TEMPBOOST_NORMAL];
+	pid_init(&contrtemp.pid, k_set,
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
-
-	/* Get the initial setpoint from EEPROM. */
-	settings = get_settings();
 	pid_set_setpoint(&contrtemp.pid, settings->temp_setpoint);
 
 	/* Enable the controller. */
