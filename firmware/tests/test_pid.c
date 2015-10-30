@@ -6,14 +6,17 @@
 static void check_common(void)
 {
 	struct pid pid;
+	struct pid_k_set k;
 
 	/* Check get/set setpoint */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(1.0),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(1.0);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -23,15 +26,18 @@ static void check_common(void)
 static void check_P(void)
 {
 	struct pid pid;
+	struct pid_k_set k;
 	fixpt_t ret;
 
 	/* Check P-term with KP=1 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(1.0),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(1.0);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -55,10 +61,12 @@ static void check_P(void)
 	/* Check P-term with KP=3 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(3.0),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(3.0);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -86,10 +94,12 @@ static void check_P(void)
 	/* Check P-term with KP=2.5 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(2.5),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(2.5);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -117,10 +127,12 @@ static void check_P(void)
 	/* Check P-term with KP=-2.5 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(-2.5),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(-2.5);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -149,15 +161,18 @@ static void check_P(void)
 static void check_I(void)
 {
 	struct pid pid;
+	struct pid_k_set k;
 	fixpt_t ret;
 
 	/* Check I-term with KI=1 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(0.0),		// kp
-		 float_to_fixpt(1.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(0.0);
+	k.ki = float_to_fixpt(1.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -197,10 +212,12 @@ static void check_I(void)
 	/* Check I-term with KI=-1 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(0.0),		// kp
-		 float_to_fixpt(-1.0),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(0.0);
+	k.ki = float_to_fixpt(-1.0);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -240,10 +257,12 @@ static void check_I(void)
 	/* Check I-term with KI=1.5 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(0.0),		// kp
-		 float_to_fixpt(1.5),		// ki
-		 float_to_fixpt(0.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(0.0);
+	k.ki = float_to_fixpt(1.5);
+	k.kd = float_to_fixpt(0.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -284,15 +303,18 @@ static void check_I(void)
 static void check_D(void)
 {
 	struct pid pid;
+	struct pid_k_set k;
 	fixpt_t ret;
 
 	/* Check D-term with KD=1 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(0.0),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(1.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(0.0);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(1.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -324,10 +346,12 @@ static void check_D(void)
 	/* Check D-term with KD=-1 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(0.0),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(-1.0),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(0.0);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(-1.0);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -360,10 +384,12 @@ static void check_D(void)
 	/* Check D-term with KD=1.5 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(0.0),		// kp
-		 float_to_fixpt(0.0),		// ki
-		 float_to_fixpt(1.5),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(0.0);
+	k.ki = float_to_fixpt(0.0);
+	k.kd = float_to_fixpt(1.5);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -396,15 +422,18 @@ static void check_D(void)
 static void check_PID(void)
 {
 	struct pid pid;
+	struct pid_k_set k;
 	fixpt_t ret;
 
 	/* Check PID with KP=1.5, KI=1.5, KD=1.5 */
 
 	memset(&pid, 0xFF, sizeof(pid));
-	pid_init(&pid,
-		 float_to_fixpt(1.5),		// kp
-		 float_to_fixpt(1.5),		// ki
-		 float_to_fixpt(1.5),		// kd
+	memset(&k, 0xFF, sizeof(k));
+	k.kp = float_to_fixpt(1.5);
+	k.ki = float_to_fixpt(1.5);
+	k.kd = float_to_fixpt(1.5);
+	k.d_decay_div = float_to_fixpt(1.0);
+	pid_init(&pid, &k,
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
