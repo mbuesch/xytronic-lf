@@ -97,6 +97,14 @@ static inline fixptfloat_t fixpt_to_float(fixpt_t p)
 	return fixpt_big_to_float(fixpt_inflate(p));
 }
 
+/* Get the integer part of a fixpt_t.
+ */
+int32_t fixpt_get_int_part(fixpt_t p);
+
+/* Get the decimal fractional part of a fixpt_t.
+ */
+uint32_t fixpt_get_dec_fract(fixpt_t p, uint8_t nr_digits);
+
 /* Calculate: a + b
  */
 static inline fixpt_big_t fixpt_big_add(fixpt_big_t a, fixpt_big_t b)

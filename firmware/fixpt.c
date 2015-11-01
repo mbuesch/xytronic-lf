@@ -47,6 +47,30 @@ int32_t fixpt_big_to_int(fixpt_big_t p)
 	return i;
 }
 
+int32_t fixpt_get_int_part(fixpt_t p)
+{
+	if (p >= int_to_fixpt(0))
+		return (int32_t)p >> FIXPT_SHIFT;
+	else
+		return -((-(int32_t)p) >> FIXPT_SHIFT);
+}
+
+uint32_t fixpt_get_dec_fract(fixpt_t p, uint8_t nr_digits)
+{
+	uint32_t dec_mask;
+	uint32_t dec_fract;
+
+	/* Mask the fractional part. */
+	p = fixpt_abs(p) & ((1L << FIXPT_SHIFT) - 1);
+	/* Calculate the decimal digit mask. */
+	dec_mask = (uint32_t)pow_int(10, nr_digits);
+	/* Calculate the decimal fractional. */
+	dec_fract = (uint32_t)udiv_round((uint32_t)p * dec_mask,
+					 (uint32_t)(1UL << FIXPT_SHIFT));
+
+	return dec_fract;
+}
+
 fixpt_big_t fixpt_big_mul(fixpt_big_t a, fixpt_big_t b)
 {
 	fixpt_big_t tmp;
