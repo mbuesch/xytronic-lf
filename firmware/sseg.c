@@ -83,8 +83,8 @@ static const uint8_t __flash char_to_segment_map[] = {
 	['H' - 'A']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
 			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (1 << SSEG_G),
-	['I' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (1 << SSEG_C) |
-			  (0 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
+	['I' - 'A']	= (0 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (0 << SSEG_D) | (1 << SSEG_E) | (1 << SSEG_F) |
 			  (0 << SSEG_G),
 	['J' - 'A']	= (0 << SSEG_A) | (1 << SSEG_B) | (1 << SSEG_C) |
 			  (1 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
