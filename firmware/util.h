@@ -93,6 +93,9 @@
 		(b) = __tmp;			\
 	} while (0)
 
+/* Compute b to the power of e. */
+int32_t pow_int(int16_t b, uint8_t e);
+
 /* Return the number of elements in a C array. */
 #define ARRAY_SIZE(x)		(sizeof(x) / sizeof((x)[0]))
 

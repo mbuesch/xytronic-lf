@@ -21,3 +21,26 @@
 #include "util.h"
 
 
+int32_t pow_int(int16_t b, uint8_t e)
+{
+	int32_t x, y;
+
+	if (!e)
+		return 1;
+
+	x = b;
+	while (!(e & 1)) {
+		e >>= 1;
+		x *= x;
+	}
+	y = x;
+	e >>= 1;
+	while (e) {
+		x *= x;
+		if (e & 1)
+			y *= x;
+		e >>= 1;
+	}
+
+	return y;
+}
