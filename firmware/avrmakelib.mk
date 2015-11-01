@@ -1,7 +1,7 @@
 #################################################
 # AVR make library                              #
 # Copyright (c) 2015 Michael Buesch <m@bues.ch> #
-# Version 1.0                                   #
+# Version 1.1                                   #
 #################################################
 
 ifeq ($(NAME),)
@@ -140,38 +140,79 @@ $(HEX): $(BIN)
 	@$(ECHO)
 	$(QUIET_SIZE) --format=SysV $(BIN)
 
-avrdude:
+define _avrdude_interactive
+  $(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
+    -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) -t
+endef
+
+define _avrdude_reset
+  $(AVRDUDE) -B $(AVRDUDE_SLOW_SPEED) -p $(AVRDUDE_ARCH) \
+    -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
+    -U signature:r:/dev/null:i -q -q
+endef
+
+define _avrdude_write_flash
+  $(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
+    -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
+    -U flash:w:$(HEX)
+endef
+
+define _avrdude_write_eeprom
+  $(TEST) -r $(EEP) && ( \
+    $(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
+    -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
+    -U eeprom:w:$(EEP) \
+  ) || $(TRUE)
+endef
+
+define _avrdude_write_fuse
+  $(AVRDUDE) -B $(AVRDUDE_SLOW_SPEED) -p $(AVRDUDE_ARCH) \
+    -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) -q -q \
+    -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m $(if $(EFUSE),-U efuse:w:$(EFUSE):m)
+endef
+
+write_flash: all
 	$(call PROGRAMMER_CMD_PROG_ENTER)
-	$(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
-	 -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) -t
+	$(call _avrdude_write_flash)
 	$(call PROGRAMMER_CMD_PWRCYCLE)
 	$(call PROGRAMMER_CMD_PROG_LEAVE)
 
-install: all
+writeflash: write_flash
+
+write_eeprom: all
 	$(call PROGRAMMER_CMD_PROG_ENTER)
-	$(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
-	 -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
-	 -U flash:w:$(HEX)
-	$(TEST) -r $(EEP) && ( \
-	 $(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
-	  -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
-	  -U eeprom:w:$(EEP) \
-	) || $(TRUE)
+	$(call _avrdude_write_eeprom)
 	$(call PROGRAMMER_CMD_PWRCYCLE)
 	$(call PROGRAMMER_CMD_PROG_LEAVE)
+
+writeeeprom: write_eeprom
+
+write_mem: all
+	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _avrdude_write_flash)
+	$(call _avrdude_write_eeprom)
+	$(call PROGRAMMER_CMD_PWRCYCLE)
+	$(call PROGRAMMER_CMD_PROG_LEAVE)
+
+writemem: write_mem
+install: write_mem
+
+write_fuse:
+	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _avrdude_write_fuse)
+	$(call PROGRAMMER_CMD_PWRCYCLE)
+	$(call PROGRAMMER_CMD_PROG_LEAVE)
+
+writefuse: write_fuse
 
 reset:
 	$(call PROGRAMMER_CMD_PROG_ENTER)
-	$(AVRDUDE) -B $(AVRDUDE_SLOW_SPEED) -p $(AVRDUDE_ARCH) \
-	 -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
-	 -U signature:r:/dev/null:i -q -q
+	$(call _avrdude_reset)
 	$(call PROGRAMMER_CMD_PWRCYCLE)
 
-writefuse:
+avrdude:
 	$(call PROGRAMMER_CMD_PROG_ENTER)
-	$(AVRDUDE) -B $(AVRDUDE_SLOW_SPEED) -p $(AVRDUDE_ARCH) \
-	 -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) -q -q \
-	 -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m $(if $(EFUSE),-U efuse:w:$(EFUSE):m)
+	$(call _avrdude_interactive)
 	$(call PROGRAMMER_CMD_PWRCYCLE)
 	$(call PROGRAMMER_CMD_PROG_LEAVE)
 
