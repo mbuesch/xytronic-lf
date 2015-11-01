@@ -1,5 +1,7 @@
 #include "test.h"
 #include "pid.c"
+
+#include "util.c"
 #include "fixpt.c"
 
 
