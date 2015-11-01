@@ -37,12 +37,11 @@
 enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
-#ifdef CONF_DEBUG
 	MENU_DEBUG,		/* Debug enable. */
-#endif
-#ifdef CONF_CALIB
 	MENU_CALIB,		/* Current calibration. */
-#endif
+	MENU_KP,		/* Temp KP config */
+	MENU_KI,		/* Temp KI config */
+	MENU_KD,		/* Temp KD config */
 };
 
 enum ramp_state {
@@ -142,16 +141,34 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_POSLIM);
 			strcpy_P(disp + 3, PSTR("S"));
 			break;
-#ifdef CONF_DEBUG
 		case MENU_DEBUG:
+			if (!CONF_DEBUG)
+				break;
 			strcpy_P(disp, PSTR("DBG"));
 			break;
-#endif
-#ifdef CONF_CALIB
 		case MENU_CALIB:
+			if (!CONF_CALIB)
+				break;
 			strcpy_P(disp, PSTR("CAL"));
 			break;
-#endif
+		case MENU_KP:
+			if (!CONF_KCONF)
+				break;
+			//TODO
+			strcpy_P(disp, PSTR("CO. P"));
+			break;
+		case MENU_KI:
+			if (!CONF_KCONF)
+				break;
+			//TODO
+			strcpy_P(disp, PSTR("CO. I"));
+			break;
+		case MENU_KD:
+			if (!CONF_KCONF)
+				break;
+			//TODO
+			strcpy_P(disp, PSTR("CO. D"));
+			break;
 		}
 	}
 
@@ -168,10 +185,49 @@ void menu_request_display_update(void)
 	mb();
 }
 
+static enum menu_state next_menu_state(enum menu_state cur_state)
+{
+	switch (cur_state) {
+	case MENU_CURTEMP:
+		if (CONF_DEBUG)
+			return MENU_DEBUG;
+		if (CONF_CALIB)
+			return MENU_CALIB;
+		if (CONF_KCONF)
+			return MENU_KP;
+		return MENU_CURTEMP;
+	case MENU_SETTEMP:
+		return MENU_CURTEMP;
+	case MENU_DEBUG:
+		if (CONF_CALIB)
+			return MENU_CALIB;
+		if (CONF_KCONF)
+			return MENU_KP;
+		return MENU_CURTEMP;
+	case MENU_CALIB:
+		if (CONF_KCONF)
+			return MENU_KP;
+		return MENU_CURTEMP;
+	case MENU_KP:
+		return MENU_KI;
+	case MENU_KI:
+		return MENU_KD;
+	case MENU_KD:
+		return MENU_CURTEMP;
+	}
+
+	return MENU_CURTEMP;
+}
+
 static void menu_set_state(enum menu_state new_state)
 {
 	menu.state = new_state;
 	menu_request_display_update();
+}
+
+static void menu_set_next_state(void)
+{
+	menu_set_state(next_menu_state(menu.state));
 }
 
 static void settemp_ramp_handler(bool up)
@@ -231,9 +287,7 @@ static void menu_button_handler(enum button_id button,
 		}
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
-#ifdef CONF_DEBUG
-				menu_set_state(MENU_DEBUG);
-#endif
+				menu_set_next_state();
 				break;
 			}
 		}
@@ -253,13 +307,14 @@ static void menu_button_handler(enum button_id button,
 		if (bstate == BSTATE_NEGEDGE) {
 			stop_ramping();
 			if (button == BUTTON_SET) {
-				menu_set_state(MENU_CURTEMP);
+				menu_set_next_state();
 				break;
 			}
 		}
 		break;
-#ifdef CONF_DEBUG
 	case MENU_DEBUG:
+		if (!CONF_DEBUG)
+			break;
 		if (bstate == BSTATE_POSEDGE) {
 			if (button == BUTTON_PLUS) {
 				debug_enable(true);
@@ -274,19 +329,15 @@ static void menu_button_handler(enum button_id button,
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
 				if (!debug_is_enabled()) {
-#ifdef CONF_CALIB
-					menu_set_state(MENU_CALIB);
-#else /* CONF_CALIB */
-					menu_set_state(MENU_CURTEMP);
-#endif /* CONF_CALIB */
+					menu_set_next_state();
 					break;
 				}
 			}
 		}
 		break;
-#endif /* CONF_DEBUG */
-#ifdef CONF_CALIB
 	case MENU_CALIB:
+		if (!CONF_CALIB)
+			break;
 		if (bstate == BSTATE_POSEDGE) {
 			if (button == BUTTON_PLUS ||
 			    button == BUTTON_MINUS) {
@@ -298,12 +349,50 @@ static void menu_button_handler(enum button_id button,
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_SET) {
 				calcurr_set_enabled(false);
-				menu_set_state(MENU_CURTEMP);
+				menu_set_next_state();
 				break;
 			}
 		}
 		break;
-#endif /* CONF_CALIB */
+	case MENU_KP:
+		if (!CONF_KCONF)
+			break;
+		if (bstate == BSTATE_POSEDGE) {
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_SET) {
+				menu_set_next_state();
+				break;
+			}
+		}
+		//TODO
+		break;
+	case MENU_KI:
+		if (!CONF_KCONF)
+			break;
+		if (bstate == BSTATE_POSEDGE) {
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_SET) {
+				menu_set_next_state();
+				break;
+			}
+		}
+		//TODO
+		break;
+	case MENU_KD:
+		if (!CONF_KCONF)
+			break;
+		if (bstate == BSTATE_POSEDGE) {
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_SET) {
+				menu_set_next_state();
+				break;
+			}
+		}
+		//TODO
+		break;
 	}
 }
 
@@ -316,12 +405,11 @@ void menu_work(void)
 	/* Menu timeouts */
 	switch (menu.state) {
 	case MENU_CURTEMP:
-#ifdef CONF_DEBUG
 	case MENU_DEBUG:
-#endif
-#ifdef CONF_CALIB
 	case MENU_CALIB:
-#endif
+	case MENU_KP:
+	case MENU_KI:
+	case MENU_KD:
 		break;
 	case MENU_SETTEMP:
 		if (timer_expired(&menu.timeout)) {
@@ -377,14 +465,14 @@ void menu_init(void)
 	buttons_register_handler(BUTTON_PLUS, menu_button_handler);
 	buttons_register_handler(BUTTON_MINUS, menu_button_handler);
 
-#ifdef CONF_DEBUG
-	if (button_is_pressed(BUTTON_SET)) {
-		debug_enable(true);
-		menu_set_state(MENU_DEBUG);
+	if (CONF_DEBUG) {
+		if (button_is_pressed(BUTTON_SET)) {
+			debug_enable(true);
+			menu_set_state(MENU_DEBUG);
+		} else {
+			menu_set_state(MENU_CURTEMP);
+		}
 	} else {
 		menu_set_state(MENU_CURTEMP);
 	}
-#else /* CONF_DEBUG */
-	menu_set_state(MENU_CURTEMP);
-#endif /* CONF_DEBUG */
 }

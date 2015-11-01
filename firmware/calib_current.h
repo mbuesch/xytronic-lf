@@ -3,7 +3,7 @@
 
 #include "util.h"
 
-#ifdef CONF_CALIB
+#if CONF_CALIB
 
 void calcurr_work(void);
 

@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 
-#ifdef CONF_DEBUG
+#if CONF_DEBUG
 
 
 void debug_print_int32(const char __flash *prefix, int32_t value);

@@ -65,9 +65,9 @@ FUNC_STACK_LIMIT	:= 64
 PROGRAMMER		:= avrisp2
 
 # Additional compiler flags
-CFLAGS			:= $(if $(call streq,1,$(CONF_CALIB)),-DCONF_CALIB) \
-			   $(if $(call streq,1,$(CONF_DEBUG)),-DCONF_DEBUG) \
-			   $(if $(call streq,1,$(CONF_KCONF)),-DCONF_KCONF)
+CFLAGS			:= -DCONF_CALIB=$(CONF_CALIB) \
+			   -DCONF_DEBUG=$(CONF_DEBUG) \
+			   -DCONF_KCONF=$(CONF_KCONF)
 LDFLAGS			:=
 
 # Additional "clean" and "distclean" target files
