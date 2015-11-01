@@ -1,6 +1,8 @@
 #include "test.h"
 #include "util.h"
 
+#include "util.c"
+
 
 static void check_util(void)
 {
@@ -131,6 +133,35 @@ static void check_util(void)
 	CHECK(ret == 1);
 	ret = udiv_round(15, 6);
 	CHECK(ret == 3);
+
+
+	/* Check: pow_int() */
+
+	CHECK_EQ_II(pow_int(0, 1), 0);
+	CHECK_EQ_II(pow_int(10, 0), 1);
+	CHECK_EQ_II(pow_int(10, 1), 10);
+	CHECK_EQ_II(pow_int(10, 2), 100);
+	CHECK_EQ_II(pow_int(10, 3), 1000);
+	CHECK_EQ_II(pow_int(10, 4), 10000);
+	CHECK_EQ_II(pow_int(10, 5), 100000);
+	CHECK_EQ_II(pow_int(-10, 0), 1);
+	CHECK_EQ_II(pow_int(-10, 1), -10);
+	CHECK_EQ_II(pow_int(-10, 2), 100);
+	CHECK_EQ_II(pow_int(-10, 3), -1000);
+	CHECK_EQ_II(pow_int(-10, 4), 10000);
+	CHECK_EQ_II(pow_int(-10, 5), -100000);
+	CHECK_EQ_II(pow_int(3, 0), 1);
+	CHECK_EQ_II(pow_int(3, 1), 3);
+	CHECK_EQ_II(pow_int(3, 2), 9);
+	CHECK_EQ_II(pow_int(3, 3), 27);
+	CHECK_EQ_II(pow_int(3, 4), 81);
+	CHECK_EQ_II(pow_int(3, 5), 243);
+	CHECK_EQ_II(pow_int(-3, 0), 1);
+	CHECK_EQ_II(pow_int(-3, 1), -3);
+	CHECK_EQ_II(pow_int(-3, 2), 9);
+	CHECK_EQ_II(pow_int(-3, 3), -27);
+	CHECK_EQ_II(pow_int(-3, 4), 81);
+	CHECK_EQ_II(pow_int(-3, 5), -243);
 }
 
 int main(void)
