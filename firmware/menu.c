@@ -301,20 +301,6 @@ static void menu_set_next_state(void)
 	menu_set_state(next_menu_state(menu.state));
 }
 
-static fixpt_t fixpt_add_limited(fixpt_t a, fixpt_t b,
-				 fixpt_t lo_lim, fixpt_t hi_lim)
-{
-	fixpt_t ret;
-
-	ret = fixpt_add(a, b);
-	if (ret > hi_lim)
-		ret = hi_lim;
-	if (ret < lo_lim)
-		ret = lo_lim;
-
-	return ret;
-}
-
 static void settemp_ramp_handler(bool up)
 {
 	fixpt_t setpoint;

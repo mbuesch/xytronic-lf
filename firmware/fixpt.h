@@ -210,4 +210,9 @@ static inline fixpt_t fixpt_neg(fixpt_t a)
  */
 fixpt_t fixpt_abs(fixpt_t a);
 
+/* Calculate: a + b, limited to lo_lim, hi_lim
+ */
+fixpt_t fixpt_add_limited(fixpt_t a, fixpt_t b,
+			  fixpt_t lo_lim, fixpt_t hi_lim);
+
 #endif /* FIXEDPOINT_H_ */

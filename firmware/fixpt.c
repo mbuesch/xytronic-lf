@@ -118,3 +118,17 @@ fixpt_t fixpt_abs(fixpt_t a)
 		return fixpt_neg(a);
 	return a;
 }
+
+fixpt_t fixpt_add_limited(fixpt_t a, fixpt_t b,
+			  fixpt_t lo_lim, fixpt_t hi_lim)
+{
+	fixpt_t ret;
+
+	ret = fixpt_add(a, b);
+	if (ret > hi_lim)
+		ret = hi_lim;
+	if (ret < lo_lim)
+		ret = lo_lim;
+
+	return ret;
+}
