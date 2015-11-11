@@ -46,6 +46,7 @@ void contrtemp_set_emerg(bool emergency);
 bool contrtemp_in_emerg(void);
 bool contrtemp_is_heating_up(void);
 enum contrtemp_boostmode contrtemp_get_boost_mode(void);
+void contrtemp_update_pid_config(void);
 
 void contrtemp_init(void);
 

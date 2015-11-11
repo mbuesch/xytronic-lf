@@ -71,6 +71,15 @@ static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
 	menu_request_display_update();
 }
 
+void contrtemp_update_pid_config(void)
+{
+	/* Setting the currently active boost mode again
+	 * will fetch the new PID settings and store
+	 * them to the controller.
+	 */
+	contrtemp_set_boost_mode(contrtemp.boost_mode);
+}
+
 static fixpt_t temp_to_amps(fixpt_t temp)
 {
 	fixpt_t current;
@@ -168,10 +177,12 @@ static void do_set_enabled(bool enabled)
 {
 	contrtemp.enabled = enabled;
 
-	/* Reset the controller. */
+	/* Reset the temp controller. */
 	pid_reset(&contrtemp.pid);
 	timer_set_now(&contrtemp.dt_timer);
 	contrtemp_set_boost_mode(TEMPBOOST_NORMAL);
+	/* Reset current controller to no-current. */
+	contrcurr_set_setpoint(float_to_fixpt(CONTRCURR_NEGLIM));
 }
 
 void contrtemp_set_enabled(bool enabled)

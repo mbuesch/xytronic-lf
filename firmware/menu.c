@@ -190,11 +190,11 @@ static void menu_update_display(void)
 			if (!CONF_KCONF)
 				break;
 			k = get_settings()->temp_k[boost_mode].ki;
-			ipart = (int16_t)clamp(fixpt_get_int_part(k), 0, 99);
-			fpart = (int16_t)fixpt_get_dec_fract(k, 2);
-			int_to_ascii_align_right(&disp[0], 1, ipart, 0, 99, ' ');
-			disp[2] = '.';
-			int_to_ascii_align_right(&disp[3], 1, fpart, 0, 99, '0');
+			ipart = (int16_t)clamp(fixpt_get_int_part(k), 0, 9);
+			fpart = (int16_t)fixpt_get_dec_fract(k, 3);
+			int_to_ascii_align_right(&disp[0], 0, ipart, 0, 9, ' ');
+			disp[1] = '.';
+			int_to_ascii_align_right(&disp[2], 2, fpart, 0, 999, '0');
 			displayed_heating = false;
 			break;
 		case MENU_KD_PRE:
@@ -283,13 +283,19 @@ static void menu_set_state(enum menu_state new_state)
 		if (!CONF_KCONF)
 			break;
 		timer_arm(&menu.timeout, MENU_KCONF_PRE_TIMEOUT);
-		break;
-	case MENU_CURTEMP:
-	case MENU_DEBUG:
-	case MENU_CALIB:
+		/* fall through... */
 	case MENU_KP:
 	case MENU_KI:
 	case MENU_KD:
+		if (!CONF_KCONF)
+			break;
+		contrtemp_set_enabled(false);
+		break;
+	case MENU_CURTEMP:
+		contrtemp_set_enabled(true);
+		break;
+	case MENU_DEBUG:
+	case MENU_CALIB:
 		break;
 	}
 
@@ -323,6 +329,7 @@ static void kconf_kp_ramp_handler(bool up)
 			       float_to_fixpt(0.0),
 			       float_to_fixpt(99.0));
 	store_settings();
+	contrtemp_update_pid_config();
 }
 
 static void kconf_ki_ramp_handler(bool up)
@@ -330,11 +337,12 @@ static void kconf_ki_ramp_handler(bool up)
 	fixpt_t *k;
 
 	k = &(get_settings()->temp_k[contrtemp_get_boost_mode()].ki);
-	*k = fixpt_add_limited(*k, (up ? float_to_fixpt(0.03125) :
-					 float_to_fixpt(-0.03125)),
+	*k = fixpt_add_limited(*k, (up ? float_to_fixpt(0.015625) :
+					 float_to_fixpt(-0.015625)),
 			       float_to_fixpt(0.0),
-			       float_to_fixpt(99.0));
+			       float_to_fixpt(9.0));
 	store_settings();
+	contrtemp_update_pid_config();
 }
 
 static void kconf_kd_ramp_handler(bool up)
@@ -347,6 +355,7 @@ static void kconf_kd_ramp_handler(bool up)
 			       float_to_fixpt(0.0),
 			       float_to_fixpt(99.0));
 	store_settings();
+	contrtemp_update_pid_config();
 }
 
 static void start_ramping(enum ramp_state ramp, ramp_handler_t handler)
