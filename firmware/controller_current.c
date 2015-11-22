@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "pwm_current.h"
 #include "scale.h"
+#include "filter.h"
 #include "debug_uart.h"
 
 #include <string.h>
@@ -41,10 +42,10 @@
 
 
 /* Current controller PID parameters */
-#define CONTRCURR_PID_KP	0.2
-#define CONTRCURR_PID_KI	0.5
-#define CONTRCURR_PID_KD	0.0
-#define CONTRCURR_PID_D_DECAY	1.0
+#define CONTRCURR_PID_KP	2.0
+#define CONTRCURR_PID_KI	0.05
+#define CONTRCURR_PID_KD	0.1
+#define CONTRCURR_PID_D_DECAY	1.2
 /* PID cut off current. PID is only active below this setpoint. */
 #define CONTRCURR_PID_CUTOFF_HI	1.7
 #define CONTRCURR_PID_CUTOFF_LO	1.0
@@ -62,6 +63,8 @@ struct current_contr_context {
 
 	int24_t old_current_feedback;
 	int24_t old_current_control;
+
+	struct lp_filter_fixpt model;
 };
 
 static struct current_contr_context contrcurr;
@@ -94,14 +97,17 @@ static void contrcurr_run(fixpt_t r)
 		if (w <= float_to_fixpt(CONTRCURR_PID_CUTOFF_LO))
 			contrcurr.pid_disabled = false;
 	} else {
-		if (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF_HI))
+		if (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF_HI)) {
 			contrcurr.pid_disabled = true;
+			lp_filter_fixpt_set(&contrcurr.model, r);
+		}
 	}
 
 	if (contrcurr.pid_disabled) {
 		/* We are in the upper setpoint area.
-		 * Do not use the real feedback. */
-		r = contrcurr.prev_y;
+		 * Do not use the real feedback. Use a PT1 model instead. */
+		r = lp_filter_fixpt_run(&contrcurr.model, contrcurr.prev_y,
+					int_to_fixpt(16));
 	}
 	/* Run the PID controller */
 	y = pid_run(&contrcurr.pid, dt, r);
