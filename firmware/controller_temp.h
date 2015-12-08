@@ -6,8 +6,8 @@
 
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP_NORMAL		4.0
-#define CONTRTEMP_PID_KI_NORMAL		0.08
+#define CONTRTEMP_PID_KP_NORMAL		5.0
+#define CONTRTEMP_PID_KI_NORMAL		0.04
 #define CONTRTEMP_PID_KD_NORMAL		1.0
 #define CONTRTEMP_PID_D_DECAY_NORMAL	1.2
 /* Temperature controller boost (1) PID parameters */
