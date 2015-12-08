@@ -60,7 +60,7 @@ WARN_CFLAGS		:= -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 CFLAGS			+= -mmcu=$(GCC_ARCH) -std=gnu11 -g -O$(O) $(WARN_CFLAGS) \
 			  "-Dinline=inline __attribute__((__always_inline__))" \
 			  -fshort-enums -DF_CPU=$(F_CPU) \
-			  -mcall-prologues \
+			  -mcall-prologues -mrelax -mstrict-X \
 			  -flto
 
 BIN			:= $(NAME).bin
