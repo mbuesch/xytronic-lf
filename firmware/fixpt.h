@@ -215,4 +215,8 @@ fixpt_t fixpt_abs(fixpt_t a);
 fixpt_t fixpt_add_limited(fixpt_t a, fixpt_t b,
 			  fixpt_t lo_lim, fixpt_t hi_lim);
 
+/* Limit a to lo_lim, hi_lim */
+fixpt_t fixpt_clamp(fixpt_t a,
+		    fixpt_t lo_lim, fixpt_t hi_lim);
+
 #endif /* FIXEDPOINT_H_ */

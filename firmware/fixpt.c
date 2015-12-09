@@ -125,10 +125,18 @@ fixpt_t fixpt_add_limited(fixpt_t a, fixpt_t b,
 	fixpt_t ret;
 
 	ret = fixpt_add(a, b);
-	if (ret > hi_lim)
-		ret = hi_lim;
-	if (ret < lo_lim)
-		ret = lo_lim;
+	ret = fixpt_clamp(ret, lo_lim, hi_lim);
 
 	return ret;
+}
+
+fixpt_t fixpt_clamp(fixpt_t a,
+		    fixpt_t lo_lim, fixpt_t hi_lim)
+{
+	if (a < lo_lim)
+		a = lo_lim;
+	if (a > hi_lim)
+		a = hi_lim;
+
+	return a;
 }
