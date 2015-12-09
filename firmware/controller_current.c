@@ -44,7 +44,7 @@
 /* Current controller PID parameters */
 #define CONTRCURR_PID_KP	2.0
 #define CONTRCURR_PID_KI	0.05
-#define CONTRCURR_PID_KD	0.1
+#define CONTRCURR_PID_KD	0.05
 #define CONTRCURR_PID_D_DECAY	1.2
 /* PID cut off current. PID is only active below this setpoint. */
 #define CONTRCURR_PID_CUTOFF_HI	1.7
@@ -61,7 +61,8 @@ struct current_contr_context {
 	fixpt_t prev_y;
 	struct timer timer;
 
-	int24_t old_current_feedback;
+	int24_t old_current_real_feedback;
+	int24_t old_current_used_feedback;
 	int24_t old_current_control;
 
 	struct lp_filter_fixpt model;
@@ -109,6 +110,10 @@ static void contrcurr_run(fixpt_t r)
 		r = lp_filter_fixpt_run(&contrcurr.model, contrcurr.prev_y,
 					int_to_fixpt(16));
 	}
+
+	debug_report_int24(PSTR("cr2"), &contrcurr.old_current_used_feedback,
+			   (int24_t)r);
+
 	/* Run the PID controller */
 	y = pid_run(&contrcurr.pid, dt, r);
 
@@ -132,8 +137,8 @@ void contrcurr_set_feedback(fixpt_t r)
 {
 	if (r != contrcurr.feedback) {
 		contrcurr.feedback = r;
-		debug_report_int24(PSTR("cr"),
-				   &contrcurr.old_current_feedback,
+		debug_report_int24(PSTR("cr1"),
+				   &contrcurr.old_current_real_feedback,
 				   (int24_t)r);
 	}
 

@@ -85,10 +85,13 @@ static fixpt_t temp_to_amps(fixpt_t temp)
 	fixpt_t current;
 
 	current = rescale(temp,
-			  float_to_fixpt(CONTRTEMP_NEGLIM),
-			  float_to_fixpt(CONTRTEMP_POSLIM),
-			  float_to_fixpt(CONTRCURR_NEGLIM),
-			  float_to_fixpt(CONTRCURR_POSLIM));
+			  float_to_fixpt(CONTRTEMP_MAP_TEMPLO),
+			  float_to_fixpt(CONTRTEMP_MAP_TEMPHI),
+			  float_to_fixpt(CONTRTEMP_MAP_CURRLO),
+			  float_to_fixpt(CONTRTEMP_MAP_CURRHI));
+	current = fixpt_clamp(current,
+			      float_to_fixpt(CONTRCURR_NEGLIM),
+			      float_to_fixpt(CONTRCURR_POSLIM));
 
 	return current;
 }

@@ -6,9 +6,9 @@
 
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP_NORMAL		5.0
+#define CONTRTEMP_PID_KP_NORMAL		4.0
 #define CONTRTEMP_PID_KI_NORMAL		0.04
-#define CONTRTEMP_PID_KD_NORMAL		1.0
+#define CONTRTEMP_PID_KD_NORMAL		0.5
 #define CONTRTEMP_PID_D_DECAY_NORMAL	1.2
 /* Temperature controller boost (1) PID parameters */
 #define CONTRTEMP_PID_KP_BOOST1		6.0
@@ -21,9 +21,15 @@
 #define CONTRTEMP_PID_KD_BOOST2		1.5
 #define CONTRTEMP_PID_D_DECAY_BOOST2	1.5
 
+/* Temperature controller limits. */
+#define CONTRTEMP_NEGLIM		0.0
+#define CONTRTEMP_POSLIM		480.0
 
-#define CONTRTEMP_NEGLIM	0.0
-#define CONTRTEMP_POSLIM	480.0
+/* Temperature to current mapping. */
+#define CONTRTEMP_MAP_TEMPLO		0.0
+#define CONTRTEMP_MAP_CURRLO		0.0
+#define CONTRTEMP_MAP_TEMPHI		180.0
+#define CONTRTEMP_MAP_CURRHI		5.0
 
 
 enum contrtemp_boostmode {
