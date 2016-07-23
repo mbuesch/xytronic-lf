@@ -36,10 +36,10 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 5
 Title "Xytronic LF-1600"
-Date "6 sep 2015"
-Rev "1.0"
-Comp "Reverse engineered by Michael Büsch <m@bues.ch>"
-Comment1 ""
+Date ""
+Rev "1.1"
+Comp "Michael Büsch <m@bues.ch>"
+Comment1 "Reverse engineered"
 Comment2 ""
 Comment3 ""
 Comment4 ""
