@@ -12,6 +12,9 @@ endif
 CONF_CALIB		:= 0
 CONF_DEBUG		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
+CONF_LEDMUXPOL		:= 1
+CONF_LEDSEGPOL		:= 0
+CONF_CURRCUTOFF		:= 1.7
 
 # Project name
 NAME			:= xytronic-lf
@@ -41,15 +44,21 @@ SRCS			:= bitmap.c \
 
 # Project fuse bits
 # 8 MHz, BOD 2.7 V
+M88_LFUSE		:= 0xE2
+M88_HFUSE		:= 0xDD
+M88_EFUSE		:= 0x01
+M328P_LFUSE		:= 0xE2
+M328P_HFUSE		:= 0xD9
+M328P_EFUSE		:= 0x05
 ifeq ($(DEV),m88)
-LFUSE			:= 0xE2
-HFUSE			:= 0xDD
-EFUSE			:= 0x01
+LFUSE			:= $(M88_LFUSE)
+HFUSE			:= $(M88_HFUSE)
+EFUSE			:= $(M88_EFUSE)
 endif
 ifeq ($(DEV),m328p)
-LFUSE			:= 0xE2
-HFUSE			:= 0xD9
-EFUSE			:= 0x05
+LFUSE			:= $(M328P_LFUSE)
+HFUSE			:= $(M328P_HFUSE)
+EFUSE			:= $(M328P_EFUSE)
 endif
 
 # CPU speed, in Hz
@@ -67,7 +76,10 @@ PROGRAMMER		:= avrisp2
 # Additional compiler flags
 CFLAGS			:= -DCONF_CALIB=$(CONF_CALIB) \
 			   -DCONF_DEBUG=$(CONF_DEBUG) \
-			   -DCONF_KCONF=$(CONF_KCONF)
+			   -DCONF_KCONF=$(CONF_KCONF) \
+			   -DCONF_LEDMUXPOL=$(CONF_LEDMUXPOL) \
+			   -DCONF_LEDSEGPOL=$(CONF_LEDSEGPOL) \
+			   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF)
 LDFLAGS			:=
 
 # Additional "clean" and "distclean" target files

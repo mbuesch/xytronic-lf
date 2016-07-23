@@ -57,13 +57,15 @@ hook_pre_archives()
 
 	# Update the README
 	local makefile="$2/firmware/Makefile"
-	local lfuse="$(grep -e 'LFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
-	local hfuse="$(grep -e 'HFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
-	local efuse="$(grep -e 'EFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
-	sed -i -e 's/%%LFUSE%%/'"$lfuse"'/g' \
-	       -e 's/%%HFUSE%%/'"$hfuse"'/g' \
-	       -e 's/%%EFUSE%%/'"$efuse"'/g' \
-	       "$2/README.md"
+	for arch in M88 M328P; do
+		local lfuse="$(grep -e "$arch"'_LFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
+		local hfuse="$(grep -e "$arch"'_HFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
+		local efuse="$(grep -e "$arch"'_EFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
+		sed -i -e 's/%%'"$arch"'_LFUSE%%/'"$lfuse"'/g' \
+		       -e 's/%%'"$arch"'_HFUSE%%/'"$hfuse"'/g' \
+		       -e 's/%%'"$arch"'_EFUSE%%/'"$efuse"'/g' \
+		       "$2/README.md"
+	done
 }
 
 project=xytronic-lf
