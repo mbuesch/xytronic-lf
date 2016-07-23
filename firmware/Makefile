@@ -2,11 +2,18 @@
 # May be one of: m88, m328p
 DEV			:= m88
 
+# Target hardware.
+# May be one of: legacy, fixed
+HW			:= legacy
+
+
 streq			= $(and $(filter 1,$(words $2)),$(filter $1,$(firstword $2)))
 deveq			= $(call streq,$1,$(DEV))
+hweq			= $(call streq,$1,$(HW))
 ifeq ($(strip $(call deveq,m88)$(call deveq,m328p)),)
 $(error "$$DEV:=$(DEV) is not supported")
 endif
+
 
 # Build configuration
 CONF_CALIB		:= 0
@@ -14,7 +21,8 @@ CONF_DEBUG		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
 CONF_LEDMUXPOL		:= 1
 CONF_LEDSEGPOL		:= 0
-CONF_CURRCUTOFF		:= 1.7
+CONF_CURRCUTOFF		:= $(if $(call hweq,legacy),1.7,CONTRCURR_POSLIM)
+
 
 # Project name
 NAME			:= xytronic-lf
