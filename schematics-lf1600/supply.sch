@@ -259,7 +259,7 @@ Connection ~ 7300 4100
 Connection ~ 6100 4800
 Text Notes 7400 4600 0    157  ~ 0
 XXX
-Text Notes 7400 4800 0    60   ~ 0
+Text Notes 7400 4750 0    39   ~ 0
 Fix:\nC12 replaced by: 100nF/63V film cap
 Wire Wire Line
 	4450 4050 4450 4250
@@ -268,7 +268,7 @@ Wire Wire Line
 Connection ~ 4450 4800
 Connection ~ 3550 4050
 Connection ~ 3050 4050
-Text Notes 4000 3900 0    60   ~ 0
+Text Notes 4150 3950 0    39   ~ 0
 Fix:\nC12b was added due to\nremoval of the original C12
 $Comp
 L CP C8

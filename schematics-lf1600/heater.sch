@@ -296,7 +296,7 @@ Text Notes 1050 4050 0    60   ~ 0
 Heater element\nR = 3.5 Ohms @ 20 °C
 Wire Wire Line
 	7000 3850 7000 3100
-Text Notes 6850 5000 0    60   ~ 0
+Text Notes 6800 5100 0    39   ~ 0
 Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R28 was removed (bridged).
 Wire Wire Line
 	6750 5350 6750 5150

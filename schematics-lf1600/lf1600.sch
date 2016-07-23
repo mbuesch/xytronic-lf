@@ -313,7 +313,7 @@ Text GLabel 3450 6650 3    60   Input ~ 0
 +5V
 Wire Wire Line
 	3450 6500 3450 6650
-Text Notes 3700 6600 0    60   ~ 0
+Text Notes 3700 6600 0    39   ~ 0
 Fix:\nC1b was added, because C1 is far\naway from VCC/GND pins
 $Comp
 L D D4
@@ -354,7 +354,7 @@ Wire Wire Line
 	6150 4300 5450 4300
 Wire Notes Line
 	5950 1650 6600 1100
-Text Notes 6700 1500 0    60   ~ 0
+Text Notes 6650 1450 0    39   ~ 0
 D4 and R9\nare not assembled\non the board.
 Wire Notes Line
 	5950 1100 6600 1650

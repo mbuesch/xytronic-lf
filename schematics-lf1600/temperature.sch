@@ -437,7 +437,7 @@ Wire Wire Line
 	10050 1700 10050 5550
 Text Notes 800  1550 0    60   ~ 0
 Sensor\nR = 53 Ohms @ 20 °C
-Text Notes 2450 5800 0    60   ~ 0
+Text Notes 3300 5700 0    39   ~ 0
 Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R12 was removed (bridged).
 Wire Wire Line
 	3550 5200 3550 5400
@@ -487,4 +487,6 @@ Wire Wire Line
 	5800 4050 9100 4050
 Text Notes 5750 4450 0    39   ~ 0
 R14 is 20k in newer models
+Text Notes 8750 5750 0    39   ~ 0
+D5 and D6 connection is not correctly performed in\nolder through-hole based (non-SMD) models.
 $EndSCHEMATC
