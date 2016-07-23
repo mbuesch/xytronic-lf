@@ -52,4 +52,4 @@ Installing the firmware:
 
      or
 
-     `avrdude -B 1 -p m88 -c avrisp2 -P usb -U eeprom:w:xytronic-lf.eep.hex`
+     `avrdude -B 1 -p m328p -c avrisp2 -P usb -U eeprom:w:xytronic-lf.eep.hex`
