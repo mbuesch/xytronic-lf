@@ -1,6 +1,6 @@
-update=Fri 19 Dec 2014 10:01:08 PM CET
+update=Sat 23 Jul 2016 09:49:12 PM CEST
 version=1
-last_client=eeschema
+last_client=kicad
 [cvpcb]
 version=1
 NetIExt=net
@@ -48,11 +48,6 @@ version=1
 [eeschema]
 version=1
 LibDir=
-NetFmtName=
-RptD_X=0
-RptD_Y=100
-RptLab=1
-LabSize=60
 [eeschema/libraries]
 LibName1=power
 LibName2=device
@@ -84,3 +79,4 @@ LibName27=opto
 LibName28=atmel
 LibName29=contrib
 LibName30=valves
+LibName31=tl431
