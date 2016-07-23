@@ -31,12 +31,26 @@ hook_regression_tests()
 	make -C "$1/firmware" tests
 }
 
+do_build()
+{
+	local fwdir="$1"
+	local targetdir="$2"
+	shift 2
+
+	make -C "$fwdir" all "$@"
+	make -C "$fwdir" clean "$@"
+	mkdir -p "$targetdir"
+	mv "$fwdir"/*.hex "$targetdir"/
+	make -C "$fwdir" distclean "$@"
+}
+
 hook_pre_archives()
 {
 	# Build the hex files.
-	make -C "$2/firmware" all
-	make -C "$2/firmware" clean
-	mv "$2"/firmware/*.hex "$2"
+	mkdir "$2"/hex
+
+	do_build "$2/firmware" "$2/hex/atmega88" DEV=m88
+	do_build "$2/firmware" "$2/hex/atmega328p" DEV=m328p
 
 	# Move the documentation.
 	mv "$2"/schematics-lf1600/lf1600.pdf "$2"/schematics-lf1600.pdf
@@ -49,7 +63,7 @@ hook_pre_archives()
 	sed -i -e 's/%%LFUSE%%/'"$lfuse"'/g' \
 	       -e 's/%%HFUSE%%/'"$hfuse"'/g' \
 	       -e 's/%%EFUSE%%/'"$efuse"'/g' \
-	       "$2/README"
+	       "$2/README.md"
 }
 
 project=xytronic-lf
