@@ -314,7 +314,7 @@ Text GLabel 3450 6650 3    60   Input ~ 0
 Wire Wire Line
 	3450 6500 3450 6650
 Text Notes 3700 6600 0    39   ~ 0
-Fix:\nC1b was added, because C1 is far\naway from VCC/GND pins
+Fix:\nC1b was added, because C1 is far away from VCC/GND pins\nin older through-hole models.
 $Comp
 L D D4
 U 1 1 55EC2D4B
@@ -374,10 +374,10 @@ $EndComp
 Wire Wire Line
 	6150 1550 6150 4300
 $Comp
-L TL431 U?
+L TL431 U3
 U 1 1 57954078
 P 2450 5600
-F 0 "U?" H 2450 5400 39  0000 C CNN
+F 0 "U3" H 2450 5400 39  0000 C CNN
 F 1 "TL431" H 2300 5800 39  0000 C CNN
 F 2 "" H 2450 5600 39  0000 C CNN
 F 3 "" H 2450 5600 39  0000 C CNN

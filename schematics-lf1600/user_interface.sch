@@ -380,21 +380,15 @@ Connection ~ 3950 4950
 Wire Wire Line
 	5850 5050 5750 5050
 Wire Wire Line
-	5850 1400 5850 5050
-Wire Wire Line
 	5850 4950 5750 4950
 Connection ~ 5850 4950
 Wire Wire Line
 	7750 5050 7650 5050
 Wire Wire Line
-	7750 1600 7750 5050
-Wire Wire Line
 	7750 4950 7650 4950
 Connection ~ 7750 4950
 Wire Wire Line
 	8150 5650 8350 5650
-Wire Wire Line
-	8150 1800 8150 5750
 Wire Wire Line
 	8150 5750 8350 5750
 Connection ~ 8150 5650
@@ -437,9 +431,7 @@ Wire Wire Line
 Wire Wire Line
 	3600 2100 4500 2100
 Wire Wire Line
-	3950 3800 4900 3800
-Wire Wire Line
-	4900 3800 4900 1200
+	3950 3800 5200 3800
 Wire Wire Line
 	4900 1200 1950 1200
 Wire Wire Line
@@ -447,7 +439,7 @@ Wire Wire Line
 Wire Wire Line
 	1950 1600 7750 1600
 Wire Wire Line
-	8150 1800 1950 1800
+	1950 1800 8700 1800
 Wire Wire Line
 	9550 4700 9550 5100
 Connection ~ 6450 4700
@@ -488,6 +480,94 @@ Text Notes 8250 6000 0    60   ~ 0
 (this 7seg LED is upside down)
 Text Notes 3050 3700 0    39   ~ 0
 R0-7: is 180R in newer models
-Text Notes 6100 2050 0    39   ~ 0
-anodes switched via MOSFETs in newer models
+$Comp
+L MMBT3904 Q1
+U 1 1 579649FC
+P 5100 2700
+F 0 "Q1" H 5300 2775 50  0000 L CNN
+F 1 "MMBT3904" H 5300 2700 50  0000 L CNN
+F 2 "SOT-23" H 5300 2625 50  0000 L CIN
+F 3 "" H 5100 2700 50  0000 L CNN
+	1    5100 2700
+	1    0    0    -1  
+$EndComp
+$Comp
+L MMBT3904 Q2
+U 1 1 57964B65
+P 6050 2950
+F 0 "Q2" H 6250 3025 50  0000 L CNN
+F 1 "MMBT3904" H 6250 2950 50  0000 L CNN
+F 2 "SOT-23" H 6250 2875 50  0000 L CIN
+F 3 "" H 6050 2950 50  0000 L CNN
+	1    6050 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L MMBT3904 Q3
+U 1 1 57964BD4
+P 7950 3200
+F 0 "Q3" H 8150 3275 50  0000 L CNN
+F 1 "MMBT3904" H 8150 3200 50  0000 L CNN
+F 2 "SOT-23" H 8150 3125 50  0000 L CIN
+F 3 "" H 7950 3200 50  0000 L CNN
+	1    7950 3200
+	1    0    0    -1  
+$EndComp
+$Comp
+L MMBT3904 Q4
+U 1 1 57964C3C
+P 8900 3450
+F 0 "Q4" H 9100 3525 50  0000 L CNN
+F 1 "MMBT3904" H 9100 3450 50  0000 L CNN
+F 2 "SOT-23" H 9100 3375 50  0000 L CIN
+F 3 "" H 8900 3450 50  0000 L CNN
+	1    8900 3450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4900 2700 4900 1200
+Wire Wire Line
+	5200 3800 5200 2900
+Text GLabel 5200 2400 1    60   Input ~ 0
++5V
+Wire Wire Line
+	5200 2400 5200 2500
+Wire Wire Line
+	5850 1400 5850 2950
+Wire Wire Line
+	6150 3150 6150 3800
+Wire Wire Line
+	6150 3800 5850 3800
+Wire Wire Line
+	5850 3800 5850 5050
+Wire Wire Line
+	7750 1600 7750 3200
+Wire Wire Line
+	8050 3400 8050 3800
+Wire Wire Line
+	8050 3800 7750 3800
+Wire Wire Line
+	7750 3800 7750 5050
+Wire Wire Line
+	8700 1800 8700 3450
+Wire Wire Line
+	9000 3650 9000 3850
+Wire Wire Line
+	9000 3850 8150 3850
+Wire Wire Line
+	8150 3850 8150 5750
+Text GLabel 6150 2650 1    60   Input ~ 0
++5V
+Text GLabel 8050 2900 1    60   Input ~ 0
++5V
+Text GLabel 9000 3150 1    60   Input ~ 0
++5V
+Wire Wire Line
+	9000 3150 9000 3250
+Wire Wire Line
+	8050 2900 8050 3000
+Wire Wire Line
+	6150 2650 6150 2750
+Text Notes 6250 1450 0    39   ~ 0
+Q1-Q4 are not present in older through-hole layouts.\n(The MUX control lines are directly connected to the anodes)
 $EndSCHEMATC

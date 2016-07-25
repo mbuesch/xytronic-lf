@@ -251,17 +251,6 @@ F 3 "~" H 8350 5550 30  0000 C CNN
 	1    8350 5550
 	0    -1   -1   0   
 $EndComp
-$Comp
-L C C17
-U 1 1 54964481
-P 7350 1350
-F 0 "C17" H 7350 1450 40  0000 L CNN
-F 1 "47 µF / 16 V" H 7356 1265 40  0000 L CNN
-F 2 "~" H 7388 1200 30  0000 C CNN
-F 3 "~" H 7350 1350 60  0000 C CNN
-	1    7350 1350
-	0    -1   -1   0   
-$EndComp
 Wire Wire Line
 	6650 1350 7200 1350
 Text GLabel 7750 1350 2    60   Input ~ 0
@@ -489,4 +478,15 @@ Text Notes 5750 4450 0    39   ~ 0
 R14 is 20k in newer models
 Text Notes 8750 5750 0    39   ~ 0
 D5 and D6 connection is not correctly performed in\nolder through-hole based (non-SMD) models.
+$Comp
+L CP C17
+U 1 1 5794C14D
+P 7350 1350
+F 0 "C17" H 7375 1450 39  0000 L CNN
+F 1 "47 µF / 16 V" H 7375 1250 39  0000 L CNN
+F 2 "" H 7388 1200 50  0000 C CNN
+F 3 "" H 7350 1350 50  0000 C CNN
+	1    7350 1350
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC
