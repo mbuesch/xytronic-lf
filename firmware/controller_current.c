@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Current controller
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,17 +38,20 @@
  * hardware not working correctly for high currents.
  * The cut-off-setpoint where the PID is switched off/on
  * is defined via CONTRCURR_PID_CUTOFF_HI/LO.
+ *
+ * CONTRCURR_PID_CUTOFF_HI is configured via CONF_CURRCUTOFF.
  */
 
 
 /* Current controller PID parameters */
-#define CONTRCURR_PID_KP	2.0
-#define CONTRCURR_PID_KI	0.05
-#define CONTRCURR_PID_KD	0.05
-#define CONTRCURR_PID_D_DECAY	1.2
+#define CONTRCURR_PID_KP		2.0
+#define CONTRCURR_PID_KI		0.05
+#define CONTRCURR_PID_KD		0.05
+#define CONTRCURR_PID_D_DECAY		1.2
 /* PID cut off current. PID is only active below this setpoint. */
-#define CONTRCURR_PID_CUTOFF_HI	1.7
-#define CONTRCURR_PID_CUTOFF_LO	1.0
+#define CONTRCURR_PID_CUTOFF_HYST	0.7
+#define CONTRCURR_PID_CUTOFF_HI		((float)(CONF_CURRCUTOFF))
+#define CONTRCURR_PID_CUTOFF_LO		(CONTRCURR_PID_CUTOFF_HI - CONTRCURR_PID_CUTOFF_HYST)
 
 
 struct current_contr_context {

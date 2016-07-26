@@ -3,7 +3,7 @@
 DEV			:= m88
 
 # Target hardware.
-# May be one of: legacy, fixed
+# May be one of: legacy, smd
 HW			:= legacy
 
 
@@ -19,9 +19,7 @@ endif
 CONF_CALIB		:= 0
 CONF_DEBUG		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
-CONF_LEDMUXPOL		:= 1
-CONF_LEDSEGPOL		:= 0
-CONF_CURRCUTOFF		:= $(if $(call hweq,legacy),1.7,CONTRCURR_POSLIM)
+CONF_CURRCUTOFF		:= 1.7
 
 
 # Project name
@@ -85,8 +83,6 @@ PROGRAMMER		:= avrisp2
 CFLAGS			:= -DCONF_CALIB=$(CONF_CALIB) \
 			   -DCONF_DEBUG=$(CONF_DEBUG) \
 			   -DCONF_KCONF=$(CONF_KCONF) \
-			   -DCONF_LEDMUXPOL=$(CONF_LEDMUXPOL) \
-			   -DCONF_LEDSEGPOL=$(CONF_LEDSEGPOL) \
 			   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF)
 LDFLAGS			:=
 
