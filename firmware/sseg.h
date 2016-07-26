@@ -21,6 +21,7 @@ struct sseg_iomap {
 	sfr_addr_t segment_ddr;
 	sfr_addr_t segment_port;
 	uint8_t segment_masks[SSEG_NR_SEGMENTS];
+	bool segment_polarity;
 
 	sfr_addr_t mux_ddr;
 	sfr_addr_t mux_port;

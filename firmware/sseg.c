@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Seven segment (plus decimal point) driver
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ static void segment_write(const struct sseg_digit_data *ddata)
 
 	enable_set = ddata->segment_enable_set;
 	enable_mask = ddata->segment_enable_mask;
-	if (iomap->mux_polarity)
+	if (!iomap->segment_polarity)
 		enable_set = (uint8_t)~enable_set;
 	enable_set &= enable_mask;
 

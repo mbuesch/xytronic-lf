@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Display routines
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,9 @@
 
 static const struct sseg_iomap __flash digit_iomaps[] = {
 	{
-		.segment_ddr	= SFR_ADDR(DDRD),
-		.segment_port	= SFR_ADDR(PORTD),
-		.segment_masks	= {
+		.segment_ddr		= SFR_ADDR(DDRD),
+		.segment_port		= SFR_ADDR(PORTD),
+		.segment_masks		= {
 			[SSEG_A]	= 1u << PD7,
 			[SSEG_B]	= 1u << PD0,
 			[SSEG_C]	= 1u << PD2,
@@ -44,14 +44,15 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 			[SSEG_G]	= 1u << PD1,
 			[SSEG_DP]	= 1u << PD3,
 		},
-		.mux_ddr	= SFR_ADDR(DDRC),
-		.mux_port	= SFR_ADDR(PORTC),
-		.mux_mask	= 1u << PC3,
-		.mux_polarity	= 1,
+		.segment_polarity	= 0,
+		.mux_ddr		= SFR_ADDR(DDRC),
+		.mux_port		= SFR_ADDR(PORTC),
+		.mux_mask		= 1u << PC3,
+		.mux_polarity		= 1,
 	}, {
-		.segment_ddr	= SFR_ADDR(DDRD),
-		.segment_port	= SFR_ADDR(PORTD),
-		.segment_masks	= {
+		.segment_ddr		= SFR_ADDR(DDRD),
+		.segment_port		= SFR_ADDR(PORTD),
+		.segment_masks		= {
 			[SSEG_A]	= 1u << PD7,
 			[SSEG_B]	= 1u << PD0,
 			[SSEG_C]	= 1u << PD2,
@@ -61,14 +62,15 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 			[SSEG_G]	= 1u << PD1,
 			[SSEG_DP]	= 1u << PD3,
 		},
-		.mux_ddr	= SFR_ADDR(DDRC),
-		.mux_port	= SFR_ADDR(PORTC),
-		.mux_mask	= 1u << PC4,
-		.mux_polarity	= 1,
+		.segment_polarity	= 0,
+		.mux_ddr		= SFR_ADDR(DDRC),
+		.mux_port		= SFR_ADDR(PORTC),
+		.mux_mask		= 1u << PC4,
+		.mux_polarity		= 1,
 	}, {
-		.segment_ddr	= SFR_ADDR(DDRD),
-		.segment_port	= SFR_ADDR(PORTD),
-		.segment_masks	= {
+		.segment_ddr		= SFR_ADDR(DDRD),
+		.segment_port		= SFR_ADDR(PORTD),
+		.segment_masks		= {
 			[SSEG_A]	= 1u << PD7,
 			[SSEG_B]	= 1u << PD0,
 			[SSEG_C]	= 1u << PD2,
@@ -78,14 +80,15 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 			[SSEG_G]	= 1u << PD1,
 			[SSEG_DP]	= 1u << PD3,
 		},
-		.mux_ddr	= SFR_ADDR(DDRC),
-		.mux_port	= SFR_ADDR(PORTC),
-		.mux_mask	= 1u << PC5,
-		.mux_polarity	= 1,
+		.segment_polarity	= 0,
+		.mux_ddr		= SFR_ADDR(DDRC),
+		.mux_port		= SFR_ADDR(PORTC),
+		.mux_mask		= 1u << PC5,
+		.mux_polarity		= 1,
 	}, {
-		.segment_ddr	= SFR_ADDR(DDRD),
-		.segment_port	= SFR_ADDR(PORTD),
-		.segment_masks	= {
+		.segment_ddr		= SFR_ADDR(DDRD),
+		.segment_port		= SFR_ADDR(PORTD),
+		.segment_masks		= {
 			[SSEG_A]	= 1u << PD2,
 			[SSEG_B]	= 1u << PD3,
 			[SSEG_C]	= 1u << PD0,
@@ -95,10 +98,11 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 			[SSEG_G]	= 1u << PD7,
 			[SSEG_DP]	= 1u << PD5,
 		},
-		.mux_ddr	= SFR_ADDR(DDRB),
-		.mux_port	= SFR_ADDR(PORTB),
-		.mux_mask	= 1u << PB7,
-		.mux_polarity	= 1,
+		.segment_polarity	= 0,
+		.mux_ddr		= SFR_ADDR(DDRB),
+		.mux_port		= SFR_ADDR(PORTB),
+		.mux_mask		= 1u << PB7,
+		.mux_polarity		= 1,
 	},
 };
 
