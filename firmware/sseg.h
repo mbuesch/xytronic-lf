@@ -17,11 +17,15 @@ enum sseg_segment_id {
 	SSEG_NR_SEGMENTS,
 };
 
-struct sseg_iomap {
+struct sseg_segment_iomap {
 	sfr_addr_t segment_ddr;
 	sfr_addr_t segment_port;
 	uint8_t segment_masks[SSEG_NR_SEGMENTS];
 	bool segment_polarity;
+};
+
+struct sseg_iomap {
+	const struct sseg_segment_iomap __flash *segment;
 
 	sfr_addr_t mux_ddr;
 	sfr_addr_t mux_port;
