@@ -15,7 +15,7 @@ typedef uint8_t bm_base_type_t;
  * Resolves at compile-time, if bitnr is a compile-time constant.
  * Uses an efficient table lookup otherwise.
  */
-extern const uint8_t __flash _bit_to_mask8[8];
+extern const uint8_t _bit_to_mask8[8];
 #define BITMASK8(bitnr)		(			\
 		(uint8_t)(__builtin_constant_p(bitnr) ?	\
 			  (1u << (bitnr)) :		\

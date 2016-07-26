@@ -1,7 +1,7 @@
 /*
  * Bitmap routines
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,6 @@
 
 
 /* Bitnumber to bitmask lookup table. */
-const uint8_t __flash _bit_to_mask8[8] = {
+const uint8_t _bit_to_mask8[8] = {
 	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
 };
