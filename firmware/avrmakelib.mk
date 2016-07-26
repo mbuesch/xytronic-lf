@@ -1,8 +1,8 @@
-#################################################
-# AVR make library                              #
-# Copyright (c) 2015 Michael Buesch <m@bues.ch> #
-# Version 1.1                                   #
-#################################################
+######################################################
+# AVR make library                                   #
+# Copyright (c) 2015-2016 Michael Buesch <m@bues.ch> #
+# Version 1.2                                        #
+######################################################
 
 ifeq ($(NAME),)
 $(error NAME not defined)
@@ -57,7 +57,7 @@ WARN_CFLAGS		:= -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 			   -Wcast-qual -Wlogical-op -Wshadow \
 			   -Wconversion
 
-CFLAGS			+= -mmcu=$(GCC_ARCH) -std=gnu11 -g -O$(O) $(WARN_CFLAGS) \
+CFLAGS			+= -mmcu=$(GCC_ARCH) -std=gnu11 -g0 -O$(O) $(WARN_CFLAGS) \
 			  "-Dinline=inline __attribute__((__always_inline__))" \
 			  -fshort-enums -DF_CPU=$(F_CPU) \
 			  -mcall-prologues -mrelax -mstrict-X \
