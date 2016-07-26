@@ -1,7 +1,7 @@
 /*
  * Timer routines
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,13 @@
 static _timcnt_t _timer_count_now;
 
 
-_timcnt_t _timer_get_now(void)
+ISR(TIMER0_COMPA_vect)
+{
+	_timer_count_now++;
+	mb();
+}
+
+static _timcnt_t timer_now(void)
 {
 	_timcnt_t count;
 	uint8_t sreg;
@@ -38,15 +44,48 @@ _timcnt_t _timer_get_now(void)
 	return count;
 }
 
-ISR(TIMER0_COMPA_vect)
+static _signed_timcnt_t _timer_ms_to_count(int32_t millisec)
 {
-	_timer_count_now++;
-	mb();
+	return (_signed_timcnt_t)sdiv_round_up((int32_t)TIMERCPS * millisec,
+					       (int32_t)1000);
+}
+
+static int32_t _timer_count_to_ms(_signed_timcnt_t count)
+{
+	return sdiv_round((int32_t)count * (int32_t)1000,
+			  (int32_t)TIMERCPS);
+}
+
+static _signed_timcnt_t _timer_count_since(const struct timer *timer)
+{
+	return (_signed_timcnt_t)(timer_now() - timer->count);
 }
 
 bool timer_expired(const struct timer *timer)
 {
 	return _timer_count_since(timer) >= 0;
+}
+
+int32_t timer_ms_since(const struct timer *timer)
+{
+	return _timer_count_to_ms(_timer_count_since(timer));
+}
+
+void timer_arm(struct timer *timer, int32_t millisec)
+{
+	timer->count = (_timcnt_t)(timer_now() +
+				   (_timcnt_t)_timer_ms_to_count(millisec));
+}
+
+void timer_set_now(struct timer *timer)
+{
+	timer->count = timer_now();
+}
+
+void timer_add(struct timer *timer, int32_t millisec)
+{
+	timer->count = (_timcnt_t)(timer->count +
+				   (_timcnt_t)_timer_ms_to_count(millisec));
 }
 
 void timer_init(void)
