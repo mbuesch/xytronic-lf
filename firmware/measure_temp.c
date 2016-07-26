@@ -62,17 +62,31 @@ static void meastemp_result_callback(fixpt_t measured_phys_value,
 
 static const struct measure_config __flash meastemp_config = {
 	.name			= "mt",
+
 	.mux			= MEAS_MUX_ADC1,
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
+
 	.averaging_timeout_ms	= 50,
+
+#ifdef HW_LEGACY
 	.scale_raw_lo		= 210,
 	.scale_raw_hi		= 411,
 	.scale_phys_lo		= FLOAT_TO_FIXPT(150.0),
 	.scale_phys_hi		= FLOAT_TO_FIXPT(480.0),
+#endif
+#ifdef HW_SMD
+#warning "FIXME: The temperature scaling is not correct for the SMD hardware."
+	.scale_raw_lo		= 210,
+	.scale_raw_hi		= 411,
+	.scale_phys_lo		= FLOAT_TO_FIXPT(150.0),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(480.0),
+#endif
+
 	.plaus_neglim		= FLOAT_TO_FIXPT(-20.0),
 	.plaus_poslim		= FLOAT_TO_FIXPT(500.0),
 	.plaus_timeout_ms	= 3000,
+
 	.filter_callback	= NULL,
 	.result_callback	= meastemp_result_callback,
 };
