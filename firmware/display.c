@@ -192,7 +192,7 @@ void display_enable(bool enable)
 			ddata->iomap = &digit_iomaps[i];
 			sseg_init(ddata);
 		}
-		timer_arm(&display.mux_timer, 0);
+		timer_set_now(&display.mux_timer);
 	} else {
 		for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
 			ddata = &(display.digit_data[i]);

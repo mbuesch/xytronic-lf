@@ -363,7 +363,7 @@ static void start_ramping(enum ramp_state ramp, ramp_handler_t handler)
 	menu.ramp = ramp;
 	menu.ramp_handler = handler;
 	menu.ramp_period = RAMP_START_PERIOD_MS;
-	timer_arm(&menu.ramp_timer, 0);
+	timer_set_now(&menu.ramp_timer);
 }
 
 static void stop_ramping(void)

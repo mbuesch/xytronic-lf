@@ -130,5 +130,5 @@ void buttons_init(void)
 	BUTTONS_PORT |= BUTTONS_MASK;
 	_delay_ms(50);
 
-	timer_arm(&buttons.debounce_timer, 0);
+	timer_set_now(&buttons.debounce_timer);
 }
