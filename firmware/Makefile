@@ -10,8 +10,12 @@ HW			:= legacy
 streq			= $(and $(filter 1,$(words $2)),$(filter $1,$(firstword $2)))
 deveq			= $(call streq,$1,$(DEV))
 hweq			= $(call streq,$1,$(HW))
+
 ifeq ($(strip $(call deveq,m88)$(call deveq,m328p)),)
 $(error "$$DEV:=$(DEV) is not supported")
+endif
+ifeq ($(strip $(call hweq,legacy)$(call hweq,smd)),)
+$(error "$$HW:=$(HW) is not supported")
 endif
 
 
@@ -19,6 +23,7 @@ endif
 CONF_CALIB		:= 0
 CONF_DEBUG		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
+CONF_CURRCUTOFFHYST	:= 0.7
 CONF_CURRCUTOFF		:= 1.7
 
 
@@ -80,10 +85,13 @@ FUNC_STACK_LIMIT	:= 64
 PROGRAMMER		:= avrisp2
 
 # Additional compiler flags
-CFLAGS			:= -DCONF_CALIB=$(CONF_CALIB) \
+CFLAGS			:= $(if $(call hweq,legacy),-DHW_LEGACY) \
+			   $(if $(call hweq,smd),-DHW_SMD) \
+			   -DCONF_CALIB=$(CONF_CALIB) \
 			   -DCONF_DEBUG=$(CONF_DEBUG) \
 			   -DCONF_KCONF=$(CONF_KCONF) \
-			   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF)
+			   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF) \
+			   -DCONF_CURRCUTOFFHYST=$(CONF_CURRCUTOFFHYST)
 LDFLAGS			:=
 
 # Additional "clean" and "distclean" target files
