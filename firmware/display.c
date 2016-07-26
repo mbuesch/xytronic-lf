@@ -125,33 +125,34 @@ void display_force_dp(int8_t dp, bool force, bool enable)
 
 void display_show(const char *digits)
 {
+	struct sseg_digit_data *digit_data;
 	char c;
-	uint8_t i = 0;
 	uint8_t mask;
 
-	while (1) {
+	digit_data = &display.digit_data[0];
+	mask = 1;
+	do {
 		c = digits[0];
-		if (c == '\0')
-			break;
+		if (c == '\0') {
+			sseg_digit_set(digit_data, ' ');
+		} else {
+			if (digits[1] == '.') {
+				c = (char)(c | SSEG_DIGIT_DP);
+				digits++;
+			}
+			if (display.dp_force_enable & mask) {
+				if (display.dp_force_mask & mask)
+					c = (char)(c | SSEG_DIGIT_DP);
+				else
+					c = (char)(c & (char)~SSEG_DIGIT_DP);
+			}
+			sseg_digit_set(digit_data, c);
 
-		if (digits[1] == '.') {
-			c = (char)(c | SSEG_DIGIT_DP);
+			mask = (uint8_t)(mask << 1);
 			digits++;
 		}
-		mask = BITMASK8(i);
-		if (display.dp_force_enable & mask) {
-			if (display.dp_force_mask & mask)
-				c = (char)(c | SSEG_DIGIT_DP);
-			else
-				c = (char)(c & (char)~SSEG_DIGIT_DP);
-		}
-		sseg_digit_set(&display.digit_data[i], c);
-
-		i++;
-		digits++;
-	}
-	for ( ; i < DISPLAY_NR_DIGITS; i++)
-		sseg_digit_set(&display.digit_data[i], ' ');
+		digit_data++;
+	} while (digit_data < &display.digit_data[DISPLAY_NR_DIGITS]);
 }
 
 void display_work(void)
