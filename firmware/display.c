@@ -134,7 +134,7 @@ void display_show(const char *digits)
 		if (c == '\0')
 			break;
 
-		if (digits[1] == '.' || digits[1] == ',') {
+		if (digits[1] == '.') {
 			c = (char)(c | SSEG_DIGIT_DP);
 			digits++;
 		}
