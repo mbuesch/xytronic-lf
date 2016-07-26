@@ -37,8 +37,9 @@ do_build()
 	local targetdir="$2"
 	shift 2
 
+	echo
+	echo "Building configuration:  $*"
 	make -C "$fwdir" all "$@"
-	make -C "$fwdir" clean "$@"
 	mkdir -p "$targetdir"
 	mv "$fwdir"/*.hex "$targetdir"/
 	make -C "$fwdir" distclean "$@"
@@ -47,10 +48,26 @@ do_build()
 hook_pre_archives()
 {
 	# Build the hex files.
-	mkdir "$2"/hex
+	for hw in legacy smd; do
+		for dev in 88 328p; do
+			for dbg in release debug; do
+				local fwdir="$2/firmware"
+				local targetdir="$2/hex/board_$hw/atmega$dev/$dbg"
 
-	do_build "$2/firmware" "$2/hex/atmega88" DEV=m88
-	do_build "$2/firmware" "$2/hex/atmega328p" DEV=m328p
+				[ $dev = 88 ] && local CONF_KCONF=0
+				[ $dev != 88 ] && local CONF_KCONF=1
+
+				[ $dbg = debug ] && local CONF_DEBUG=1
+				[ $dbg != debug ] && local CONF_DEBUG=0
+
+				do_build "$fwdir" "$targetdir" \
+					HW=$hw DEV=m$dev \
+					CONF_CALIB=0 \
+					CONF_DEBUG=$CONF_DEBUG \
+					CONF_KCONF=$CONF_KCONF
+			done
+		done
+	done
 
 	# Move the documentation.
 	mv "$2"/schematics-lf1600/lf1600.pdf "$2"/schematics-lf1600.pdf

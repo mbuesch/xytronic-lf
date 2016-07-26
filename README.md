@@ -5,6 +5,19 @@ Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
 
 Licensed under the terms of the GNU General Public License version 2 or (at your option) any later version. 
 
+Selecting the correct firmware hex image:
+-----------------------------------------
+
+The `hex` subdirectory of this package contains various pre-built configurations of the firmware.
+
+* There are hex images available for legacy (through-hole) boards and newer SMD boards.
+
+* Images for controller types AtMega-88 (the original controller) or AtMega-328p (upgrade controller) are available.
+
+* Images with or without debug support (debug vs. release) are available.
+
+If you don't know which one pick, take either `hex/board_legacy/atmega88/release` or `hex/board_smd/atmega88/release` depending on your board type.
+
 Installing the firmware:
 ------------------------
 
