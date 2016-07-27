@@ -46,7 +46,10 @@ static struct settings_context settings;
 #define NR_EE_SETTINGS	((E2END + 1) / sizeof(struct settings))
 static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 	[0 ... NR_EE_SETTINGS - 1] = {
-		.temp_setpoint	= FLOAT_TO_FIXPT(330.0),
+		.temp_setpoint		= FLOAT_TO_FIXPT(CONTRTEMP_DEF_SETPOINT),
+#if CONF_IDLE
+		.temp_idle_setpoint	= FLOAT_TO_FIXPT(CONTRTEMP_DEF_IDLE_SETPOINT),
+#endif
 		.temp_k[TEMPBOOST_NORMAL] = {
 			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_NORMAL),
 			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),

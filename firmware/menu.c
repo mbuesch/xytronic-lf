@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * User menu
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -106,8 +106,10 @@ static void menu_update_display(void)
 	bool displayed_heating;
 	enum contrtemp_boostmode boost_mode;
 	int16_t ipart, fpart;
+	bool temp_idle;
 
 	boost_mode = contrtemp_get_boost_mode();
+	temp_idle = contrtemp_is_idle();
 	displayed_error = menu.displayed_error;
 	displayed_heating = menu.displayed_heating;
 	disp[0] = '\0';
@@ -128,21 +130,25 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_NEGLIM,
 						 (int16_t)CONTRTEMP_POSLIM,
 						 ' ');
-			switch (boost_mode) {
-			case TEMPBOOST_NORMAL:
-				strcpy_P(disp + 3, PSTR("C."));
-				break;
+			if (temp_idle) {
+				strcpy_P(disp + 3, PSTR("L"));
+			} else {
+				switch (boost_mode) {
+				case TEMPBOOST_NORMAL:
+					strcpy_P(disp + 3, PSTR("C."));
+					break;
 #if CONF_BOOST
-			case TEMPBOOST_BOOST1:
-				strcpy_P(disp + 3, PSTR("b."));
-				break;
-			case TEMPBOOST_BOOST2:
-				strcpy_P(disp + 3, PSTR("8."));
-				break;
+				case TEMPBOOST_BOOST1:
+					strcpy_P(disp + 3, PSTR("b."));
+					break;
+				case TEMPBOOST_BOOST2:
+					strcpy_P(disp + 3, PSTR("8."));
+					break;
 #endif
-			case NR_BOOST_MODES:
-			default:
-				break;
+				case NR_BOOST_MODES:
+				default:
+					break;
+				}
 			}
 			break;
 		case MENU_SETTEMP:

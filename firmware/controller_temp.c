@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Temperature controller
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,10 @@
 struct temp_contr_context {
 	bool enabled;
 	bool emergency;
+
+#if CONF_IDLE
+	bool idle;
+#endif
 
 #if CONF_BOOST
 	enum contrtemp_boostmode boost_mode;
@@ -76,6 +80,15 @@ static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
 #endif
 
 	menu_request_display_update();
+}
+
+bool contrtemp_is_idle(void)
+{
+#if CONF_IDLE
+	return contrtemp.idle;
+#else
+	return false;
+#endif
 }
 
 void contrtemp_update_pid_config(void)
@@ -167,14 +180,29 @@ fixpt_t contrtemp_get_feedback(void)
 	return contrtemp.feedback;
 }
 
+static void contrtemp_update_setpoint(void)
+{
+	struct settings *settings;
+	fixpt_t temp_setpoint;
+	fixpt_t temp_idle_setpoint;
+
+	settings = get_settings();
+	temp_setpoint = settings->temp_setpoint;
+	temp_idle_setpoint = settings->temp_idle_setpoint;
+
+	if (contrtemp_is_idle() && (temp_idle_setpoint < temp_setpoint))
+		pid_set_setpoint(&contrtemp.pid, temp_idle_setpoint);
+	else
+		pid_set_setpoint(&contrtemp.pid, temp_setpoint);
+}
+
 void contrtemp_set_setpoint(fixpt_t w)
 {
 	struct settings *settings;
 
-	pid_set_setpoint(&contrtemp.pid, w);
-
 	settings = get_settings();
 	settings->temp_setpoint = w;
+	contrtemp_update_setpoint();
 	store_settings();
 }
 
@@ -245,6 +273,31 @@ static void contrtemp_boost_button_handler(enum button_id button,
 }
 #endif
 
+#if CONF_IDLE
+static void contrtemp_idle_button_handler(enum button_id button,
+					  enum button_state bstate)
+{
+	bool idle;
+
+	idle = contrtemp.idle;
+#if CONF_IDLETOGGLE
+	if (bstate == BSTATE_POSEDGE)
+		idle = !idle;
+#else
+	if (bstate == BSTATE_POSEDGE)
+		idle = true;
+	if (bstate == BSTATE_NEGEDGE)
+		idle = false;
+#endif
+
+	if (idle != contrtemp.idle) {
+		contrtemp.idle = idle;
+		contrtemp_update_setpoint();
+		menu_request_display_update();
+	}
+}
+#endif
+
 void contrtemp_init(void)
 {
 	struct pid_k_set *k_set;
@@ -268,5 +321,13 @@ void contrtemp_init(void)
 #if CONF_BOOST
 	buttons_register_handler(BUTTON_IRON,
 				 contrtemp_boost_button_handler);
+#endif
+#if CONF_IDLE
+	buttons_register_handler(BUTTON_IRON,
+				 contrtemp_idle_button_handler);
+#endif
+
+#if (CONF_BOOST) && (CONF_IDLE)
+# error "Cannot simultaneously enable CONF_BOOST and CONF_IDLE"
 #endif
 }
