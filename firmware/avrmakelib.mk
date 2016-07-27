@@ -198,13 +198,22 @@ write_mem: all
 writemem: write_mem
 install: write_mem
 
-write_fuse:
+write_fuses:
 	$(call PROGRAMMER_CMD_PROG_ENTER)
 	$(call _avrdude_write_fuse)
 	$(call PROGRAMMER_CMD_PWRCYCLE)
 	$(call PROGRAMMER_CMD_PROG_LEAVE)
 
-writefuse: write_fuse
+write_fuse: write_fuses
+writefuse: write_fuses
+writefuses: write_fuses
+
+print_fuses:
+	@$(if $(LFUSE),echo "LFUSE (low fuse)      = $(LFUSE)",$(TRUE))
+	@$(if $(HFUSE),echo "HFUSE (high fuse)     = $(HFUSE)",$(TRUE))
+	@$(if $(EFUSE),echo "EFUSE (extended fuse) = $(EFUSE)",$(TRUE))
+
+printfuses: print_fuses
 
 reset:
 	$(call PROGRAMMER_CMD_PROG_ENTER)
