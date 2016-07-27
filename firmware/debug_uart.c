@@ -75,7 +75,7 @@ static void debug_uart_print_timestamp(void)
 {
 	char buf[(sizeof(unsigned int) * 2) + 1];
 
-	utoa((unsigned int)(uint16_t)_timer_get_now(), buf, 16);
+	utoa((unsigned int)(uint16_t)timer_now(), buf, 16);
 	debug_uart_tx_string(buf);
 	debug_uart_tx((uint8_t)':');
 	debug_uart_tx((uint8_t)' ');

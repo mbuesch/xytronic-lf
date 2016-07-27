@@ -32,7 +32,7 @@ ISR(TIMER0_COMPA_vect)
 	mb();
 }
 
-static _timcnt_t timer_now(void)
+_timcnt_t timer_now(void)
 {
 	_timcnt_t count;
 	uint8_t sreg;

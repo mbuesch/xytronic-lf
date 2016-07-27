@@ -26,7 +26,7 @@ static void check_timer(void)
 
 	/* Check: get */
 	_timer_count_now = 42;
-	CHECK_EQ_UU(_timer_get_now(), 42);
+	CHECK_EQ_UU(timer_now(), 42);
 
 
 	/* Check: ms to count */

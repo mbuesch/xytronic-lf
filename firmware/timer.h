@@ -32,6 +32,8 @@ struct timer {
 };
 
 
+_timcnt_t timer_now(void);
+
 bool timer_expired(const struct timer *timer);
 int32_t timer_ms_since(const struct timer *timer);
 
