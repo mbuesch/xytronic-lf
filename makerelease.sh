@@ -39,8 +39,15 @@ do_build()
 
 	echo
 	echo "Building configuration:  $*"
-	make -C "$fwdir" all "$@"
 	mkdir -p "$targetdir"
+
+	echo "$*" > "$targetdir/build_config.txt"
+	make -C "$fwdir" all "$@"
+
+	echo "Fuse configuration:" > "$targetdir/fuses.txt"
+	echo >> "$targetdir/fuses.txt"
+	make --no-print-directory -C "$fwdir" print_fuses "$@" >> "$targetdir/fuses.txt"
+
 	mv "$fwdir"/*.hex "$targetdir"/
 	make -C "$fwdir" distclean "$@"
 }
