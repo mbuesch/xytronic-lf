@@ -39,12 +39,16 @@
 #include <avr/wdt.h>
 
 
+void early_init(void) __attribute__((naked, section(".init3"), used));
+void early_init(void)
+{
+	MCUSR = 0;
+	wdt_enable(WDTO_2S);
+}
+
 int main(void) _mainfunc;
 int main(void)
 {
-	irq_disable();
-	wdt_enable(WDTO_2S);
-
 	/* Wait a bit for the capacitors to charge
 	 * and the reference voltage to stabilize.
 	 */
