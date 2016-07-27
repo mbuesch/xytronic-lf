@@ -36,7 +36,9 @@ struct temp_contr_context {
 	bool enabled;
 	bool emergency;
 
+#if CONF_BOOST
 	enum contrtemp_boostmode boost_mode;
+#endif
 
 	struct pid pid;
 	fixpt_t feedback;
@@ -52,7 +54,11 @@ static struct temp_contr_context contrtemp;
 
 enum contrtemp_boostmode contrtemp_get_boost_mode(void)
 {
+#if CONF_BOOST
 	return contrtemp.boost_mode;
+#else
+	return TEMPBOOST_NORMAL;
+#endif
 }
 
 static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
@@ -64,9 +70,10 @@ static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
 	k_set = &settings->temp_k[new_boost_mode];
 
 	pid_set_factors(&contrtemp.pid, k_set);
+#if CONF_BOOST
 	contrtemp.boost_mode = new_boost_mode;
-
 	debug_print_int16(PSTR("tb"), (int16_t)new_boost_mode);
+#endif
 
 	menu_request_display_update();
 }
@@ -77,7 +84,7 @@ void contrtemp_update_pid_config(void)
 	 * will fetch the new PID settings and store
 	 * them to the controller.
 	 */
-	contrtemp_set_boost_mode(contrtemp.boost_mode);
+	contrtemp_set_boost_mode(contrtemp_get_boost_mode());
 }
 
 static fixpt_t temp_to_amps(fixpt_t temp)
@@ -221,8 +228,9 @@ bool contrtemp_is_heating_up(void)
 	return contrtemp.feedback < contrtemp_get_setpoint();
 }
 
-static void contrtemp_iron_button_handler(enum button_id button,
-					  enum button_state bstate)
+#if CONF_BOOST
+static void contrtemp_boost_button_handler(enum button_id button,
+					   enum button_state bstate)
 {
 	enum contrtemp_boostmode new_boost_mode;
 
@@ -235,6 +243,7 @@ static void contrtemp_iron_button_handler(enum button_id button,
 		contrtemp_set_boost_mode(new_boost_mode);
 	}
 }
+#endif
 
 void contrtemp_init(void)
 {
@@ -256,6 +265,8 @@ void contrtemp_init(void)
 	do_set_emerg(false);
 
 	/* Register handler for the iron button. */
+#if CONF_BOOST
 	buttons_register_handler(BUTTON_IRON,
-				 contrtemp_iron_button_handler);
+				 contrtemp_boost_button_handler);
+#endif
 }

@@ -9,7 +9,7 @@
 
 struct settings {
 	fixpt_t temp_setpoint;
-	struct pid_k_set temp_k[NR_BOOST_MODES];
+	struct pid_k_set temp_k[3];
 	uint8_t reserved[24];
 	uint8_t serial;
 } _packed;

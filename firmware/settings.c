@@ -53,6 +53,7 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_NORMAL),
 			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_NORMAL),
 		},
+#if CONF_BOOST
 		.temp_k[TEMPBOOST_BOOST1] = {
 			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST1),
 			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST1),
@@ -65,6 +66,7 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST2),
 			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST2),
 		},
+#endif
 		.serial		= 0,
 	},
 };
@@ -181,6 +183,7 @@ void settings_init(void)
 	uint8_t serial, next_serial;
 
 	build_assert(sizeof(struct settings) == 64);
+	build_assert(ARRAY_SIZE(((struct settings *)NULL)->temp_k) >= NR_BOOST_MODES);
 
 	memset(&settings, 0, sizeof(settings));
 

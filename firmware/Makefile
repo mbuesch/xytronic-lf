@@ -22,6 +22,7 @@ endif
 # Build configuration
 CONF_CALIB		:= 0
 CONF_DEBUG		:= 1
+CONF_BOOST		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
 CONF_CURRCUTOFFHYST	:= 0.7
 CONF_CURRCUTOFF		:= 1.7
@@ -89,6 +90,7 @@ CFLAGS			:= $(if $(call hweq,legacy),-DHW_LEGACY) \
 			   $(if $(call hweq,smd),-DHW_SMD) \
 			   -DCONF_CALIB=$(CONF_CALIB) \
 			   -DCONF_DEBUG=$(CONF_DEBUG) \
+			   -DCONF_BOOST=$(CONF_BOOST) \
 			   -DCONF_KCONF=$(CONF_KCONF) \
 			   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF) \
 			   -DCONF_CURRCUTOFFHYST=$(CONF_CURRCUTOFFHYST)

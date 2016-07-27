@@ -132,12 +132,14 @@ static void menu_update_display(void)
 			case TEMPBOOST_NORMAL:
 				strcpy_P(disp + 3, PSTR("C."));
 				break;
+#if CONF_BOOST
 			case TEMPBOOST_BOOST1:
 				strcpy_P(disp + 3, PSTR("b."));
 				break;
 			case TEMPBOOST_BOOST2:
 				strcpy_P(disp + 3, PSTR("8."));
 				break;
+#endif
 			case NR_BOOST_MODES:
 			default:
 				break;
