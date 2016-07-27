@@ -78,7 +78,7 @@ F_CPU			:= 8000000UL
 # Architecture configuration
 GCC_ARCH		:= $(patsubst m%,atmega%,$(DEV))
 AVRDUDE_ARCH		:= $(DEV)
-FUNC_STACK_LIMIT	:= 64
+FUNC_STACK_LIMIT	:=
 
 # Programmer selection.
 # Values can be:  avrisp2, mysmartusb
