@@ -206,9 +206,16 @@ void contrtemp_set_setpoint(fixpt_t w)
 	store_settings();
 }
 
-fixpt_t contrtemp_get_setpoint(void)
+void contrtemp_set_idle_setpoint(fixpt_t w)
 {
-	return pid_get_setpoint(&contrtemp.pid);
+	struct settings *settings;
+
+	if (CONF_IDLE) {
+		settings = get_settings();
+		settings->temp_idle_setpoint = w;
+		contrtemp_update_setpoint();
+		store_settings();
+	}
 }
 
 static void do_set_enabled(bool enabled)
@@ -253,7 +260,7 @@ bool contrtemp_in_emerg(void)
 
 bool contrtemp_is_heating_up(void)
 {
-	return contrtemp.feedback < contrtemp_get_setpoint();
+	return contrtemp.feedback < pid_get_setpoint(&contrtemp.pid);
 }
 
 #if CONF_BOOST

@@ -57,7 +57,7 @@ void contrtemp_set_feedback(fixpt_t r);
 fixpt_t contrtemp_get_feedback(void);
 
 void contrtemp_set_setpoint(fixpt_t w);
-fixpt_t contrtemp_get_setpoint(void);
+void contrtemp_set_idle_setpoint(fixpt_t w);
 
 void contrtemp_set_enabled(bool enabled);
 void contrtemp_set_emerg(bool emergency);

@@ -33,12 +33,14 @@
 
 
 #define MENU_SETTEMP_TIMEOUT	3000
-#define MENU_KCONF_PRE_TIMEOUT	1000
+#define MENU_IDLETEMP_TIMEOUT	3000
+#define MENU_KCONF_PRE_TIMEOUT	1500
 
 
 enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
 	MENU_SETTEMP,		/* Temperature setpoint. */
+	MENU_IDLETEMP,		/* Idle temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
 	MENU_CALIB,		/* Current calibration. */
 	MENU_KP_PRE,		/* Temp KP config */
@@ -131,7 +133,7 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_POSLIM,
 						 ' ');
 			if (temp_idle) {
-				strcpy_P(disp + 3, PSTR("L"));
+				strcpy_P(disp + 3, PSTR("L."));
 			} else {
 				switch (boost_mode) {
 				case TEMPBOOST_NORMAL:
@@ -152,7 +154,7 @@ static void menu_update_display(void)
 			}
 			break;
 		case MENU_SETTEMP:
-			temp_fixpt = contrtemp_get_setpoint();
+			temp_fixpt = get_settings()->temp_setpoint;
 			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
 			int_to_ascii_align_right(disp, 2,
 						 temp_int,
@@ -160,6 +162,18 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_POSLIM,
 						 ' ');
 			strcpy_P(disp + 3, PSTR("S"));
+			break;
+		case MENU_IDLETEMP:
+			if (!CONF_IDLE)
+				break;
+			temp_fixpt = get_settings()->temp_idle_setpoint;
+			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
+			int_to_ascii_align_right(disp, 2,
+						 temp_int,
+						 (int16_t)CONTRTEMP_NEGLIM,
+						 (int16_t)CONTRTEMP_POSLIM,
+						 ' ');
+			strcpy_P(disp + 3, PSTR("L"));
 			break;
 		case MENU_DEBUG:
 			if (!CONF_DEBUG)
@@ -174,7 +188,7 @@ static void menu_update_display(void)
 		case MENU_KP_PRE:
 			if (!CONF_KCONF)
 				break;
-			strcpy_P(disp, PSTR("CO. P"));
+			strcpy_P(disp, PSTR(" P"));
 			displayed_heating = false;
 			break;
 		case MENU_KP:
@@ -191,7 +205,7 @@ static void menu_update_display(void)
 		case MENU_KI_PRE:
 			if (!CONF_KCONF)
 				break;
-			strcpy_P(disp, PSTR("CO. I"));
+			strcpy_P(disp, PSTR(" I"));
 			displayed_heating = false;
 			break;
 		case MENU_KI:
@@ -208,7 +222,7 @@ static void menu_update_display(void)
 		case MENU_KD_PRE:
 			if (!CONF_KCONF)
 				break;
-			strcpy_P(disp, PSTR("CO. D"));
+			strcpy_P(disp, PSTR(" D"));
 			displayed_heating = false;
 			break;
 		case MENU_KD:
@@ -241,6 +255,8 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 {
 	switch (cur_state) {
 	case MENU_CURTEMP:
+		if (CONF_IDLE)
+			return MENU_IDLETEMP;
 		if (CONF_DEBUG)
 			return MENU_DEBUG;
 		if (CONF_CALIB)
@@ -249,6 +265,14 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
 	case MENU_SETTEMP:
+		return MENU_CURTEMP;
+	case MENU_IDLETEMP:
+		if (CONF_DEBUG)
+			return MENU_DEBUG;
+		if (CONF_CALIB)
+			return MENU_CALIB;
+		if (CONF_KCONF)
+			return MENU_KP_PRE;
 		return MENU_CURTEMP;
 	case MENU_DEBUG:
 		if (CONF_CALIB)
@@ -261,16 +285,28 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
 	case MENU_KP_PRE:
-		return MENU_KP;
+		if (CONF_KCONF)
+			return MENU_KP;
+		return MENU_CURTEMP;
 	case MENU_KP:
-		return MENU_KI_PRE;
+		if (CONF_KCONF)
+			return MENU_KI_PRE;
+		return MENU_CURTEMP;
 	case MENU_KI_PRE:
-		return MENU_KI;
+		if (CONF_KCONF)
+			return MENU_KI;
+		return MENU_CURTEMP;
 	case MENU_KI:
-		return MENU_KD_PRE;
+		if (CONF_KCONF)
+			return MENU_KD_PRE;
+		return MENU_CURTEMP;
 	case MENU_KD_PRE:
-		return MENU_KD;
+		if (CONF_KCONF)
+			return MENU_KD;
+		return MENU_CURTEMP;
 	case MENU_KD:
+		if (CONF_KCONF)
+			return MENU_CURTEMP;
 		return MENU_CURTEMP;
 	}
 
@@ -284,6 +320,9 @@ static void menu_set_state(enum menu_state new_state)
 	switch (new_state) {
 	case MENU_SETTEMP:
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
+		break;
+	case MENU_IDLETEMP:
+		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
 		break;
 	case MENU_KP_PRE:
 	case MENU_KI_PRE:
@@ -315,16 +354,31 @@ static void menu_set_next_state(void)
 	menu_set_state(next_menu_state(menu.state));
 }
 
+static fixpt_t ramp_temp(fixpt_t temp, bool up)
+{
+	return fixpt_add_limited(temp,
+				 (up ? float_to_fixpt(1.0) :
+				       float_to_fixpt(-1.0)),
+				 float_to_fixpt(CONTRTEMP_NEGLIM),
+				 float_to_fixpt(CONTRTEMP_POSLIM));
+}
+
 static void settemp_ramp_handler(bool up)
 {
 	fixpt_t setpoint;
 
-	setpoint = fixpt_add_limited(contrtemp_get_setpoint(),
-				     (up ? float_to_fixpt(1.0) :
-					   float_to_fixpt(-1.0)),
-				     float_to_fixpt(CONTRTEMP_NEGLIM),
-				     float_to_fixpt(CONTRTEMP_POSLIM));
+	setpoint = get_settings()->temp_setpoint;
+	setpoint = ramp_temp(setpoint, up);
 	contrtemp_set_setpoint(setpoint);
+}
+
+static void idletemp_ramp_handler(bool up)
+{
+	fixpt_t setpoint;
+
+	setpoint = get_settings()->temp_idle_setpoint;
+	setpoint = ramp_temp(setpoint, up);
+	contrtemp_set_idle_setpoint(setpoint);
 }
 
 static void kconf_kp_ramp_handler(bool up)
@@ -385,7 +439,6 @@ static void menu_button_handler(enum button_id button,
 {
 	if (menu.displayed_error) {
 		/* We have an error. Ignore all buttons. */
-		stop_ramping();
 		return;
 	}
 
@@ -417,6 +470,28 @@ static void menu_button_handler(enum button_id button,
 			}
 			if (button == BUTTON_PLUS) {
 				start_ramping(RAMP_UP, settemp_ramp_handler);
+				break;
+			}
+		}
+		if (bstate == BSTATE_NEGEDGE) {
+			stop_ramping();
+			if (button == BUTTON_SET) {
+				menu_set_next_state();
+				break;
+			}
+		}
+		break;
+	case MENU_IDLETEMP:
+		if (!CONF_IDLE)
+			break;
+		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
+		if (bstate == BSTATE_POSEDGE) {
+			if (button == BUTTON_MINUS) {
+				start_ramping(RAMP_DOWN, idletemp_ramp_handler);
+				break;
+			}
+			if (button == BUTTON_PLUS) {
+				start_ramping(RAMP_UP, idletemp_ramp_handler);
 				break;
 			}
 		}
@@ -555,8 +630,12 @@ void menu_work(void)
 	case MENU_KI_PRE:
 	case MENU_KD_PRE:
 	case MENU_SETTEMP:
+	case MENU_IDLETEMP:
 		if (timer_expired(&menu.timeout)) {
-			menu_set_next_state();
+			if (menu.state == MENU_IDLETEMP)
+				menu_set_state(MENU_CURTEMP);
+			else
+				menu_set_next_state();
 			stop_ramping();
 			break;
 		}
