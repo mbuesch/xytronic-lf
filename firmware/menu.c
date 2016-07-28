@@ -101,19 +101,58 @@ static void int_to_ascii_align_right(char *buf, uint8_t align_to_digit,
 
 #define menu_putstr(dest, str)	strcpy((dest), (str))
 
+static void menu_put_temp(char *disp, fixpt_t temp, const char *symbol)
+{
+	int16_t temp_int;
+
+	temp_int = (int16_t)fixpt_to_int(temp);
+	int_to_ascii_align_right(disp, 2,
+				 temp_int,
+				 (int16_t)CONTRTEMP_NEGLIM,
+				 (int16_t)CONTRTEMP_POSLIM,
+				 ' ');
+	menu_putstr(disp + 3, symbol);
+}
+
+static void menu_put_fixpt(char *disp, fixpt_t val, uint8_t fract_digits)
+{
+	int16_t ipart, fpart;
+	int16_t ipart_max, fpart_max;
+	int16_t ipart_digits;
+	uint8_t ipart_align, fpart_align;
+
+	if (fract_digits == 2) {
+		ipart_max = 99;
+		ipart_align = 1;
+		fpart_max = 99;
+		fpart_align = 1;
+	} else { /* fract_digits == 3 */
+		ipart_max = 9;
+		ipart_align = 0;
+		fpart_max = 999;
+		fpart_align = 2;
+	}
+	ipart_digits = 4 - fract_digits;
+
+	ipart = (int16_t)clamp(fixpt_get_int_part(val), 0, ipart_max);
+	fpart = (int16_t)fixpt_get_dec_fract(val, fract_digits);
+
+	int_to_ascii_align_right(&disp[0], ipart_align, ipart,
+				 0, ipart_max, ' ');
+	disp[ipart_digits] = '.';
+	int_to_ascii_align_right(&disp[ipart_digits + 1], fpart_align, fpart,
+				 0, fpart_max, '0');
+}
+
 static void menu_update_display(void)
 {
 	char disp[6];
-	fixpt_t temp_fixpt, k;
-	int16_t temp_int;
+	const char *symbol;
 	uint8_t displayed_error;
 	bool displayed_heating;
 	enum contrtemp_boostmode boost_mode;
-	int16_t ipart, fpart;
-	bool temp_idle;
 
 	boost_mode = contrtemp_get_boost_mode();
-	temp_idle = contrtemp_is_idle();
 	displayed_error = menu.displayed_error;
 	displayed_heating = menu.displayed_heating;
 	disp[0] = '\0';
@@ -127,55 +166,34 @@ static void menu_update_display(void)
 	} else {
 		switch (menu.state) {
 		case MENU_CURTEMP:
-			temp_fixpt = contrtemp_get_feedback();
-			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
-			int_to_ascii_align_right(disp, 2,
-						 temp_int,
-						 (int16_t)CONTRTEMP_NEGLIM,
-						 (int16_t)CONTRTEMP_POSLIM,
-						 ' ');
-			if (temp_idle) {
-				menu_putstr(disp + 3, "L.");
+			if (contrtemp_is_idle()) {
+				symbol = "L.";
 			} else {
 				switch (boost_mode) {
+				case NR_BOOST_MODES:
+				default:
 				case TEMPBOOST_NORMAL:
-					menu_putstr(disp + 3, "C.");
+					symbol = "C.";
 					break;
 #if CONF_BOOST
 				case TEMPBOOST_BOOST1:
-					menu_putstr(disp + 3, "b.");
+					symbol = "b.";
 					break;
 				case TEMPBOOST_BOOST2:
-					menu_putstr(disp + 3, "8.");
+					symbol = "8.";
 					break;
 #endif
-				case NR_BOOST_MODES:
-				default:
-					break;
 				}
 			}
+			menu_put_temp(disp, contrtemp_get_feedback(), symbol);
 			break;
 		case MENU_SETTEMP:
-			temp_fixpt = get_settings()->temp_setpoint;
-			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
-			int_to_ascii_align_right(disp, 2,
-						 temp_int,
-						 (int16_t)CONTRTEMP_NEGLIM,
-						 (int16_t)CONTRTEMP_POSLIM,
-						 ' ');
-			menu_putstr(disp + 3, "S");
+			menu_put_temp(disp, get_settings()->temp_setpoint, "S");
 			break;
 		case MENU_IDLETEMP:
 			if (!CONF_IDLE)
 				break;
-			temp_fixpt = get_settings()->temp_idle_setpoint;
-			temp_int = (int16_t)fixpt_to_int(temp_fixpt);
-			int_to_ascii_align_right(disp, 2,
-						 temp_int,
-						 (int16_t)CONTRTEMP_NEGLIM,
-						 (int16_t)CONTRTEMP_POSLIM,
-						 ' ');
-			menu_putstr(disp + 3, "L");
+			menu_put_temp(disp, get_settings()->temp_idle_setpoint, "L");
 			break;
 		case MENU_DEBUG:
 			if (!CONF_DEBUG)
@@ -196,12 +214,7 @@ static void menu_update_display(void)
 		case MENU_KP:
 			if (!CONF_KCONF)
 				break;
-			k = get_settings()->temp_k[boost_mode].kp;
-			ipart = (int16_t)clamp(fixpt_get_int_part(k), 0, 99);
-			fpart = (int16_t)fixpt_get_dec_fract(k, 2);
-			int_to_ascii_align_right(&disp[0], 1, ipart, 0, 99, ' ');
-			disp[2] = '.';
-			int_to_ascii_align_right(&disp[3], 1, fpart, 0, 99, '0');
+			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kp, 2);
 			displayed_heating = false;
 			break;
 		case MENU_KI_PRE:
@@ -213,12 +226,7 @@ static void menu_update_display(void)
 		case MENU_KI:
 			if (!CONF_KCONF)
 				break;
-			k = get_settings()->temp_k[boost_mode].ki;
-			ipart = (int16_t)clamp(fixpt_get_int_part(k), 0, 9);
-			fpart = (int16_t)fixpt_get_dec_fract(k, 3);
-			int_to_ascii_align_right(&disp[0], 0, ipart, 0, 9, ' ');
-			disp[1] = '.';
-			int_to_ascii_align_right(&disp[2], 2, fpart, 0, 999, '0');
+			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].ki, 3);
 			displayed_heating = false;
 			break;
 		case MENU_KD_PRE:
@@ -230,12 +238,7 @@ static void menu_update_display(void)
 		case MENU_KD:
 			if (!CONF_KCONF)
 				break;
-			k = get_settings()->temp_k[boost_mode].kd;
-			ipart = (int16_t)clamp(fixpt_get_int_part(k), 0, 99);
-			fpart = (int16_t)fixpt_get_dec_fract(k, 2);
-			int_to_ascii_align_right(&disp[0], 1, ipart, 0, 99, ' ');
-			disp[2] = '.';
-			int_to_ascii_align_right(&disp[3], 1, fpart, 0, 99, '0');
+			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kd, 2);
 			displayed_heating = false;
 			break;
 		}
