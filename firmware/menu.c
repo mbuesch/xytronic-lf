@@ -359,7 +359,7 @@ static void menu_set_next_state(void)
 	menu_set_state(next_menu_state(menu.state));
 }
 
-static fixpt_t ramp_temp(fixpt_t temp, bool up)
+static fixpt_t do_ramp_temp(fixpt_t temp, bool up)
 {
 	return fixpt_add_limited(temp,
 				 (up ? float_to_fixpt(1.0) :
@@ -373,7 +373,7 @@ static void settemp_ramp_handler(bool up)
 	fixpt_t setpoint;
 
 	setpoint = get_settings()->temp_setpoint;
-	setpoint = ramp_temp(setpoint, up);
+	setpoint = do_ramp_temp(setpoint, up);
 	contrtemp_set_setpoint(setpoint);
 }
 
@@ -382,60 +382,72 @@ static void idletemp_ramp_handler(bool up)
 	fixpt_t setpoint;
 
 	setpoint = get_settings()->temp_idle_setpoint;
-	setpoint = ramp_temp(setpoint, up);
+	setpoint = do_ramp_temp(setpoint, up);
 	contrtemp_set_idle_setpoint(setpoint);
+}
+
+static void do_ramp_k(fixpt_t *k, fixpt_t inc, fixpt_t max, bool up)
+{
+	*k = fixpt_add_limited(*k, (up ? inc : fixpt_neg(inc)),
+			       float_to_fixpt(0.0), max);
+	store_settings();
+	contrtemp_update_pid_config();
 }
 
 static void kconf_kp_ramp_handler(bool up)
 {
-	fixpt_t *k;
-
-	k = &(get_settings()->temp_k[contrtemp_get_boost_mode()].kp);
-	*k = fixpt_add_limited(*k, (up ? float_to_fixpt(0.03125) :
-					 float_to_fixpt(-0.03125)),
-			       float_to_fixpt(0.0),
-			       float_to_fixpt(99.0));
-	store_settings();
-	contrtemp_update_pid_config();
+	do_ramp_k(&(get_settings()->temp_k[contrtemp_get_boost_mode()].kp),
+		  float_to_fixpt(0.03125),
+		  float_to_fixpt(99.0), up);
 }
 
 static void kconf_ki_ramp_handler(bool up)
 {
-	fixpt_t *k;
-
-	k = &(get_settings()->temp_k[contrtemp_get_boost_mode()].ki);
-	*k = fixpt_add_limited(*k, (up ? float_to_fixpt(0.015625) :
-					 float_to_fixpt(-0.015625)),
-			       float_to_fixpt(0.0),
-			       float_to_fixpt(9.0));
-	store_settings();
-	contrtemp_update_pid_config();
+	do_ramp_k(&(get_settings()->temp_k[contrtemp_get_boost_mode()].ki),
+		  float_to_fixpt(0.015625),
+		  float_to_fixpt(9.0), up);
 }
 
 static void kconf_kd_ramp_handler(bool up)
 {
-	fixpt_t *k;
-
-	k = &(get_settings()->temp_k[contrtemp_get_boost_mode()].kd);
-	*k = fixpt_add_limited(*k, (up ? float_to_fixpt(0.03125) :
-					 float_to_fixpt(-0.03125)),
-			       float_to_fixpt(0.0),
-			       float_to_fixpt(99.0));
-	store_settings();
-	contrtemp_update_pid_config();
+	do_ramp_k(&(get_settings()->temp_k[contrtemp_get_boost_mode()].kd),
+		  float_to_fixpt(0.03125),
+		  float_to_fixpt(99.0), up);
 }
 
-static void start_ramping(enum ramp_state ramp, ramp_handler_t handler)
+static void start_ramping(bool up, ramp_handler_t handler)
 {
-	menu.ramp = ramp;
+	menu.ramp = up ? RAMP_UP : RAMP_DOWN;
 	menu.ramp_handler = handler;
 	menu.ramp_period = RAMP_START_PERIOD_MS;
 	timer_set_now(&menu.ramp_timer);
 }
 
+static void start_ramping_button(enum button_id button,
+				 enum button_state bstate,
+				 ramp_handler_t handler)
+{
+	if (bstate == BSTATE_POSEDGE) {
+		if (button == BUTTON_MINUS)
+			start_ramping(false, handler);
+		else if (button == BUTTON_PLUS)
+			start_ramping(true, handler);
+	}
+}
+
 static void stop_ramping(void)
 {
 	menu.ramp = RAMP_NONE;
+}
+
+static void button_handler_next_state(enum button_id button,
+				      enum button_state bstate)
+{
+	if (bstate == BSTATE_NEGEDGE) {
+		stop_ramping();
+		if (button == BUTTON_SET)
+			menu_set_next_state();
+	}
 }
 
 /* Handler for SET, MINUS and PLUS buttons */
@@ -450,168 +462,77 @@ static void menu_button_handler(enum button_id button,
 	switch (menu.state) {
 	case MENU_CURTEMP:
 		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS ||
-			    button == BUTTON_PLUS) {
-				start_ramping((button == BUTTON_MINUS) ?
-						RAMP_DOWN : RAMP_UP,
-					      settemp_ramp_handler);
+			start_ramping_button(button, bstate,
+					     settemp_ramp_handler);
+			if (button != BUTTON_SET)
 				menu_set_state(MENU_SETTEMP);
-				break;
-			}
 		}
-		if (bstate == BSTATE_NEGEDGE) {
-			if (button == BUTTON_SET) {
-				menu_set_next_state();
-				break;
-			}
-		}
+		button_handler_next_state(button, bstate);
 		break;
 	case MENU_SETTEMP:
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
-		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS) {
-				start_ramping(RAMP_DOWN, settemp_ramp_handler);
-				break;
-			}
-			if (button == BUTTON_PLUS) {
-				start_ramping(RAMP_UP, settemp_ramp_handler);
-				break;
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			stop_ramping();
-			if (button == BUTTON_SET) {
-				menu_set_next_state();
-				break;
-			}
-		}
+		start_ramping_button(button, bstate, settemp_ramp_handler);
+		button_handler_next_state(button, bstate);
 		break;
 	case MENU_IDLETEMP:
 		if (!CONF_IDLE)
 			break;
 		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
-		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS) {
-				start_ramping(RAMP_DOWN, idletemp_ramp_handler);
-				break;
-			}
-			if (button == BUTTON_PLUS) {
-				start_ramping(RAMP_UP, idletemp_ramp_handler);
-				break;
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			stop_ramping();
-			if (button == BUTTON_SET) {
-				menu_set_next_state();
-				break;
-			}
-		}
+		start_ramping_button(button, bstate, idletemp_ramp_handler);
+		button_handler_next_state(button, bstate);
 		break;
 	case MENU_DEBUG:
 		if (!CONF_DEBUG)
 			break;
 		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_PLUS) {
+			if (button == BUTTON_PLUS)
 				debug_enable(true);
-				break;
-			}
 			if (button == BUTTON_MINUS) {
 				debug_enable(false);
 				menu_request_display_update();
-				break;
 			}
 		}
-		if (bstate == BSTATE_NEGEDGE) {
-			if (button == BUTTON_SET) {
-				if (!debug_is_enabled()) {
-					menu_set_next_state();
-					break;
-				}
-			}
-		}
+		if (!debug_is_enabled())
+			button_handler_next_state(button, bstate);
 		break;
 	case MENU_CALIB:
 		if (!CONF_CALIB)
 			break;
 		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_PLUS ||
-			    button == BUTTON_MINUS) {
+			if (button != BUTTON_SET) {
 				calcurr_set_enabled(!calcurr_is_enabled());
 				menu_request_display_update();
-				break;
 			}
 		}
 		if (bstate == BSTATE_NEGEDGE) {
-			if (button == BUTTON_SET) {
+			if (button == BUTTON_SET)
 				calcurr_set_enabled(false);
-				menu_set_next_state();
-				break;
-			}
 		}
+		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KP_PRE:
 		break;
 	case MENU_KP:
 		if (!CONF_KCONF)
 			break;
-		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS ||
-			    button == BUTTON_PLUS) {
-				start_ramping((button == BUTTON_MINUS) ?
-						RAMP_DOWN : RAMP_UP,
-					      kconf_kp_ramp_handler);
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			stop_ramping();
-			if (button == BUTTON_SET) {
-				menu_set_next_state();
-				break;
-			}
-		}
+		start_ramping_button(button, bstate, kconf_kp_ramp_handler);
+		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KI_PRE:
 		break;
 	case MENU_KI:
 		if (!CONF_KCONF)
 			break;
-		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS ||
-			    button == BUTTON_PLUS) {
-				start_ramping((button == BUTTON_MINUS) ?
-						RAMP_DOWN : RAMP_UP,
-					      kconf_ki_ramp_handler);
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			stop_ramping();
-			if (button == BUTTON_SET) {
-				menu_set_next_state();
-				break;
-			}
-		}
+		start_ramping_button(button, bstate, kconf_ki_ramp_handler);
+		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KD_PRE:
 		break;
 	case MENU_KD:
 		if (!CONF_KCONF)
 			break;
-		if (bstate == BSTATE_POSEDGE) {
-			if (button == BUTTON_MINUS ||
-			    button == BUTTON_PLUS) {
-				start_ramping((button == BUTTON_MINUS) ?
-						RAMP_DOWN : RAMP_UP,
-					      kconf_kd_ramp_handler);
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			stop_ramping();
-			if (button == BUTTON_SET) {
-				menu_set_next_state();
-				break;
-			}
-		}
+		start_ramping_button(button, bstate, kconf_kd_ramp_handler);
+		button_handler_next_state(button, bstate);
 		break;
 	}
 }
