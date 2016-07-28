@@ -92,14 +92,16 @@ static const struct sseg_iomap __flash digit_iomaps[] = {
 
 #define DISPLAY_NR_DIGITS	ARRAY_SIZE(digit_iomaps)
 
+struct display_digit {
+	struct sseg_digit_data sseg;
+	bool dp_force_enable;
+	bool dp_on;
+};
+
 struct display_context {
 	bool enabled;
 
-	struct sseg_digit_data digit_data[DISPLAY_NR_DIGITS];
-
-	uint8_t dp_force_enable;
-	uint8_t dp_force_mask;
-
+	struct display_digit digit_data[DISPLAY_NR_DIGITS];
 	uint8_t digit_mux_count;
 
 	struct timer mux_timer;
@@ -108,49 +110,37 @@ struct display_context {
 static struct display_context display;
 
 
-void display_force_dp(int8_t dp, bool force, bool enable)
+void display_force_dp(int8_t dp, bool force_en, bool dp_on)
 {
-	uint8_t mask;
-
-	mask = BITMASK8(dp);
-	if (force)
-		display.dp_force_enable |= mask;
-	else
-		display.dp_force_enable &= (uint8_t)~mask;
-	if (enable)
-		display.dp_force_mask |= mask;
-	else
-		display.dp_force_mask &= (uint8_t)~mask;
+	display.digit_data[dp].dp_force_enable = force_en;
+	display.digit_data[dp].dp_on = dp_on;
 }
 
 void display_show(const char *digits)
 {
-	struct sseg_digit_data *digit_data;
+	struct display_digit *digit_data;
 	char c;
-	uint8_t mask;
 
 	digit_data = &display.digit_data[0];
-	mask = 1;
 	do {
 		c = digits[0];
 		if (c == '\0') {
-			sseg_digit_set(digit_data, ' ');
+			c = ' ';
 		} else {
 			if (digits[1] == '.') {
 				c = (char)(c | SSEG_DIGIT_DP);
 				digits++;
 			}
-			if (display.dp_force_enable & mask) {
-				if (display.dp_force_mask & mask)
+			if (digit_data->dp_force_enable) {
+				if (digit_data->dp_on)
 					c = (char)(c | SSEG_DIGIT_DP);
 				else
 					c = (char)(c & (char)~SSEG_DIGIT_DP);
 			}
-			sseg_digit_set(digit_data, c);
-
-			mask = (uint8_t)(mask << 1);
 			digits++;
 		}
+		sseg_digit_set(&digit_data->sseg, c);
+
 		digit_data++;
 	} while (digit_data < &display.digit_data[DISPLAY_NR_DIGITS]);
 }
@@ -172,8 +162,8 @@ void display_work(void)
 		next_mux = 0;
 	display.digit_mux_count = next_mux;
 
-	sseg_multiplex(&display.digit_data[cur_mux],
-		       &display.digit_data[next_mux]);
+	sseg_multiplex(&display.digit_data[cur_mux].sseg,
+		       &display.digit_data[next_mux].sseg);
 }
 
 void display_enable(bool enable)
@@ -187,7 +177,7 @@ void display_enable(bool enable)
 	display.enabled = enable;
 	if (enable) {
 		for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
-			ddata = &(display.digit_data[i]);
+			ddata = &display.digit_data[i].sseg;
 
 			ddata->iomap = &digit_iomaps[i];
 			sseg_init(ddata);
@@ -195,7 +185,7 @@ void display_enable(bool enable)
 		timer_set_now(&display.mux_timer);
 	} else {
 		for (i = 0; i < DISPLAY_NR_DIGITS; i++) {
-			ddata = &(display.digit_data[i]);
+			ddata = &display.digit_data[i].sseg;
 
 			sseg_exit(ddata);
 		}
