@@ -57,7 +57,7 @@ enum ramp_state {
 	RAMP_DOWN,
 };
 
-#define RAMP_START_PERIOD_MS	400
+#define RAMP_START_PERIOD_MS	400u
 #define RAMP_MIN_PERIOD_MS	(RAMP_START_PERIOD_MS >> 4)
 
 typedef void (*ramp_handler_t)(bool up);
@@ -69,12 +69,12 @@ struct menu_context {
 	enum ramp_state ramp;
 	struct timer ramp_timer;
 	ramp_handler_t ramp_handler;
-	int32_t ramp_period;
+	uint16_t ramp_period;
 
 	uint8_t displayed_error;
 	bool displayed_heating;
 
-	uint8_t display_update_requested;
+	bool display_update_requested;
 };
 
 static struct menu_context menu;
@@ -252,7 +252,7 @@ static void menu_update_display(void)
 
 void menu_request_display_update(void)
 {
-	menu.display_update_requested = 1;
+	menu.display_update_requested = true;
 	mb();
 }
 
@@ -672,7 +672,7 @@ void menu_work(void)
 		} else {
 			if (timer_expired(&menu.ramp_timer)) {
 				menu.ramp_handler(menu.ramp == RAMP_UP);
-				menu_request_display_update();
+				menu.display_update_requested = true;
 				timer_add(&menu.ramp_timer, menu.ramp_period);
 				if (menu.ramp_period > RAMP_MIN_PERIOD_MS)
 					menu.ramp_period /= 2;
@@ -683,7 +683,7 @@ void menu_work(void)
 	/* Update the display, if requested. */
 	mb();
 	if (menu.display_update_requested) {
-		menu.display_update_requested = 0;
+		menu.display_update_requested = false;
 		mb();
 		menu_update_display();
 	}
