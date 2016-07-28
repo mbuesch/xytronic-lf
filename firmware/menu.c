@@ -99,6 +99,8 @@ static void int_to_ascii_align_right(char *buf, uint8_t align_to_digit,
 	}
 }
 
+#define menu_putstr(dest, str)	strcpy((dest), (str))
+
 static void menu_update_display(void)
 {
 	char disp[6];
@@ -117,7 +119,7 @@ static void menu_update_display(void)
 	disp[0] = '\0';
 
 	if (displayed_error) {
-		strcpy_P(disp, PSTR("Err"));
+		menu_putstr(disp, "Err");
 		int_to_ascii_align_right(disp + 3, 0,
 					 displayed_error, 0, 9, ' ');
 		disp[5] = '\0';
@@ -133,18 +135,18 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_POSLIM,
 						 ' ');
 			if (temp_idle) {
-				strcpy_P(disp + 3, PSTR("L."));
+				menu_putstr(disp + 3, "L.");
 			} else {
 				switch (boost_mode) {
 				case TEMPBOOST_NORMAL:
-					strcpy_P(disp + 3, PSTR("C."));
+					menu_putstr(disp + 3, "C.");
 					break;
 #if CONF_BOOST
 				case TEMPBOOST_BOOST1:
-					strcpy_P(disp + 3, PSTR("b."));
+					menu_putstr(disp + 3, "b.");
 					break;
 				case TEMPBOOST_BOOST2:
-					strcpy_P(disp + 3, PSTR("8."));
+					menu_putstr(disp + 3, "8.");
 					break;
 #endif
 				case NR_BOOST_MODES:
@@ -161,7 +163,7 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_NEGLIM,
 						 (int16_t)CONTRTEMP_POSLIM,
 						 ' ');
-			strcpy_P(disp + 3, PSTR("S"));
+			menu_putstr(disp + 3, "S");
 			break;
 		case MENU_IDLETEMP:
 			if (!CONF_IDLE)
@@ -173,22 +175,22 @@ static void menu_update_display(void)
 						 (int16_t)CONTRTEMP_NEGLIM,
 						 (int16_t)CONTRTEMP_POSLIM,
 						 ' ');
-			strcpy_P(disp + 3, PSTR("L"));
+			menu_putstr(disp + 3, "L");
 			break;
 		case MENU_DEBUG:
 			if (!CONF_DEBUG)
 				break;
-			strcpy_P(disp, PSTR("DBG"));
+			menu_putstr(disp, "DBG");
 			break;
 		case MENU_CALIB:
 			if (!CONF_CALIB)
 				break;
-			strcpy_P(disp, PSTR("CAL"));
+			menu_putstr(disp, "CAL");
 			break;
 		case MENU_KP_PRE:
 			if (!CONF_KCONF)
 				break;
-			strcpy_P(disp, PSTR(" P"));
+			menu_putstr(disp, " P");
 			displayed_heating = false;
 			break;
 		case MENU_KP:
@@ -205,7 +207,7 @@ static void menu_update_display(void)
 		case MENU_KI_PRE:
 			if (!CONF_KCONF)
 				break;
-			strcpy_P(disp, PSTR(" I"));
+			menu_putstr(disp, " I");
 			displayed_heating = false;
 			break;
 		case MENU_KI:
@@ -222,7 +224,7 @@ static void menu_update_display(void)
 		case MENU_KD_PRE:
 			if (!CONF_KCONF)
 				break;
-			strcpy_P(disp, PSTR(" D"));
+			menu_putstr(disp, " D");
 			displayed_heating = false;
 			break;
 		case MENU_KD:
