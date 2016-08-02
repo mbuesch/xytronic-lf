@@ -165,18 +165,18 @@ static void menu_update_display(void)
 	char _symbol[3];
 	uint8_t displayed_error;
 	uint8_t active_index;
-	bool displayed_heating;
+	bool show_heating;
 	enum contrtemp_boostmode boost_mode;
 
 	boost_mode = contrtemp_get_boost_mode();
 	displayed_error = menu.displayed_error;
-	displayed_heating = menu.displayed_heating;
+	show_heating = true;
 	disp[0] = '\0';
 
 	if (displayed_error) {
 		menu_putstr(disp, "Err ");
 		disp[3] = (char)('0' + displayed_error);
-		displayed_heating = false;
+		show_heating = false;
 	} else {
 		switch (menu.state) {
 		case MENU_CURTEMP:
@@ -232,43 +232,43 @@ static void menu_update_display(void)
 			if (!CONF_KCONF)
 				break;
 			menu_putstr(disp, " P");
-			displayed_heating = false;
+			show_heating = false;
 			break;
 		case MENU_KP:
 			if (!CONF_KCONF)
 				break;
 			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kp, 2);
-			displayed_heating = false;
+			show_heating = false;
 			break;
 		case MENU_KI_PRE:
 			if (!CONF_KCONF)
 				break;
 			menu_putstr(disp, " I");
-			displayed_heating = false;
+			show_heating = false;
 			break;
 		case MENU_KI:
 			if (!CONF_KCONF)
 				break;
 			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].ki, 3);
-			displayed_heating = false;
+			show_heating = false;
 			break;
 		case MENU_KD_PRE:
 			if (!CONF_KCONF)
 				break;
 			menu_putstr(disp, " D");
-			displayed_heating = false;
+			show_heating = false;
 			break;
 		case MENU_KD:
 			if (!CONF_KCONF)
 				break;
 			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kd, 2);
-			displayed_heating = false;
+			show_heating = false;
 			break;
 		}
 	}
 
 	/* Show the 'is heating' dot. */
-	display_force_dp(2, true, displayed_heating);
+	display_force_dp(2, true, show_heating ? menu.displayed_heating : false);
 	/* Update the display content. */
 	display_show(disp);
 }
