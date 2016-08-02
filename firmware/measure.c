@@ -158,6 +158,7 @@ static void measure_handle_result(void)
 			   (int16_t)raw_adc);
 
 	/* Filter the raw adc value, if we have a filter. */
+	//TODO we should filter the phys value instead of the raw value, so that we only need a fixpt implementation of the filter.
 	if (config->filter_callback)
 		raw_adc = config->filter_callback(raw_adc);
 
