@@ -112,7 +112,7 @@ void buttons_work(void)
 				handler((enum button_id)i, BSTATE_POSEDGE);
 			else if (neg_edge & mask)
 				handler((enum button_id)i, BSTATE_NEGEDGE);
-			else if (state & mask)
+			if (state & mask)
 				handler((enum button_id)i, BSTATE_PRESSED);
 		}
 	}
