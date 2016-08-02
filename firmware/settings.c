@@ -194,8 +194,6 @@ void settings_init(void)
 	build_assert(SEA_SIZE(struct settings, temp_k) >= NR_BOOST_MODES);
 	build_assert(SEA_SIZE(struct settings, temp_setpoint) >= NR_PRESETS);
 
-	memset(&settings, 0, sizeof(settings));
-
 	/* Find the latest settings in the eeprom.
 	 * The latest setting is the one with the largest
 	 * index. However, wrap around must be considered.

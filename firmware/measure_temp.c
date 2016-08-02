@@ -93,6 +93,5 @@ static const struct measure_config __flash meastemp_config = {
 
 void meastemp_init(void)
 {
-	memset(&meastemp, 0, sizeof(meastemp));
 	measure_register_channel(MEAS_CHAN_1, &meastemp_config);
 }

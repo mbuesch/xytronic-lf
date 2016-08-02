@@ -108,7 +108,6 @@ void presets_init(void)
 #if CONF_PRESETS
 	struct settings *settings;
 
-	memset(&presets, 0, sizeof(presets));
 	settings = get_settings();
 	presets.active = min(settings->temp_setpoint_active,
 			     NR_PRESETS - 1u);

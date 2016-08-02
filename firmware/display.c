@@ -193,6 +193,5 @@ void display_enable(bool enable)
 
 void display_init(void)
 {
-	memset(&display, 0, sizeof(display));
 	display_enable(true);
 }

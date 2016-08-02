@@ -264,12 +264,6 @@ void measure_work(void)
 
 void measure_init(void)
 {
-	uint8_t i;
-
-	memset(&meas, 0, sizeof(meas));
-	for (i = 0; i < ARRAY_SIZE(meas.channels); i++)
-		meas.channels[i].config = NULL;
-
 	/* Discard the first measurement. */
 	adc_trigger_chan(NULL);
 	adc_busywait();

@@ -92,7 +92,6 @@ void pid_init(struct pid *pid,
 	      const struct pid_k_set *k,
 	      fixpt_t y_neglim, fixpt_t y_poslim)
 {
-	memset(pid, 0, sizeof(*pid));
 	pid->y_neglim = y_neglim;
 	pid->y_poslim = y_poslim;
 	pid_set_factors(pid, k);

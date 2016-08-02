@@ -665,8 +665,6 @@ void menu_work(void)
 
 void menu_init(void)
 {
-	memset(&menu, 0, sizeof(menu));
-
 	buttons_register_handler(BUTTON_SET, menu_button_handler);
 	buttons_register_handler(BUTTON_PLUS, menu_button_handler);
 	buttons_register_handler(BUTTON_MINUS, menu_button_handler);

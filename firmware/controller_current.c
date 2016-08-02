@@ -210,8 +210,6 @@ void contrcurr_init(void)
 {
 	struct pid_k_set k_set;
 
-	memset(&contrcurr, 0, sizeof(contrcurr));
-
 	k_set = contrcurr_factors;
 	pid_init(&contrcurr.pid, &k_set,
 		 float_to_fixpt(CONTRCURR_NEGLIM),

@@ -302,8 +302,6 @@ void contrtemp_init(void)
 	struct settings *settings;
 	fixpt_t temp_setpoint;
 
-	memset(&contrtemp, 0, sizeof(contrtemp));
-
 	settings = get_settings();
 
 	k_set = &settings->temp_k[TEMPBOOST_NORMAL];

@@ -120,12 +120,6 @@ void buttons_work(void)
 
 void buttons_init(void)
 {
-	int8_t i;
-
-	memset(&buttons, 0, sizeof(buttons));
-	for (i = 0; i < NR_BUTTONS; i++)
-		buttons_register_handler((enum button_id)i, NULL);
-
 	BUTTONS_DDR &= (uint8_t)~BUTTONS_MASK;
 	BUTTONS_PORT |= BUTTONS_MASK;
 	_delay_ms(50);
