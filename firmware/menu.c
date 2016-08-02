@@ -33,7 +33,8 @@
 #include <string.h>
 
 
-#define MENU_SETTEMP_TIMEOUT	3000
+#define MENU_SELPRESET_TIMEOUT	3000
+#define MENU_CHGPRESET_TIMEOUT	3000
 #define MENU_IDLETEMP_TIMEOUT	3000
 #define MENU_KCONF_PRE_TIMEOUT	1500
 
@@ -342,8 +343,10 @@ static void menu_set_state(enum menu_state new_state)
 
 	switch (new_state) {
 	case MENU_SELPRESET:
+		timer_arm(&menu.timeout, MENU_SELPRESET_TIMEOUT);
+		break;
 	case MENU_CHGPRESET:
-		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
+		timer_arm(&menu.timeout, MENU_CHGPRESET_TIMEOUT);
 		break;
 	case MENU_IDLETEMP:
 		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
@@ -502,7 +505,7 @@ static void menu_button_handler(enum button_id button,
 	case MENU_SELPRESET:
 		if (!CONF_PRESETS)
 			break;
-		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
+		timer_arm(&menu.timeout, MENU_SELPRESET_TIMEOUT);
 		if (bstate == BSTATE_NEGEDGE) {
 			if (button == BUTTON_PLUS)
 				presets_next();
@@ -513,7 +516,7 @@ static void menu_button_handler(enum button_id button,
 				     settemp_ramp_handler);
 		break;
 	case MENU_CHGPRESET:
-		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
+		timer_arm(&menu.timeout, MENU_CHGPRESET_TIMEOUT);
 		start_ramping_button(button, bstate, false,
 				     settemp_ramp_handler);
 		break;
