@@ -25,6 +25,7 @@ CONF_DEBUG		:= 1
 CONF_BOOST		:= 0
 CONF_IDLE		:= 1
 CONF_IDLETOGGLE		:= 1
+CONF_PRESETS		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
 CONF_CURRCUTOFFHYST	:= 0.7
 CONF_CURRCUTOFF		:= 1.7
@@ -49,6 +50,7 @@ SRCS			:= bitmap.c \
 			   measure_temp.c \
 			   menu.c \
 			   pid.c \
+			   presets.c \
 			   pwm_current.c \
 			   settings.c \
 			   scale.c \
@@ -95,6 +97,7 @@ CFLAGS			:= $(if $(call hweq,legacy),-DHW_LEGACY) \
 			   -DCONF_BOOST=$(CONF_BOOST) \
 			   -DCONF_IDLE=$(CONF_IDLE) \
 			   -DCONF_IDLETOGGLE=$(CONF_IDLETOGGLE) \
+			   -DCONF_PRESETS=$(CONF_PRESETS) \
 			   -DCONF_KCONF=$(CONF_KCONF) \
 			   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF) \
 			   -DCONF_CURRCUTOFFHYST=$(CONF_CURRCUTOFFHYST)

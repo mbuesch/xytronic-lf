@@ -34,6 +34,7 @@
 #include "menu.h"
 #include "settings.h"
 #include "calib_current.h"
+#include "presets.h"
 
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -68,6 +69,7 @@ int main(void)
 
 	/* Initialize the controllers. */
 	contrcurr_init();
+	presets_init();
 	contrtemp_init();
 
 	/* Initialize the current actuator. */

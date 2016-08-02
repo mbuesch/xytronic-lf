@@ -23,6 +23,7 @@
 #include "util.h"
 #include "timer.h"
 #include "controller_temp.h"
+#include "presets.h"
 
 #include <string.h>
 
@@ -46,10 +47,6 @@ static struct settings_context settings;
 #define NR_EE_SETTINGS	((E2END + 1) / sizeof(struct settings))
 static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 	[0 ... NR_EE_SETTINGS - 1] = {
-		.temp_setpoint		= FLOAT_TO_FIXPT(CONTRTEMP_DEF_SETPOINT),
-#if CONF_IDLE
-		.temp_idle_setpoint	= FLOAT_TO_FIXPT(CONTRTEMP_DEF_IDLE_SETPOINT),
-#endif
 		.temp_k[TEMPBOOST_NORMAL] = {
 			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_NORMAL),
 			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),
@@ -70,6 +67,16 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST2),
 		},
 #endif
+		.temp_setpoint[0]	= FLOAT_TO_FIXPT(PRESET_DEFAULT0),
+#if CONF_PRESETS
+		.temp_setpoint[1]	= FLOAT_TO_FIXPT(PRESET_DEFAULT1),
+		.temp_setpoint[2]	= FLOAT_TO_FIXPT(PRESET_DEFAULT2),
+#endif
+		.temp_setpoint_active	= PRESET_DEFAULT_INDEX,
+#if CONF_IDLE
+		.temp_idle_setpoint	= FLOAT_TO_FIXPT(CONTRTEMP_DEF_IDLE_SETPOINT),
+#endif
+
 		.serial		= 0,
 	},
 };
@@ -186,7 +193,8 @@ void settings_init(void)
 	uint8_t serial, next_serial;
 
 	build_assert(sizeof(struct settings) == 64);
-	build_assert(ARRAY_SIZE(((struct settings *)NULL)->temp_k) >= NR_BOOST_MODES);
+	build_assert(SEA_SIZE(struct settings, temp_k) >= NR_BOOST_MODES);
+	build_assert(SEA_SIZE(struct settings, temp_setpoint) >= NR_PRESETS);
 
 	memset(&settings, 0, sizeof(settings));
 

@@ -28,6 +28,7 @@
 #include "menu.h"
 #include "buttons.h"
 #include "debug_uart.h"
+#include "presets.h"
 
 #include <string.h>
 
@@ -180,30 +181,20 @@ fixpt_t contrtemp_get_feedback(void)
 	return contrtemp.feedback;
 }
 
-static void contrtemp_update_setpoint(void)
+void contrtemp_update_setpoint(void)
 {
 	struct settings *settings;
 	fixpt_t temp_setpoint;
 	fixpt_t temp_idle_setpoint;
 
+	temp_setpoint = presets_get_active_value();
 	settings = get_settings();
-	temp_setpoint = settings->temp_setpoint;
 	temp_idle_setpoint = settings->temp_idle_setpoint;
 
 	if (contrtemp_is_idle() && (temp_idle_setpoint < temp_setpoint))
 		pid_set_setpoint(&contrtemp.pid, temp_idle_setpoint);
 	else
 		pid_set_setpoint(&contrtemp.pid, temp_setpoint);
-}
-
-void contrtemp_set_setpoint(fixpt_t w)
-{
-	struct settings *settings;
-
-	settings = get_settings();
-	settings->temp_setpoint = w;
-	contrtemp_update_setpoint();
-	store_settings();
 }
 
 void contrtemp_set_idle_setpoint(fixpt_t w)
@@ -309,6 +300,7 @@ void contrtemp_init(void)
 {
 	struct pid_k_set *k_set;
 	struct settings *settings;
+	fixpt_t temp_setpoint;
 
 	memset(&contrtemp, 0, sizeof(contrtemp));
 
@@ -318,7 +310,8 @@ void contrtemp_init(void)
 	pid_init(&contrtemp.pid, k_set,
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
-	pid_set_setpoint(&contrtemp.pid, settings->temp_setpoint);
+	temp_setpoint = presets_get_active_value();
+	pid_set_setpoint(&contrtemp.pid, temp_setpoint);
 
 	/* Enable the controller. */
 	do_set_enabled(true);

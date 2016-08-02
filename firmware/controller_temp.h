@@ -37,8 +37,7 @@
 #define CONTRTEMP_MAP_TEMPHI		180.0
 #define CONTRTEMP_MAP_CURRHI		5.0
 
-/* Temperature controller default setpoint. */
-#define CONTRTEMP_DEF_SETPOINT		330.0
+/* Temperature controller default idle setpoint. */
 #define CONTRTEMP_DEF_IDLE_SETPOINT	150.0
 
 
@@ -56,7 +55,7 @@ enum contrtemp_boostmode {
 void contrtemp_set_feedback(fixpt_t r);
 fixpt_t contrtemp_get_feedback(void);
 
-void contrtemp_set_setpoint(fixpt_t w);
+void contrtemp_update_setpoint(void);
 void contrtemp_set_idle_setpoint(fixpt_t w);
 
 void contrtemp_set_enabled(bool enabled);

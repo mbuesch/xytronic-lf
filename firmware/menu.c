@@ -28,6 +28,7 @@
 #include "debug_uart.h"
 #include "calib_current.h"
 #include "settings.h"
+#include "presets.h"
 
 #include <string.h>
 
@@ -39,7 +40,8 @@
 
 enum menu_state {
 	MENU_CURTEMP,		/* Show the current temperature. */
-	MENU_SETTEMP,		/* Temperature setpoint. */
+	MENU_SELPRESET,		/* Select temperature preset. */
+	MENU_CHGPRESET,		/* Change temperature preset. */
 	MENU_IDLETEMP,		/* Idle temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
 	MENU_CALIB,		/* Current calibration. */
@@ -55,8 +57,11 @@ enum ramp_state {
 	RAMP_NONE,
 	RAMP_UP,
 	RAMP_DOWN,
+	RAMP_PRE_UP,
+	RAMP_PRE_DOWN,
 };
 
+#define RAMP_PRE_TIMEOUT_MS	1000u
 #define RAMP_START_PERIOD_MS	400u
 #define RAMP_MIN_PERIOD_MS	(RAMP_START_PERIOD_MS >> 4)
 
@@ -68,6 +73,7 @@ struct menu_context {
 
 	enum ramp_state ramp;
 	struct timer ramp_timer;
+	struct timer ramp_pre_timer;
 	ramp_handler_t ramp_handler;
 	uint16_t ramp_period;
 
@@ -148,7 +154,9 @@ static void menu_update_display(void)
 {
 	char disp[6];
 	const char *symbol;
+	char _symbol[3];
 	uint8_t displayed_error;
+	uint8_t active_index;
 	bool displayed_heating;
 	enum contrtemp_boostmode boost_mode;
 
@@ -187,8 +195,17 @@ static void menu_update_display(void)
 			}
 			menu_put_temp(disp, contrtemp_get_feedback(), symbol);
 			break;
-		case MENU_SETTEMP:
-			menu_put_temp(disp, get_settings()->temp_setpoint, "S");
+		case MENU_SELPRESET:
+		case MENU_CHGPRESET:
+			if (CONF_PRESETS) {
+				active_index = presets_get_active_index();
+				_symbol[0] = (char)('1' + active_index);
+				_symbol[1] = '.';
+				_symbol[2] = '\0';
+				symbol = _symbol;
+			} else
+				symbol = " ";
+			menu_put_temp(disp, presets_get_active_value(), symbol);
 			break;
 		case MENU_IDLETEMP:
 			if (!CONF_IDLE)
@@ -269,7 +286,8 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
-	case MENU_SETTEMP:
+	case MENU_SELPRESET:
+	case MENU_CHGPRESET:
 		return MENU_CURTEMP;
 	case MENU_IDLETEMP:
 		if (CONF_DEBUG)
@@ -320,10 +338,13 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 
 static void menu_set_state(enum menu_state new_state)
 {
+	if (menu.state == new_state)
+		return;
 	menu.state = new_state;
 
 	switch (new_state) {
-	case MENU_SETTEMP:
+	case MENU_SELPRESET:
+	case MENU_CHGPRESET:
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
 		break;
 	case MENU_IDLETEMP:
@@ -372,9 +393,11 @@ static void settemp_ramp_handler(bool up)
 {
 	fixpt_t setpoint;
 
-	setpoint = get_settings()->temp_setpoint;
+	setpoint = presets_get_active_value();
 	setpoint = do_ramp_temp(setpoint, up);
-	contrtemp_set_setpoint(setpoint);
+	presets_set_active_value(setpoint);
+
+	menu_set_state(MENU_CHGPRESET);
 }
 
 static void idletemp_ramp_handler(bool up)
@@ -415,9 +438,14 @@ static void kconf_kd_ramp_handler(bool up)
 		  float_to_fixpt(99.0), up);
 }
 
-static void start_ramping(bool up, ramp_handler_t handler)
+static void start_ramping(bool up, bool pre_ramp_wait, ramp_handler_t handler)
 {
-	menu.ramp = up ? RAMP_UP : RAMP_DOWN;
+	if (pre_ramp_wait) {
+		menu.ramp = up ? RAMP_PRE_UP : RAMP_PRE_DOWN;
+		timer_arm(&menu.ramp_pre_timer, RAMP_PRE_TIMEOUT_MS);
+	} else {
+		menu.ramp = up ? RAMP_UP : RAMP_DOWN;
+	}
 	menu.ramp_handler = handler;
 	menu.ramp_period = RAMP_START_PERIOD_MS;
 	timer_set_now(&menu.ramp_timer);
@@ -425,13 +453,14 @@ static void start_ramping(bool up, ramp_handler_t handler)
 
 static void start_ramping_button(enum button_id button,
 				 enum button_state bstate,
+				 bool pre_ramp_wait,
 				 ramp_handler_t handler)
 {
 	if (bstate == BSTATE_POSEDGE) {
 		if (button == BUTTON_MINUS)
-			start_ramping(false, handler);
+			start_ramping(false, pre_ramp_wait, handler);
 		else if (button == BUTTON_PLUS)
-			start_ramping(true, handler);
+			start_ramping(true, pre_ramp_wait, handler);
 	}
 }
 
@@ -462,23 +491,43 @@ static void menu_button_handler(enum button_id button,
 	switch (menu.state) {
 	case MENU_CURTEMP:
 		if (bstate == BSTATE_POSEDGE) {
-			start_ramping_button(button, bstate,
+			start_ramping_button(button, bstate, (CONF_PRESETS),
 					     settemp_ramp_handler);
-			if (button != BUTTON_SET)
-				menu_set_state(MENU_SETTEMP);
+			if (button != BUTTON_SET) {
+				if (CONF_PRESETS)
+					menu_set_state(MENU_SELPRESET);
+				else
+					menu_set_state(MENU_CHGPRESET);
+			}
 		}
 		button_handler_next_state(button, bstate);
 		break;
-	case MENU_SETTEMP:
+	case MENU_SELPRESET:
+		if (!CONF_PRESETS)
+			break;
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
-		start_ramping_button(button, bstate, settemp_ramp_handler);
+		if (bstate == BSTATE_NEGEDGE) {
+			if (button == BUTTON_PLUS)
+				presets_next();
+			if (button == BUTTON_MINUS)
+				presets_prev();
+		}
+		start_ramping_button(button, bstate, true,
+				     settemp_ramp_handler);
+		button_handler_next_state(button, bstate);
+		break;
+	case MENU_CHGPRESET:
+		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
+		start_ramping_button(button, bstate, false,
+				     settemp_ramp_handler);
 		button_handler_next_state(button, bstate);
 		break;
 	case MENU_IDLETEMP:
 		if (!CONF_IDLE)
 			break;
 		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
-		start_ramping_button(button, bstate, idletemp_ramp_handler);
+		start_ramping_button(button, bstate, false,
+				     idletemp_ramp_handler);
 		button_handler_next_state(button, bstate);
 		break;
 	case MENU_DEBUG:
@@ -515,7 +564,8 @@ static void menu_button_handler(enum button_id button,
 	case MENU_KP:
 		if (!CONF_KCONF)
 			break;
-		start_ramping_button(button, bstate, kconf_kp_ramp_handler);
+		start_ramping_button(button, bstate, false,
+				     kconf_kp_ramp_handler);
 		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KI_PRE:
@@ -523,7 +573,8 @@ static void menu_button_handler(enum button_id button,
 	case MENU_KI:
 		if (!CONF_KCONF)
 			break;
-		start_ramping_button(button, bstate, kconf_ki_ramp_handler);
+		start_ramping_button(button, bstate, false,
+				     kconf_ki_ramp_handler);
 		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KD_PRE:
@@ -531,7 +582,8 @@ static void menu_button_handler(enum button_id button,
 	case MENU_KD:
 		if (!CONF_KCONF)
 			break;
-		start_ramping_button(button, bstate, kconf_kd_ramp_handler);
+		start_ramping_button(button, bstate, false,
+				     kconf_kd_ramp_handler);
 		button_handler_next_state(button, bstate);
 		break;
 	}
@@ -540,8 +592,9 @@ static void menu_button_handler(enum button_id button,
 /* Periodic work. */
 void menu_work(void)
 {
-	bool heating;
+	enum ramp_state ramp;
 	uint8_t error;
+	bool heating;
 
 	/* Menu timeouts */
 	switch (menu.state) {
@@ -555,7 +608,8 @@ void menu_work(void)
 	case MENU_KP_PRE:
 	case MENU_KI_PRE:
 	case MENU_KD_PRE:
-	case MENU_SETTEMP:
+	case MENU_SELPRESET:
+	case MENU_CHGPRESET:
 	case MENU_IDLETEMP:
 		if (timer_expired(&menu.timeout)) {
 			if (menu.state == MENU_IDLETEMP)
@@ -578,6 +632,8 @@ void menu_work(void)
 		menu.displayed_error = error;
 		menu.display_update_requested = true;
 	}
+	if (error)
+		stop_ramping();
 
 	/* Update heating condition. */
 	heating = contrtemp_is_heating_up();
@@ -587,12 +643,17 @@ void menu_work(void)
 	}
 
 	/* Generic ramping handler. */
-	if (menu.ramp != RAMP_NONE) {
-		if (menu.displayed_error) {
-			stop_ramping();
+	ramp = menu.ramp;
+	if (ramp != RAMP_NONE) {
+		if (ramp == RAMP_PRE_UP ||
+		    ramp == RAMP_PRE_DOWN) {
+			if (timer_expired(&menu.ramp_pre_timer)) {
+				start_ramping(ramp == RAMP_PRE_UP, false,
+					      menu.ramp_handler);
+			}
 		} else {
 			if (timer_expired(&menu.ramp_timer)) {
-				menu.ramp_handler(menu.ramp == RAMP_UP);
+				menu.ramp_handler(ramp == RAMP_UP);
 				menu.display_update_requested = true;
 				timer_add(&menu.ramp_timer, menu.ramp_period);
 				if (menu.ramp_period > RAMP_MIN_PERIOD_MS)
