@@ -498,7 +498,6 @@ static void menu_button_handler(enum button_id button,
 					menu_set_state(MENU_CHGPRESET);
 			}
 		}
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_SELPRESET:
 		if (!CONF_PRESETS)
@@ -512,13 +511,11 @@ static void menu_button_handler(enum button_id button,
 		}
 		start_ramping_button(button, bstate, true,
 				     settemp_ramp_handler);
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_CHGPRESET:
 		timer_arm(&menu.timeout, MENU_SETTEMP_TIMEOUT);
 		start_ramping_button(button, bstate, false,
 				     settemp_ramp_handler);
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_IDLETEMP:
 		if (!CONF_IDLE)
@@ -526,7 +523,6 @@ static void menu_button_handler(enum button_id button,
 		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
 		start_ramping_button(button, bstate, false,
 				     idletemp_ramp_handler);
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_DEBUG:
 		if (!CONF_DEBUG)
@@ -539,8 +535,6 @@ static void menu_button_handler(enum button_id button,
 				menu_request_display_update();
 			}
 		}
-		if (!debug_is_enabled())
-			button_handler_next_state(button, bstate);
 		break;
 	case MENU_CALIB:
 		if (!CONF_CALIB)
@@ -555,7 +549,6 @@ static void menu_button_handler(enum button_id button,
 			if (button == BUTTON_SET)
 				calcurr_set_enabled(false);
 		}
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KP_PRE:
 		break;
@@ -564,7 +557,6 @@ static void menu_button_handler(enum button_id button,
 			break;
 		start_ramping_button(button, bstate, false,
 				     kconf_kp_ramp_handler);
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KI_PRE:
 		break;
@@ -573,7 +565,6 @@ static void menu_button_handler(enum button_id button,
 			break;
 		start_ramping_button(button, bstate, false,
 				     kconf_ki_ramp_handler);
-		button_handler_next_state(button, bstate);
 		break;
 	case MENU_KD_PRE:
 		break;
@@ -582,9 +573,11 @@ static void menu_button_handler(enum button_id button,
 			break;
 		start_ramping_button(button, bstate, false,
 				     kconf_kd_ramp_handler);
-		button_handler_next_state(button, bstate);
 		break;
 	}
+
+	if (!debug_is_enabled())
+		button_handler_next_state(button, bstate);
 }
 
 /* Periodic work. */
