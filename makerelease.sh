@@ -70,6 +70,10 @@ hook_pre_archives()
 				do_build "$fwdir" "$targetdir" \
 					HW=$hw DEV=m$dev \
 					CONF_CALIB=0 \
+					CONF_PRESETS=1 \
+					CONF_BOOST=0 \
+					CONF_IDLE=1 \
+					CONF_IDLETOGGLE=1 \
 					CONF_DEBUG=$CONF_DEBUG \
 					CONF_KCONF=$CONF_KCONF
 			done
@@ -85,10 +89,12 @@ hook_pre_archives()
 		local lfuse="$(grep -e "$arch"'_LFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local hfuse="$(grep -e "$arch"'_HFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local efuse="$(grep -e "$arch"'_EFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
-		sed -i -e 's/%%'"$arch"'_LFUSE%%/'"$lfuse"'/g' \
-		       -e 's/%%'"$arch"'_HFUSE%%/'"$hfuse"'/g' \
-		       -e 's/%%'"$arch"'_EFUSE%%/'"$efuse"'/g' \
-		       "$2/README.md"
+		for f in "$2/README".*; do
+			sed -i -e 's/%%'"$arch"'_LFUSE%%/'"$lfuse"'/g' \
+			       -e 's/%%'"$arch"'_HFUSE%%/'"$hfuse"'/g' \
+			       -e 's/%%'"$arch"'_EFUSE%%/'"$efuse"'/g' \
+			       "$f"
+		done
 	done
 }
 
