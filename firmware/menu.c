@@ -470,16 +470,6 @@ static void stop_ramping(void)
 	menu.ramp = RAMP_NONE;
 }
 
-static void button_handler_next_state(enum button_id button,
-				      enum button_state bstate)
-{
-	if (bstate == BSTATE_NEGEDGE) {
-		stop_ramping();
-		if (button == BUTTON_SET)
-			menu_set_next_state();
-	}
-}
-
 /* Handler for SET, MINUS and PLUS buttons */
 static void menu_button_handler(enum button_id button,
 				enum button_state bstate)
@@ -579,8 +569,16 @@ static void menu_button_handler(enum button_id button,
 		break;
 	}
 
-	if (!debug_is_enabled())
-		button_handler_next_state(button, bstate);
+	if (bstate == BSTATE_NEGEDGE) {
+		/* Stop ramping, if any button is released. */
+		stop_ramping();
+
+		/* Switch to the next menu via SET. */
+		if (button == BUTTON_SET) {
+			if (!debug_is_enabled())
+				menu_set_next_state();
+		}
+	}
 }
 
 /* Periodic work. */
