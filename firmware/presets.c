@@ -22,6 +22,7 @@
 #include "presets.h"
 #include "settings.h"
 #include "controller_temp.h"
+#include "ring.h"
 
 #include <string.h>
 
@@ -35,42 +36,36 @@ static struct presets_context presets;
 #endif
 
 
-void presets_next(void)
-{
 #if CONF_PRESETS
+void presets_update_index(uint8_t active)
+{
 	struct settings *settings;
-	uint8_t active;
 
-	active = presets.active;
-	active++;
-	if (active >= NR_PRESETS)
-		active = 0u;
 	presets.active = active;
-
 	settings = get_settings();
 	settings->temp_setpoint_active = active;
 	store_settings();
 	contrtemp_update_setpoint();
+}
+#endif
+
+void presets_next(void)
+{
+#if CONF_PRESETS
+	uint8_t active;
+
+	active = ring_next(presets.active, NR_PRESETS - 1u);
+	presets_update_index(active);
 #endif
 }
 
 void presets_prev(void)
 {
 #if CONF_PRESETS
-	struct settings *settings;
 	uint8_t active;
 
-	active = presets.active;
-	if (active == 0u)
-		active = NR_PRESETS - 1u;
-	else
-		active--;
-	presets.active = active;
-
-	settings = get_settings();
-	settings->temp_setpoint_active = active;
-	store_settings();
-	contrtemp_update_setpoint();
+	active = ring_prev(presets.active, NR_PRESETS - 1u);
+	presets_update_index(active);
 #endif
 }
 

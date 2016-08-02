@@ -52,6 +52,7 @@ SRCS			:= bitmap.c \
 			   pid.c \
 			   presets.c \
 			   pwm_current.c \
+			   ring.c \
 			   settings.c \
 			   scale.c \
 			   sseg.c \

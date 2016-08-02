@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Measurement routines
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "scale.h"
 #include "timer.h"
 #include "debug_uart.h"
+#include "ring.h"
 
 #include <string.h>
 
@@ -130,10 +131,11 @@ static void adc_trigger_chan(struct meas_chan_context *chan)
 
 static void adc_trigger_next_chan(void)
 {
+	uint8_t active_chan;
+
 	/* Switch to the next channel. */
-	meas.active_chan++;
-	if (meas.active_chan >= ARRAY_SIZE(meas.channels))
-		meas.active_chan = 0;
+	active_chan = ring_next(meas.active_chan, ARRAY_SIZE(meas.channels) - 1u);
+	meas.active_chan = active_chan;
 	adc_trigger_chan(&meas.channels[meas.active_chan]);
 }
 

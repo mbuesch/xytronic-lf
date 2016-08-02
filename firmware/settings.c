@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Settings handling
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "controller_temp.h"
 #include "presets.h"
+#include "ring.h"
 
 #include <string.h>
 
@@ -156,7 +157,7 @@ void store_settings(void)
 
 void settings_work(void)
 {
-	uint8_t sreg, index;
+	uint8_t sreg;
 
 	if (!settings.store_request)
 		return;
@@ -170,11 +171,8 @@ void settings_work(void)
 	sreg = irq_disable_save();
 
 	/* Increment the store index. */
-	index = settings.ee_index;
-	index++;
-	if (index >= ARRAY_SIZE(ee_settings))
-		index = 0;
-	settings.ee_index = index;
+	settings.ee_index = ring_next(settings.ee_index,
+				      ARRAY_SIZE(ee_settings) - 1u);
 
 	/* Reset the store byte offset. */
 	settings.ee_write_offset = 0;
@@ -207,9 +205,7 @@ void settings_init(void)
 	do {
 		found_index = next_index;
 
-		next_index++;
-		if (next_index >= ARRAY_SIZE(ee_settings))
-			next_index = 0u;
+		next_index = ring_next(next_index, ARRAY_SIZE(ee_settings) + 1u);
 
 		next_serial = ee_read_byte((uint16_t)&ee_settings[next_index].serial);
 		if (next_serial != ((serial + 1u) & 0xFFu))

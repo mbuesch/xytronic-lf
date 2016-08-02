@@ -23,6 +23,7 @@
 #include "sseg.h"
 #include "timer.h"
 #include "bitmap.h"
+#include "ring.h"
 
 #include <string.h>
 
@@ -157,9 +158,7 @@ void display_work(void)
 	timer_add(&display.mux_timer, DISPLAY_MUX_PERIOD_MS);
 
 	cur_mux = display.digit_mux_count;
-	next_mux = (uint8_t)(cur_mux + 1u);
-	if (next_mux >= DISPLAY_NR_DIGITS)
-		next_mux = 0;
+	next_mux = ring_next(cur_mux, DISPLAY_NR_DIGITS - 1u);
 	display.digit_mux_count = next_mux;
 
 	sseg_multiplex(&display.digit_data[cur_mux].sseg,
