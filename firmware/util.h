@@ -96,8 +96,14 @@
 /* Compute b to the power of e. */
 int32_t pow_int(int16_t b, uint8_t e);
 
-/* Return the number of elements in a C array. */
-#define ARRAY_SIZE(x)		(sizeof(x) / sizeof((x)[0]))
+/* Get the number of elements in a C array. */
+#define ARRAY_SIZE(x)			(sizeof(x) / sizeof((x)[0]))
+
+/* Get the size of a struct member. */
+#define SE_SIZE(_struct, _elem)		(sizeof(((_struct *)NULL)->_elem))
+
+/* Get the array size of an array member in a struct. */
+#define SEA_SIZE(_struct, _elem_arr)	ARRAY_SIZE(((_struct *)NULL)->_elem_arr)
 
 /* Memory barrier. */
 #define mb()			__asm__ __volatile__("" : : : "memory")
