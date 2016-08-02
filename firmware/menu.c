@@ -166,10 +166,8 @@ static void menu_update_display(void)
 	disp[0] = '\0';
 
 	if (displayed_error) {
-		menu_putstr(disp, "Err");
-		int_to_ascii_align_right(disp + 3, 0,
-					 displayed_error, 0, 9, ' ');
-		disp[5] = '\0';
+		menu_putstr(disp, "Err ");
+		disp[3] = (char)('0' + displayed_error);
 		displayed_heating = false;
 	} else {
 		switch (menu.state) {
