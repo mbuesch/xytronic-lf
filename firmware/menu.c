@@ -95,9 +95,16 @@ static void int_to_ascii_align_right(char *buf, uint8_t align_to_digit,
 	uint8_t i;
 
 	val = clamp(val, min_val, max_val);
-	memset(buf, 0, align_to_digit + 1u);
+
+	/* Fill all digits with NUL. Needed for shifting. */
+	memset(buf, '\0', align_to_digit + 1u);
+
+	/* Format the value. */
 	itoa(val, buf, 10);
+
+	/* Right-align the number, if requested. */
 	if (align_to_digit > 0) {
+		/* Right-shift until the rightmost digit is non-NUL. */
 		while (buf[align_to_digit] == '\0') {
 			for (i = align_to_digit; i > 0; i--)
 				buf[i] = buf[i - 1];
