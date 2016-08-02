@@ -24,7 +24,7 @@ import sys
 import serial
 
 
-if len(sys.argv) != 2 or "-h" in sys.argv or "--help" in sys.argv:
+if len(sys.argv) != 3 or "-h" in sys.argv or "--help" in sys.argv:
 	print("Usage: dumpcurves.py /dev/ttyUSB0 output.csv")
 	print("")
 	print("/dev/ttyUSB0 is the serial device where the data is read from.")
