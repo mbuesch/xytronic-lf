@@ -1,7 +1,7 @@
 ######################################################
 # AVR make library                                   #
 # Copyright (c) 2015-2016 Michael Buesch <m@bues.ch> #
-# Version 1.3                                        #
+# Version 1.4                                        #
 ######################################################
 
 ifeq ($(NAME),)
@@ -20,33 +20,46 @@ ifeq ($(AVRDUDE_ARCH),)
 $(error AVRDUDE_ARCH not defined)
 endif
 
-BINEXT			:=
-NODEPS			:=
+_uppercase		= $(shell echo $(1) | tr a-z A-Z)
+_lowercase		= $(shell echo $(1) | tr A-Z a-z)
 
 # The toolchain definitions
-CC			= avr-gcc$(BINEXT)
-OBJCOPY			= avr-objcopy$(BINEXT)
-OBJDUMP			= avr-objdump$(BINEXT)
-SIZE			= avr-size$(BINEXT)
-MKDIR			= mkdir$(BINEXT)
-MV			= mv$(BINEXT)
-RM			= rm$(BINEXT)
-CP			= cp$(BINEXT)
-ECHO			= echo$(BINEXT)
-GREP			= grep$(BINEXT)
-TRUE			= true$(BINEXT)
-TEST			= test$(BINEXT)
-AVRDUDE			= avrdude$(BINEXT)
-MYSMARTUSB		= mysmartusb.py
-DOXYGEN			= doxygen$(BINEXT)
+CC			:= avr-gcc
+OBJCOPY			:= avr-objcopy
+OBJDUMP			:= avr-objdump
+SIZE			:= avr-size
+MKDIR			:= mkdir
+MV			:= mv
+RM			:= rm
+CP			:= cp
+ECHO			:= echo
+GREP			:= grep
+TRUE			:= true
+TEST			:= test
+AVRDUDE			:= avrdude
+MYSMARTUSB		:= mysmartusb.py
+DOXYGEN			:= doxygen
+PYTHON2			:= python2
+PYTHON3			:= python3
+SPARSE			:= sparse
 
-V			:= @		# Verbose build:  make V=1
+V			:= @		# Verbose build:	make V=1
+C			:= 0		# Sparsechecker build:	make C=1
+DEBUG			:= 0		# Debug build:		make DEBUG=1
 O			:= s		# Optimize flag
 Q			:= $(V:1=)
 QUIET_CC		= $(Q:@=@$(ECHO) '     CC       '$@;)$(CC)
 QUIET_DEPEND		= $(Q:@=@$(ECHO) '     DEPEND   '$@;)$(CC)
 QUIET_OBJCOPY		= $(Q:@=@$(ECHO) '     OBJCOPY  '$@;)$(OBJCOPY)
 QUIET_SIZE		= $(Q:@=@$(ECHO) '     SIZE     '$@;)$(SIZE)
+QUIET_PYTHON2		= $(Q:@=@$(ECHO) '     PYTHON2  '$@;)$(PYTHON2)
+QUIET_PYTHON3		= $(Q:@=@$(ECHO) '     PYTHON3  '$@;)$(PYTHON3)
+QUIET_RM		= $(Q:@=@$(ECHO) '     RM       '$@;)$(RM)
+ifeq ($(C),1)
+QUIET_SPARSE		= $(Q:@=@$(ECHO) '     SPARSE   '$@;)$(SPARSE)
+else
+QUIET_SPARSE		= @$(TRUE)
+endif
 
 FUNC_STACK_LIMIT	?= 128
 
@@ -57,15 +70,62 @@ WARN_CFLAGS		:= -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 			   -Wcast-qual -Wlogical-op -Wshadow \
 			   -Wconversion
 
-CFLAGS			+= -mmcu=$(GCC_ARCH) -std=gnu11 -g0 -O$(O) $(WARN_CFLAGS) \
-			  "-Dinline=inline __attribute__((__always_inline__))" \
-			  -DF_CPU=$(F_CPU) \
-			  -mcall-prologues -mrelax -mstrict-X \
-			  -fshort-enums -flto
+DEFINE_CFLAGS		:= "-Dinline=inline __attribute__((__always_inline__))" \
+			   -DF_CPU=$(F_CPU) \
+			   $(if $(BOOT_OFFSET),-DBOOT_OFFSET=$(BOOT_OFFSET)) \
+			   $(if $(DEBUG),-DDEBUG=$(DEBUG))
+
+MAIN_CFLAGS		:= -mmcu=$(GCC_ARCH) -std=gnu11 -g0 -O$(O) \
+			   $(WARN_CFLAGS) \
+			   $(DEFINE_CFLAGS) \
+			   -mcall-prologues -mrelax -mstrict-X \
+			   -fshort-enums -flto
+
+MAIN_LDFLAGS		:=
+
+INSTRUMENT_CFLAGS	:= -DINSTRUMENT_FUNCTIONS=1 \
+			   -finstrument-functions \
+			   -finstrument-functions-exclude-file-list=.h
+
+MAIN_SPARSEFLAGS	:= -D__STDC_HOSTED__=0 \
+			   -gcc-base-dir=/usr/lib/avr \
+			   -I/usr/lib/avr/include \
+			   -D__OS_main__=dllexport \
+			   -D__ATTR_PROGMEM__= \
+			   -D__AVR_ARCH__=5 \
+			   -D__AVR_$(subst MEGA,mega,$(call _uppercase,$(GCC_ARCH)))__=1 \
+			   -Wsparse-all
+
+CFLAGS			:= $(MAIN_CFLAGS) \
+			   $(if $(INSTRUMENT_FUNC),$(INSTRUMENT_CFLAGS)) \
+			   $(CFLAGS)
+
+BOOT_CFLAGS		:= $(MAIN_CFLAGS) -DBOOTLOADER \
+			   $(if $(BOOT_INSTRUMENT_FUNC),$(INSTRUMENT_CFLAGS)) \
+			   $(BOOT_CFLAGS)
+
+LDFLAGS			:= $(MAIN_LDFLAGS) -fwhole-program \
+			   $(LDFLAGS)
+
+BOOT_LDFLAGS		:= $(MAIN_LDFLAGS) -fwhole-program \
+			   -Wl,--section-start=.text=$(BOOT_OFFSET) \
+			   $(BOOT_LDFLAGS)
+
+SPARSEFLAGS		:= $(subst gnu11,gnu99,$(CFLAGS)) \
+			   $(MAIN_SPARSEFLAGS) $(SPARSEFLAGS)
+BOOT_SPARSEFLAGS	:= $(subst gnu11,gnu99,$(BOOT_CFLAGS)) \
+			   $(MAIN_SPARSEFLAGS) $(BOOT_SPARSEFLAGS)
 
 BIN			:= $(NAME).bin
 HEX			:= $(NAME).hex
 EEP			:= $(NAME).eep.hex
+BOOT_BIN		:= $(NAME).bootloader.bin
+BOOT_HEX		:= $(NAME).bootloader.hex
+
+OBJ_DIR			:= obj
+DEP_DIR			:= dep
+BOOT_OBJ_DIR		:= obj-boot
+BOOT_DEP_DIR		:= dep-boot
 
 .SUFFIXES:
 .DEFAULT_GOAL := all
@@ -74,6 +134,7 @@ EEP			:= $(NAME).eep.hex
 AVRDUDE_SPEED		?= 1
 AVRDUDE_SLOW_SPEED	?= 200
 
+AVRDUDE_PROGRAMMER	:=
 ifeq ($(PROGRAMMER),mysmartusb)
 AVRDUDE_PROGRAMMER	:= avr910
 PROGPORT		:= /dev/ttyUSB0
@@ -87,59 +148,84 @@ ifeq ($(AVRDUDE_PROGRAMMER),)
 $(error Invalid PROGRAMMER specified)
 endif
 
-PROGRAMMER_CMD_PWRCYCLE := \
+define _programmer_cmd_pwrcycle
 	$(if $(filter mysmartusb,$(PROGRAMMER)), \
 		$(MYSMARTUSB) -p0 $(PROGPORT) && \
 		sleep 1 && \
 		$(MYSMARTUSB) -p1 $(PROGPORT) \
 	)
+endef
 
-PROGRAMMER_CMD_PROG_ENTER := \
+define _programmer_cmd_prog_enter
 	$(if $(filter mysmartusb,$(PROGRAMMER)), \
 		$(MYSMARTUSB) -mp $(PROGPORT) \
 	)
+endef
 
-PROGRAMMER_CMD_PROG_LEAVE := \
+define _programmer_cmd_prog_leave
 	$(if $(filter mysmartusb,$(PROGRAMMER)), \
 		$(MYSMARTUSB) -md $(PROGPORT) \
 	)
+endef
 
-DEPS = $(sort $(patsubst %.c,dep/%.d,$(1)))
-OBJS = $(sort $(patsubst %.c,obj/%.o,$(1)))
+DEPS = $(sort $(patsubst %.c,$(2)/%.d,$(1)))
+OBJS = $(sort $(patsubst %.c,$(2)/%.o,$(1)))
 
 # Generate dependencies
-$(call DEPS,$(SRCS)): dep/%.d: %.c 
+$(call DEPS,$(SRCS),$(DEP_DIR)): $(DEP_DIR)/%.d: %.c
 	@$(MKDIR) -p $(dir $@)
-	@$(MKDIR) -p obj
-	$(QUIET_DEPEND) -o $@.tmp -MM -MT "$@ $(patsubst dep/%.d,obj/%.o,$@)" $(CFLAGS) $<
+	@$(MKDIR) -p $(OBJ_DIR)
+	$(QUIET_DEPEND) -o $@.tmp -MM $(if $(GEN_SRCS),-MG) -MT "$@ $(patsubst $(DEP_DIR)/%.d,$(OBJ_DIR)/%.o,$@)" $(CFLAGS) $<
 	@$(MV) -f $@.tmp $@
 
-ifeq ($(NODEPS),)
--include $(call DEPS,$(SRCS))
+ifneq ($(BOOT_SRCS),)
+$(call DEPS,$(BOOT_SRCS),$(BOOT_DEP_DIR)): $(BOOT_DEP_DIR)/%.d: %.c
+	@$(MKDIR) -p $(dir $@)
+	@$(MKDIR) -p $(BOOT_OBJ_DIR)
+	$(QUIET_DEPEND) -o $@.tmp -MM $(if $(BOOT_GEN_SRCS),-MG) -MT "$@ $(patsubst $(BOOT_DEP_DIR)/%.d,$(BOOT_OBJ_DIR)/%.o,$@)" $(BOOT_CFLAGS) $<
+	@$(MV) -f $@.tmp $@
+endif
+
+-include $(call DEPS,$(SRCS),$(DEP_DIR))
+ifneq ($(BOOT_SRCS),)
+-include $(call DEPS,$(BOOT_SRCS),$(BOOT_DEP_DIR))
 endif
 
 # Generate object files
-$(call OBJS,$(SRCS)): obj/%.o: %.c
+$(call OBJS,$(SRCS),$(OBJ_DIR)): $(OBJ_DIR)/%.o: %.c
 	@$(MKDIR) -p $(dir $@)
 	$(QUIET_CC) -o $@ -c $(CFLAGS) $<
+	$(QUIET_SPARSE) $(SPARSEFLAGS) $<
 
-all: $(HEX)
+ifneq ($(BOOT_SRCS),)
+$(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR)): $(BOOT_OBJ_DIR)/%.o: %.c
+	@$(MKDIR) -p $(dir $@)
+	$(QUIET_CC) -o $@ -c $(BOOT_CFLAGS) $<
+	$(QUIET_SPARSE) $(BOOT_SPARSEFLAGS) $<
+endif
+
+all: $(HEX) $(if $(BOOT_SRCS),$(BOOT_HEX))
 
 %.s: %.c
-	$(QUIET_CC) $(CFLAGS) -S $*.c
+	$(QUIET_CC) $(CFLAGS) -fno-lto -S $*.c
 
-$(BIN): $(call OBJS,$(SRCS))
-	$(QUIET_CC) $(CFLAGS) -o $(BIN) -fwhole-program $(call OBJS,$(SRCS)) $(LDFLAGS)
+$(BIN): $(call OBJS,$(SRCS),$(OBJ_DIR))
+	$(QUIET_CC) $(CFLAGS) -o $(BIN) $(call OBJS,$(SRCS),$(OBJ_DIR)) $(LDFLAGS)
+
+$(BOOT_BIN): $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR))
+	$(QUIET_CC) $(BOOT_CFLAGS) -o $(BOOT_BIN) $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR)) $(BOOT_LDFLAGS)
 
 $(HEX): $(BIN)
 	$(QUIET_OBJCOPY) -R.eeprom -O ihex $(BIN) $(HEX)
-	@$(if $(filter .exe,$(BINEXT)),$(TRUE), \
-	$(OBJDUMP) -h $(BIN) | $(GREP) -qe .eeprom && \
+	@$(OBJDUMP) -h $(BIN) | $(GREP) -qe .eeprom && \
 	 $(OBJCOPY) -j.eeprom --set-section-flags=.eeprom="alloc,load" \
 	 --change-section-lma .eeprom=0 -O ihex $(BIN) $(EEP) \
-	 || $(TRUE))
-	@$(ECHO)
+	 || $(TRUE)
 	$(QUIET_SIZE) --format=SysV $(BIN)
+
+$(BOOT_HEX): $(BOOT_BIN)
+	$(QUIET_OBJCOPY) -R.eeprom -O ihex $(BOOT_BIN) $(BOOT_HEX)
+	$(QUIET_SIZE) --format=SysV $(BOOT_BIN)
 
 define _avrdude_interactive
   $(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
@@ -155,6 +241,7 @@ endef
 define _avrdude_write_flash
   $(AVRDUDE) -B $(AVRDUDE_SPEED) -p $(AVRDUDE_ARCH) \
     -c $(AVRDUDE_PROGRAMMER) -P $(PROGPORT) \
+    $(if $(BOOT_SRCS),-U flash:w:$(BOOT_HEX)) \
     -U flash:w:$(HEX)
 endef
 
@@ -173,36 +260,36 @@ define _avrdude_write_fuse
 endef
 
 write_flash: all
-	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _programmer_cmd_prog_enter)
 	$(call _avrdude_write_flash)
-	$(call PROGRAMMER_CMD_PWRCYCLE)
-	$(call PROGRAMMER_CMD_PROG_LEAVE)
+	$(call _programmer_cmd_pwrcycle)
+	$(call _programmer_cmd_prog_leave)
 
 writeflash: write_flash
 
 write_eeprom: all
-	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _programmer_cmd_prog_enter)
 	$(call _avrdude_write_eeprom)
-	$(call PROGRAMMER_CMD_PWRCYCLE)
-	$(call PROGRAMMER_CMD_PROG_LEAVE)
+	$(call _programmer_cmd_pwrcycle)
+	$(call _programmer_cmd_prog_leave)
 
 writeeeprom: write_eeprom
 
 write_mem: all
-	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _programmer_cmd_prog_enter)
 	$(call _avrdude_write_flash)
 	$(call _avrdude_write_eeprom)
-	$(call PROGRAMMER_CMD_PWRCYCLE)
-	$(call PROGRAMMER_CMD_PROG_LEAVE)
+	$(call _programmer_cmd_pwrcycle)
+	$(call _programmer_cmd_prog_leave)
 
 writemem: write_mem
 install: write_mem
 
 write_fuses:
-	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _programmer_cmd_prog_enter)
 	$(call _avrdude_write_fuse)
-	$(call PROGRAMMER_CMD_PWRCYCLE)
-	$(call PROGRAMMER_CMD_PROG_LEAVE)
+	$(call _programmer_cmd_pwrcycle)
+	$(call _programmer_cmd_prog_leave)
 
 write_fuse: write_fuses
 writefuse: write_fuses
@@ -216,22 +303,31 @@ print_fuses:
 printfuses: print_fuses
 
 reset:
-	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _programmer_cmd_prog_enter)
 	$(call _avrdude_reset)
-	$(call PROGRAMMER_CMD_PWRCYCLE)
+	$(call _programmer_cmd_pwrcycle)
 
 avrdude:
-	$(call PROGRAMMER_CMD_PROG_ENTER)
+	$(call _programmer_cmd_prog_enter)
 	$(call _avrdude_interactive)
-	$(call PROGRAMMER_CMD_PWRCYCLE)
-	$(call PROGRAMMER_CMD_PROG_LEAVE)
+	$(call _programmer_cmd_pwrcycle)
+	$(call _programmer_cmd_prog_leave)
 
 doxygen:
 	$(DOXYGEN) Doxyfile
 
 clean:
-	-$(RM) -rf obj dep $(BIN) $(CLEAN_FILES)
+	-$(QUIET_RM) -rf \
+		$(OBJ_DIR) $(DEP_DIR) \
+		$(BOOT_OBJ_DIR) $(BOOT_DEP_DIR) \
+		$(BIN) $(BOOT_BIN) \
+		*.pyc *.pyo __pycache__ \
+		$(GEN_SRCS) $(BOOT_GEN_SRCS) \
+		$(CLEAN_FILES)
 
 distclean: clean
-	-$(RM) -f $(HEX) $(EEP) $(DISTCLEAN_FILES)
-	-$(RM) -f $(if $(filter .exe,$(BINEXT)),$(patsubst %.c,%.s,$(SRCS)),*.s)
+	-$(QUIET_RM) -f \
+		$(HEX) $(BOOT_HEX) \
+		$(EEP) \
+		*.s \
+		$(DISTCLEAN_FILES)

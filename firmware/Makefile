@@ -58,6 +58,12 @@ SRCS			:= bitmap.c \
 			   sseg.c \
 			   timer.c \
 			   util.c
+GEN_SRCS		:=
+
+# Bootloader source files
+BOOT_SRCS		:=
+BOOT_GEN_SRCS		:=
+BOOT_OFFSET		:=
 
 # Project fuse bits
 # 8 MHz, BOD 2.7 V
@@ -89,6 +95,10 @@ FUNC_STACK_LIMIT	:=
 # Programmer selection.
 # Values can be:  avrisp2, mysmartusb
 PROGRAMMER		:= avrisp2
+
+# Instrumentation
+INSTRUMENT_FUNC		:=
+BOOT_INSTRUMENT_FUNC	:=
 
 # Additional compiler flags
 CFLAGS			:= $(if $(call hweq,legacy),-DHW_LEGACY) \
