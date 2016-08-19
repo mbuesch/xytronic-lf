@@ -68,7 +68,7 @@ hook_pre_archives()
 				[ $dbg != debug ] && local CONF_DEBUG=0
 
 				do_build "$fwdir" "$targetdir" \
-					HW=$hw DEV=m$dev \
+					HW=$hw DEV=m$dev C=1 \
 					CONF_CALIB=0 \
 					CONF_PRESETS=1 \
 					CONF_BOOST=0 \
