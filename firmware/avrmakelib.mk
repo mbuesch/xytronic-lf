@@ -1,7 +1,7 @@
 ######################################################
 # AVR make library                                   #
 # Copyright (c) 2015-2016 Michael Buesch <m@bues.ch> #
-# Version 1.4                                        #
+# Version 1.5                                        #
 ######################################################
 
 ifeq ($(NAME),)
@@ -87,22 +87,22 @@ INSTRUMENT_CFLAGS	:= -DINSTRUMENT_FUNCTIONS=1 \
 			   -finstrument-functions \
 			   -finstrument-functions-exclude-file-list=.h
 
-MAIN_SPARSEFLAGS	:= -D__STDC_HOSTED__=0 \
-			   -gcc-base-dir=/usr/lib/avr \
+MAIN_SPARSEFLAGS	:= -gcc-base-dir=/usr/lib/avr \
 			   -I/usr/lib/avr/include \
-			   -D__OS_main__=dllexport \
-			   -D__ATTR_PROGMEM__= \
+			   -D__STDC_HOSTED__=1 \
 			   -D__AVR_ARCH__=5 \
 			   -D__AVR_$(subst MEGA,mega,$(call _uppercase,$(GCC_ARCH)))__=1 \
 			   -Wsparse-all
 
 CFLAGS			:= $(MAIN_CFLAGS) \
 			   $(if $(INSTRUMENT_FUNC),$(INSTRUMENT_CFLAGS)) \
-			   $(CFLAGS)
+			   $(CFLAGS) \
+			   -include sparse.h
 
 BOOT_CFLAGS		:= $(MAIN_CFLAGS) -DBOOTLOADER \
 			   $(if $(BOOT_INSTRUMENT_FUNC),$(INSTRUMENT_CFLAGS)) \
-			   $(BOOT_CFLAGS)
+			   $(BOOT_CFLAGS) \
+			   -include sparse.h
 
 LDFLAGS			:= $(MAIN_LDFLAGS) -fwhole-program \
 			   $(LDFLAGS)

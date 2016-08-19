@@ -190,7 +190,9 @@ void settings_init(void)
 	uint8_t next_index, found_index;
 	uint8_t serial, next_serial;
 
+#ifndef __CHECKER__
 	build_assert(sizeof(struct settings) == 64);
+#endif
 	build_assert(SEA_SIZE(struct settings, temp_k) >= NR_BOOST_MODES);
 	build_assert(SEA_SIZE(struct settings, temp_setpoint) >= NR_PRESETS);
 

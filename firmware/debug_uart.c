@@ -76,7 +76,7 @@ static void debug_uart_print_timestamp(void)
 	char buf[(sizeof(unsigned int) * 2) + 1];
 
 	utoa((unsigned int)(uint16_t)timer_now(), buf, 16);
-	debug_uart_tx_string(buf);
+	debug_uart_tx_string(to_memx(&buf[0]));
 	debug_uart_tx((uint8_t)':');
 	debug_uart_tx((uint8_t)' ');
 }
@@ -92,10 +92,10 @@ static void debug_print_str2(const char __flash *str0, const char *str1)
 
 	debug_uart_print_timestamp();
 	if (str0)
-		debug_uart_tx_string(str0);
+		debug_uart_tx_string(to_memx(str0));
 	if (str1) {
 		debug_uart_tx((uint8_t)' ');
-		debug_uart_tx_string(str1);
+		debug_uart_tx_string(to_memx(str1));
 	}
 	debug_uart_tx_eol();
 
@@ -106,7 +106,9 @@ void debug_print_int32(const char __flash *prefix, int32_t value)
 {
 	char buf[10 + 1 + 1];
 
+#ifndef __CHECKER__
 	build_assert(sizeof(long) == sizeof(value));
+#endif
 	ltoa(value, buf, 10);
 
 	debug_print_str2(prefix, buf);
@@ -158,7 +160,7 @@ void debug_enable(bool enable)
 	display_enable(!enable);
 	if (enable) {
 		debug_uart_enable();
-		debug_uart_tx_string(PSTR("\r\nst\r\n"));
+		debug_uart_tx_string(to_memx(PSTR("\r\nst\r\n")));
 	} else {
 		debug_uart_disable();
 	}
