@@ -12,7 +12,7 @@
 #define __flash5			__attribute__((address_space(5)))
 #define __flash				__attribute__((address_space(6)))
 #define __memx				__attribute__((address_space(7)))
-#define __ATTR_PROGMEM__
+#define __ATTR_PROGMEM__		__flash
 #define __OS_main__			dllexport
 #define __builtin_avr_delay_cycles(x)
 
