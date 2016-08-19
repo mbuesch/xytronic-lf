@@ -37,7 +37,7 @@ static struct presets_context presets;
 
 
 #if CONF_PRESETS
-void presets_update_index(uint8_t active)
+static void presets_update_index(uint8_t active)
 {
 	struct settings *settings;
 
