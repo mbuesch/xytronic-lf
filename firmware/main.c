@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Open Source firmware
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,13 +40,38 @@
 #include <avr/wdt.h>
 
 
+/* Configure unused package pins. */
+static void unused_pins_init(void)
+{
+	/* Configure unused pins as inputs with pull up
+	 * to get a well defined level on the input driver.
+	 */
+
+	/* PB5 */
+	DDRB &= (uint8_t)~(1u << DDB5);
+	PORTB |= 1u << PB5;
+
+	/* PB6 */
+	DDRB &= (uint8_t)~(1u << DDB6);
+	PORTB |= 1u << PB6;
+
+	/* PC0 */
+	DDRC &= (uint8_t)~(1u << DDC0);
+	PORTC |= 1u << PC0;
+}
+
+/* Early boot routine. Runs before main().
+ * This function does not have a stack frame.
+ */
 void early_init(void) __attribute__((naked, section(".init3"), used));
 void early_init(void)
 {
+	/* Reconfigure watchdog. */
 	MCUSR = 0;
 	wdt_enable(WDTO_2S);
 }
 
+/* Main entry point. */
 int main(void) _mainfunc;
 int main(void)
 {
@@ -77,6 +102,9 @@ int main(void)
 
 	/* Initialize the user interface. */
 	menu_init();
+
+	/* Configure unused package pins. */
+	unused_pins_init();
 
 	/* Startup measurements to get everything going. */
 	measure_start();
