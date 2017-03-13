@@ -1,7 +1,7 @@
 Xytronic LF-1600 Open Source Firmware
 =====================================
 
-Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
+Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
 
 Licensed under the terms of the GNU General Public License version 2 or (at your option) any later version. 
 

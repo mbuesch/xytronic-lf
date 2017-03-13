@@ -82,14 +82,17 @@ hook_pre_archives()
 
 	# Move the documentation.
 	mv "$2"/schematics-lf1600/lf1600.pdf "$2"/schematics-lf1600.pdf
+}
 
+hook_pre_documentation()
+{
 	# Update the README
-	local makefile="$2/firmware/Makefile"
+	local makefile="$1/firmware/Makefile"
 	for arch in M88 M328P; do
 		local lfuse="$(grep -e "$arch"'_LFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local hfuse="$(grep -e "$arch"'_HFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local efuse="$(grep -e "$arch"'_EFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
-		for f in "$2/README".*; do
+		for f in "$1/README.md"; do
 			sed -i -e 's/%%'"$arch"'_LFUSE%%/'"$lfuse"'/g' \
 			       -e 's/%%'"$arch"'_HFUSE%%/'"$hfuse"'/g' \
 			       -e 's/%%'"$arch"'_EFUSE%%/'"$efuse"'/g' \
