@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Temperature presets
  *
- * Copyright (c) 2016 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2016-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "settings.h"
 #include "controller_temp.h"
 #include "ring.h"
+#include "menu.h"
 
 #include <string.h>
 
@@ -46,6 +47,7 @@ static void presets_update_index(uint8_t active)
 	settings->temp_setpoint_active = active;
 	store_settings();
 	contrtemp_update_setpoint();
+	menu_request_display_update();
 }
 #endif
 
