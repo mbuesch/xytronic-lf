@@ -1,4 +1,4 @@
-update=Sat 23 Jul 2016 10:10:32 PM CEST
+update=Mon 13 Mar 2017 08:07:56 PM CET
 version=1
 last_client=kicad
 [cvpcb]
@@ -79,3 +79,4 @@ LibName27=atmel
 LibName28=contrib
 LibName29=valves
 LibName30=tl431
+LibName31=switches

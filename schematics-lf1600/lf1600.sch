@@ -29,6 +29,7 @@ LIBS:atmel
 LIBS:contrib
 LIBS:valves
 LIBS:tl431
+LIBS:switches
 LIBS:lf1600-cache
 EELAYER 25 0
 EELAYER END
