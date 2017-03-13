@@ -92,12 +92,10 @@ hook_pre_documentation()
 		local lfuse="$(grep -e "$arch"'_LFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local hfuse="$(grep -e "$arch"'_HFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local efuse="$(grep -e "$arch"'_EFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
-		for f in "$1/README.md"; do
-			sed -i -e 's/%%'"$arch"'_LFUSE%%/'"$lfuse"'/g' \
-			       -e 's/%%'"$arch"'_HFUSE%%/'"$hfuse"'/g' \
-			       -e 's/%%'"$arch"'_EFUSE%%/'"$efuse"'/g' \
-			       "$f"
-		done
+		sed -i -e 's/%%'"$arch"'_LFUSE%%/'"$lfuse"'/g' \
+		       -e 's/%%'"$arch"'_HFUSE%%/'"$hfuse"'/g' \
+		       -e 's/%%'"$arch"'_EFUSE%%/'"$efuse"'/g' \
+		       "$1/README.md"
 	done
 }
 
