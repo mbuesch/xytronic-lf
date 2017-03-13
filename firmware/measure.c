@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Measurement routines
  *
- * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,6 +84,8 @@ static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref,
 {
 	uint8_t trig, ie;
 
+	mb();
+
 	/* Mask the multiplexer bits. */
 	mux &= (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0);
 	/* Mask the prescaler bits. */
@@ -102,8 +104,6 @@ static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref,
 		ie = 1 << ADIE;
 	else
 		ie = 0 << ADIE;
-
-	mb();
 
 	/* Set multiplexer and start conversion. */
 	ADMUX = ref | (0 << ADLAR) | mux;
@@ -239,7 +239,29 @@ ISR(ADC_vect)
 void measure_register_channel(enum measure_chan chan,
 			      const struct measure_config __flash *config)
 {
+	uint8_t mux;
+
+	/* Register the channel. */
 	meas.channels[chan].config = config;
+
+	/* Disable digital input on the pin. */
+	mux = config->mux;
+	if (mux == MEAS_MUX_ADC0 ||
+	    mux == MEAS_MUX_ADC1 ||
+	    mux == MEAS_MUX_ADC2 ||
+	    mux == MEAS_MUX_ADC3 ||
+	    mux == MEAS_MUX_ADC4 ||
+	    mux == MEAS_MUX_ADC5) {
+		static const uint8_t mux2didr[] = {
+			[MEAS_MUX_ADC0] = 1u << ADC0D,
+			[MEAS_MUX_ADC1] = 1u << ADC1D,
+			[MEAS_MUX_ADC2] = 1u << ADC2D,
+			[MEAS_MUX_ADC3] = 1u << ADC3D,
+			[MEAS_MUX_ADC4] = 1u << ADC4D,
+			[MEAS_MUX_ADC5] = 1u << ADC5D,
+		};
+		DIDR0 |= mux2didr[mux];
+	}
 }
 
 void measure_start(void)
