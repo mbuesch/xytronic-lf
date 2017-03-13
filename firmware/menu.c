@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * User menu
  *
- * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -488,13 +488,16 @@ static void menu_button_handler(enum button_id button,
 
 	switch (menu.state) {
 	case MENU_CURTEMP:
-		if (bstate == BSTATE_POSEDGE) {
-			start_ramping_button(button, bstate, (CONF_PRESETS),
-					     settemp_ramp_handler);
-			if (button != BUTTON_SET) {
-				if (CONF_PRESETS)
+		start_ramping_button(button, bstate, (CONF_PRESETS),
+				     settemp_ramp_handler);
+		if (CONF_PRESETS) {
+			if (bstate == BSTATE_NEGEDGE) {
+				if (button != BUTTON_SET)
 					menu_set_state(MENU_SELPRESET);
-				else
+			}
+		} else {
+			if (bstate == BSTATE_POSEDGE) {
+				if (button != BUTTON_SET)
 					menu_set_state(MENU_CHGPRESET);
 			}
 		}
