@@ -5,11 +5,13 @@
 #include "fixpt.h"
 
 
-#define CONTRCURR_NEGLIM		0.0
-#define CONTRCURR_POSLIM		5.0
+#define AMPERE(ampere)			((float)(ampere))
+
+#define CONTRCURR_NEGLIM		AMPERE(0)
+#define CONTRCURR_POSLIM		AMPERE(5)
 
 #define CONTRCURR_RESTRICT_TOTEMP	100.0
-#define CONTRCURR_RESTRICT_MAXCURR	2.0
+#define CONTRCURR_RESTRICT_MAXCURR	AMPERE(2)
 
 
 void contrcurr_set_feedback(fixpt_t r);

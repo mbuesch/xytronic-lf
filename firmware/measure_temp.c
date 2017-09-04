@@ -72,19 +72,19 @@ static const struct measure_config __flash meastemp_config = {
 #ifdef HW_LEGACY
 	.scale_raw_lo		= 210,
 	.scale_raw_hi		= 411,
-	.scale_phys_lo		= FLOAT_TO_FIXPT(150.0),
-	.scale_phys_hi		= FLOAT_TO_FIXPT(480.0),
+	.scale_phys_lo		= FLOAT_TO_FIXPT(CELSIUS(150)),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(CELSIUS(480)),
 #endif
 #ifdef HW_SMD
 #warning "FIXME: The temperature scaling is not correct for the SMD hardware."
 	.scale_raw_lo		= 210,
 	.scale_raw_hi		= 411,
-	.scale_phys_lo		= FLOAT_TO_FIXPT(150.0),
-	.scale_phys_hi		= FLOAT_TO_FIXPT(480.0),
+	.scale_phys_lo		= FLOAT_TO_FIXPT(CELSIUS(150)),
+	.scale_phys_hi		= FLOAT_TO_FIXPT(CELSIUS(480)),
 #endif
 
-	.plaus_neglim		= FLOAT_TO_FIXPT(-20.0),
-	.plaus_poslim		= FLOAT_TO_FIXPT(500.0),
+	.plaus_neglim		= FLOAT_TO_FIXPT(CELSIUS(-20)),
+	.plaus_poslim		= FLOAT_TO_FIXPT(CELSIUS(500)),
 	.plaus_timeout_ms	= 3000,
 
 	.filter_callback	= NULL,

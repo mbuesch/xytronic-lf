@@ -5,6 +5,8 @@
 #include "fixpt.h"
 
 
+#define CELSIUS(celsius)		((float)(celsius))
+
 /* Temperature controller PID parameters */
 #define CONTRTEMP_PID_KP_NORMAL		4.0
 #define CONTRTEMP_PID_KI_NORMAL		0.04
@@ -28,17 +30,17 @@
 #endif
 
 /* Temperature controller limits. */
-#define CONTRTEMP_NEGLIM		0.0
-#define CONTRTEMP_POSLIM		480.0
+#define CONTRTEMP_NEGLIM		CELSIUS(0)
+#define CONTRTEMP_POSLIM		CELSIUS(480)
 
 /* Temperature to current mapping. */
-#define CONTRTEMP_MAP_TEMPLO		0.0
-#define CONTRTEMP_MAP_CURRLO		0.0
-#define CONTRTEMP_MAP_TEMPHI		180.0
-#define CONTRTEMP_MAP_CURRHI		5.0
+#define CONTRTEMP_MAP_TEMPLO		CELSIUS(0)
+#define CONTRTEMP_MAP_CURRLO		AMPERE(0)
+#define CONTRTEMP_MAP_TEMPHI		CELSIUS(180)
+#define CONTRTEMP_MAP_CURRHI		AMPERE(5)
 
 /* Temperature controller default idle setpoint. */
-#define CONTRTEMP_DEF_IDLE_SETPOINT	150.0
+#define CONTRTEMP_DEF_IDLE_SETPOINT	CELSIUS(150)
 
 
 enum contrtemp_boostmode {

@@ -26,8 +26,8 @@
 #include "debug_uart.h"
 
 
-#define CALCURR_TEMP_HI		250.0
-#define CALCURR_TEMP_LO		75.0
+#define CALCURR_TEMP_HI		CELSIUS(250)
+#define CALCURR_TEMP_LO		CELSIUS(75)
 
 
 struct calcurr_context {
