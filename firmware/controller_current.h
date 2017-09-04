@@ -5,7 +5,7 @@
 #include "fixpt.h"
 
 
-#define AMPERE(ampere)			((float)(ampere))
+#define AMPERE(ampere)			((float)(ampere) * 100.0) /* Convert to 1/100th amps */
 
 #define CONTRCURR_NEGLIM		AMPERE(0)
 #define CONTRCURR_POSLIM		AMPERE(5)
