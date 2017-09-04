@@ -21,10 +21,10 @@ endif
 
 # Build configuration
 CONF_CALIB		:= 0
-CONF_DEBUG		:= 1
+CONF_DEBUG		:= $(if $(call deveq,m328p),1,0)
 CONF_BOOST		:= 0
 CONF_IDLE		:= 1
-CONF_IDLETOGGLE		:= 1
+CONF_IDLETOGGLE		:= $(if $(call hweq,legacy),1,0)
 CONF_PRESETS		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
 CONF_CURRCUTOFFHYST	:= 0.7

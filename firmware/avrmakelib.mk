@@ -1,7 +1,7 @@
 ######################################################
 # AVR make library                                   #
-# Copyright (c) 2015-2016 Michael Buesch <m@bues.ch> #
-# Version 1.5                                        #
+# Copyright (c) 2015-2017 Michael Buesch <m@bues.ch> #
+# Version 1.6                                        #
 ######################################################
 
 ifeq ($(NAME),)
@@ -22,6 +22,7 @@ endif
 
 _uppercase		= $(shell echo $(1) | tr a-z A-Z)
 _lowercase		= $(shell echo $(1) | tr A-Z a-z)
+_streq			= $(and $(filter 1,$(words $2)),$(filter $1,$(firstword $2)))
 
 # The toolchain definitions
 CC			:= avr-gcc
@@ -43,10 +44,17 @@ PYTHON2			:= python2
 PYTHON3			:= python3
 SPARSE			:= sparse
 
-V			:= @		# Verbose build:	make V=1
-C			:= 0		# Sparsechecker build:	make C=1
-DEBUG			:= 0		# Debug build:		make DEBUG=1
-O			:= s		# Optimize flag
+# Verbose build:        	make V=1
+V			:= @
+# Sparsechecker build:  	make C=1
+C			:= 0
+# Debug build:          	make DEBUG=1
+DEBUG			:= 0
+# Optimize flag:		make O=0/1/2/3/s
+O			:= s
+# Link time optimization:	make LTO=1
+LTO			:= 1
+
 Q			:= $(V:1=)
 QUIET_CC		= $(Q:@=@$(ECHO) '     CC       '$@;)$(CC)
 QUIET_DEPEND		= $(Q:@=@$(ECHO) '     DEPEND   '$@;)$(CC)
@@ -61,25 +69,59 @@ else
 QUIET_SPARSE		= @$(TRUE)
 endif
 
+BIN			:= $(NAME).bin
+HEX			:= $(NAME).hex
+MAP			:= $(NAME).map
+EEP			:= $(NAME).eep.hex
+BOOT_BIN		:= $(NAME).bootloader.bin
+BOOT_HEX		:= $(NAME).bootloader.hex
+BOOT_MAP		:= $(NAME).bootloader.map
+
+OBJ_DIR			:= obj
+DEP_DIR			:= dep
+BOOT_OBJ_DIR		:= obj-boot
+BOOT_DEP_DIR		:= dep-boot
+
 FUNC_STACK_LIMIT	?= 128
 
-WARN_CFLAGS		:= -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
+WARN_CFLAGS		:= -Wall \
+			   -Wextra \
+			   -Wno-unused-parameter \
+			   -Wswitch-enum \
 			   -Wsuggest-attribute=noreturn \
-			   -Wundef -Wpointer-arith -Winline \
+			   -Wundef \
+			   -Wpointer-arith \
+			   -Winline \
 			   $(if $(FUNC_STACK_LIMIT),-Wstack-usage=$(FUNC_STACK_LIMIT)) \
-			   -Wcast-qual -Wlogical-op -Wshadow \
+			   -Wcast-qual \
+			   -Wlogical-op \
+			   -Wshadow \
 			   -Wconversion
+
+OPTIMIZE_CFLAGS		:= -O$(O) \
+			   -maccumulate-args \
+			   -mcall-prologues \
+			   -mrelax \
+			   -mstrict-X \
+			   -fno-inline-small-functions \
+			   -fno-move-loop-invariants \
+			   -fno-split-wide-types \
+			   -fshort-enums \
+			   $(if $(call _streq,$(LTO),1),-flto=jobserver -fuse-linker-plugin -fno-fat-lto-objects,-fno-lto)
 
 DEFINE_CFLAGS		:= "-Dinline=inline __attribute__((__always_inline__))" \
 			   -DF_CPU=$(F_CPU) \
 			   $(if $(BOOT_OFFSET),-DBOOT_OFFSET=$(BOOT_OFFSET)) \
 			   $(if $(DEBUG),-DDEBUG=$(DEBUG))
 
-MAIN_CFLAGS		:= -mmcu=$(GCC_ARCH) -std=gnu11 -g0 -O$(O) \
+MAIN_CFLAGS		:= -mmcu=$(GCC_ARCH) \
+			   -std=gnu11 \
+			   -g0 \
+			   $(if $(call _streq,$(DEBUG),1),-ffunction-sections) \
+			   $(if $(call _streq,$(DEBUG),1),-fdata-sections) \
+			   $(OPTIMIZE_CFLAGS) \
 			   $(WARN_CFLAGS) \
-			   $(DEFINE_CFLAGS) \
-			   -mcall-prologues -mrelax -mstrict-X \
-			   -fshort-enums -flto
+			   $(DEFINE_CFLAGS)
 
 MAIN_LDFLAGS		:=
 
@@ -104,28 +146,21 @@ BOOT_CFLAGS		:= $(MAIN_CFLAGS) -DBOOTLOADER \
 			   $(BOOT_CFLAGS) \
 			   -include sparse.h
 
-LDFLAGS			:= $(MAIN_LDFLAGS) -fwhole-program \
+LDFLAGS			:= $(MAIN_LDFLAGS) \
+			   $(if $(call _streq,$(LTO),1),,-fwhole-program) \
+			   -Wl,-Map,$(MAP) \
 			   $(LDFLAGS)
 
-BOOT_LDFLAGS		:= $(MAIN_LDFLAGS) -fwhole-program \
+BOOT_LDFLAGS		:= $(MAIN_LDFLAGS) \
+			   $(if $(call _streq,$(LTO),1),,-fwhole-program) \
 			   -Wl,--section-start=.text=$(BOOT_OFFSET) \
+			   -Wl,-Map,$(BOOT_MAP) \
 			   $(BOOT_LDFLAGS)
 
 SPARSEFLAGS		:= $(subst gnu11,gnu99,$(CFLAGS)) \
 			   $(MAIN_SPARSEFLAGS) $(SPARSEFLAGS)
 BOOT_SPARSEFLAGS	:= $(subst gnu11,gnu99,$(BOOT_CFLAGS)) \
 			   $(MAIN_SPARSEFLAGS) $(BOOT_SPARSEFLAGS)
-
-BIN			:= $(NAME).bin
-HEX			:= $(NAME).hex
-EEP			:= $(NAME).eep.hex
-BOOT_BIN		:= $(NAME).bootloader.bin
-BOOT_HEX		:= $(NAME).bootloader.hex
-
-OBJ_DIR			:= obj
-DEP_DIR			:= dep
-BOOT_OBJ_DIR		:= obj-boot
-BOOT_DEP_DIR		:= dep-boot
 
 .SUFFIXES:
 .DEFAULT_GOAL := all
@@ -210,10 +245,10 @@ all: $(HEX) $(if $(BOOT_SRCS),$(BOOT_HEX))
 	$(QUIET_CC) $(CFLAGS) -fno-lto -S $*.c
 
 $(BIN): $(call OBJS,$(SRCS),$(OBJ_DIR))
-	$(QUIET_CC) $(CFLAGS) -o $(BIN) $(call OBJS,$(SRCS),$(OBJ_DIR)) $(LDFLAGS)
+	+$(QUIET_CC) $(CFLAGS) -o $(BIN) $(call OBJS,$(SRCS),$(OBJ_DIR)) $(LDFLAGS)
 
 $(BOOT_BIN): $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR))
-	$(QUIET_CC) $(BOOT_CFLAGS) -o $(BOOT_BIN) $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR)) $(BOOT_LDFLAGS)
+	+$(QUIET_CC) $(BOOT_CFLAGS) -o $(BOOT_BIN) $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR)) $(BOOT_LDFLAGS)
 
 $(HEX): $(BIN)
 	$(QUIET_OBJCOPY) -R.eeprom -O ihex $(BIN) $(HEX)
@@ -321,6 +356,7 @@ clean:
 		$(OBJ_DIR) $(DEP_DIR) \
 		$(BOOT_OBJ_DIR) $(BOOT_DEP_DIR) \
 		$(BIN) $(BOOT_BIN) \
+		$(MAP) $(BOOT_MAP) \
 		*.pyc *.pyo __pycache__ \
 		$(GEN_SRCS) $(BOOT_GEN_SRCS) \
 		$(CLEAN_FILES)
