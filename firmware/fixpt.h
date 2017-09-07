@@ -16,15 +16,19 @@
 
 
 #if FIXPT_SIZE == 8
+# define FIXPTBIG_SIZE	16
 typedef int8_t fixpt_t;
 typedef int16_t fixpt_big_t;
 #elif FIXPT_SIZE == 16
+# define FIXPTBIG_SIZE	24
 typedef int16_t fixpt_t;
 typedef int24_t fixpt_big_t;
 #elif FIXPT_SIZE == 24
+# define FIXPTBIG_SIZE	32
 typedef int24_t fixpt_t;
 typedef int32_t fixpt_big_t;
 #elif FIXPT_SIZE == 32
+# define FIXPTBIG_SIZE	64
 typedef int32_t fixpt_t;
 typedef int64_t fixpt_big_t;
 #else
@@ -33,6 +37,8 @@ typedef int64_t fixpt_big_t;
 
 #define FIXPT_MAX	((fixpt_t)((1ULL << (FIXPT_SIZE - 1U)) - 1U))
 #define FIXPT_MIN	((fixpt_t)(-FIXPT_MAX))
+#define FIXPTBIG_MAX	((fixpt_t)((1ULL << (FIXPTBIG_SIZE - 1U)) - 1U))
+#define FIXPTBIG_MIN	((fixpt_t)(-FIXPTBIG_MAX))
 
 
 #if FIXPTFLOAT_SIZE == 32

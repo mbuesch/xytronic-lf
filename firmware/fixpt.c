@@ -36,7 +36,7 @@ int32_t fixpt_big_to_int(fixpt_big_t p)
 {
 	int32_t i;
 
-	if (p < 0) {
+	if (p < int_to_fixpt_big(0)) {
 		p = -p;
 		i = ((int32_t)p + (int32_t)(1L << (FIXPT_SHIFT - 1))) >> FIXPT_SHIFT;
 		i = -i;
@@ -89,15 +89,25 @@ fixpt_big_t fixpt_big_div(fixpt_big_t a, fixpt_big_t b)
 {
 	fixpt_big_t tmp;
 
-	/* Scale */
-	tmp = a << FIXPT_SHIFT;
-	/* Round */
-	if ((tmp >= 0 && b >= 0) || (tmp < 0 && b < 0))
-		tmp += b / 2;
-	else
-		tmp -= b / 2;
-	/* Divide */
-	tmp /= b;
+	if (b == int_to_fixpt_big(0)) {
+		/* Division by zero. Handle it gracefully. */
+		if (a < int_to_fixpt_big(0))
+			tmp = FIXPTBIG_MIN;
+		else
+			tmp = FIXPTBIG_MAX;
+	} else {
+		/* Scale */
+		tmp = a << FIXPT_SHIFT;
+		/* Round */
+		if ((tmp >= int_to_fixpt_big(0) && b >= int_to_fixpt_big(0)) ||
+		    (tmp < int_to_fixpt_big(0) && b < int_to_fixpt_big(0))) {
+			tmp += b / 2;
+		} else {
+			tmp -= b / 2;
+		}
+		/* Divide */
+		tmp /= b;
+	}
 
 	return tmp;
 }

@@ -70,14 +70,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	kd = pid->k.kd;
 	if (kd != int_to_fixpt(0)) {
 		de = fixpt_sub(e, pid->prev_e);
-		if (dt) {
-			d = fixpt_mul_div(de, kd, dt);
-		} else {
-			if (de < 0)
-				d = y_neglim;
-			else
-				d = y_poslim;
-		}
+		d = fixpt_mul_div(de, kd, dt);
 		pid->prev_e = fixpt_div(e, pid->k.d_decay_div);
 
 		pid_result = fixpt_add(pid_result, d);
