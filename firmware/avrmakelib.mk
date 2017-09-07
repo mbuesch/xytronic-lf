@@ -59,6 +59,7 @@ Q			:= $(V:1=)
 QUIET_CC		= $(Q:@=@$(ECHO) '     CC       '$@;)$(CC)
 QUIET_DEPEND		= $(Q:@=@$(ECHO) '     DEPEND   '$@;)$(CC)
 QUIET_OBJCOPY		= $(Q:@=@$(ECHO) '     OBJCOPY  '$@;)$(OBJCOPY)
+QUIET_OBJDUMP		= $(Q:@=@$(ECHO) '     OBJDUMP  '$@;)$(OBJDUMP)
 QUIET_SIZE		= $(Q:@=@$(ECHO) '     SIZE     '$@;)$(SIZE)
 QUIET_PYTHON2		= $(Q:@=@$(ECHO) '     PYTHON2  '$@;)$(PYTHON2)
 QUIET_PYTHON3		= $(Q:@=@$(ECHO) '     PYTHON3  '$@;)$(PYTHON3)
@@ -72,10 +73,12 @@ endif
 BIN			:= $(NAME).bin
 HEX			:= $(NAME).hex
 MAP			:= $(NAME).map
+DASM			:= $(NAME).dasm
 EEP			:= $(NAME).eep.hex
 BOOT_BIN		:= $(NAME).bootloader.bin
 BOOT_HEX		:= $(NAME).bootloader.hex
 BOOT_MAP		:= $(NAME).bootloader.map
+BOOT_DASM		:= $(NAME).bootloader.dasm
 
 OBJ_DIR			:= obj
 DEP_DIR			:= dep
@@ -91,7 +94,6 @@ WARN_CFLAGS		:= -Wall \
 			   -Wsuggest-attribute=noreturn \
 			   -Wundef \
 			   -Wpointer-arith \
-			   -Winline \
 			   $(if $(FUNC_STACK_LIMIT),-Wstack-usage=$(FUNC_STACK_LIMIT)) \
 			   -Wcast-qual \
 			   -Wlogical-op \
@@ -109,14 +111,13 @@ OPTIMIZE_CFLAGS		:= -O$(O) \
 			   -fshort-enums \
 			   $(if $(call _streq,$(LTO),1),-flto=jobserver -fuse-linker-plugin -fno-fat-lto-objects,-fno-lto)
 
-DEFINE_CFLAGS		:= "-Dinline=inline __attribute__((__always_inline__))" \
-			   -DF_CPU=$(F_CPU) \
+DEFINE_CFLAGS		:= -DF_CPU=$(F_CPU) \
 			   $(if $(BOOT_OFFSET),-DBOOT_OFFSET=$(BOOT_OFFSET)) \
 			   $(if $(DEBUG),-DDEBUG=$(DEBUG))
 
 MAIN_CFLAGS		:= -mmcu=$(GCC_ARCH) \
 			   -std=gnu11 \
-			   -g0 \
+			   -g \
 			   $(if $(call _streq,$(DEBUG),1),-ffunction-sections) \
 			   $(if $(call _streq,$(DEBUG),1),-fdata-sections) \
 			   $(OPTIMIZE_CFLAGS) \
@@ -246,9 +247,11 @@ all: $(HEX) $(if $(BOOT_SRCS),$(BOOT_HEX))
 
 $(BIN): $(call OBJS,$(SRCS),$(OBJ_DIR))
 	+$(QUIET_CC) $(CFLAGS) -o $(BIN) $(call OBJS,$(SRCS),$(OBJ_DIR)) $(LDFLAGS)
+	+$(QUIET_OBJDUMP) -S $(BIN) > $(DASM)
 
 $(BOOT_BIN): $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR))
 	+$(QUIET_CC) $(BOOT_CFLAGS) -o $(BOOT_BIN) $(call OBJS,$(BOOT_SRCS),$(BOOT_OBJ_DIR)) $(BOOT_LDFLAGS)
+	+$(QUIET_OBJDUMP) -S $(BOOT_BIN) > $(BOOT_DASM)
 
 $(HEX): $(BIN)
 	$(QUIET_OBJCOPY) -R.eeprom -O ihex $(BIN) $(HEX)
