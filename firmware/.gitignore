@@ -4,6 +4,7 @@ obj/
 *.bin
 *.hex
 *.map
+*.dasm
 
 *.swp
 .~*
