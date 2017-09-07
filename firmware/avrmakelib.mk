@@ -360,6 +360,7 @@ clean:
 		$(BOOT_OBJ_DIR) $(BOOT_DEP_DIR) \
 		$(BIN) $(BOOT_BIN) \
 		$(MAP) $(BOOT_MAP) \
+		$(DASM) $(BOOT_DASM) \
 		*.pyc *.pyo __pycache__ \
 		$(GEN_SRCS) $(BOOT_GEN_SRCS) \
 		$(CLEAN_FILES)
