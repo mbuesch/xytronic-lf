@@ -37,13 +37,16 @@ outFile = sys.argv[2]
 s = serial.Serial(port = inDev, baudrate = 9600, bytesize = 8,
 		  parity = serial.PARITY_NONE, stopbits = 2)
 
-outFd = open(outFile, "wb")
-outFd.write(b"time (ticks);current real r (A);current used r (A);current y (A);"
-	    b"temp r (*C);temp y1 (*C);temp y2 (A);"
-	    b"measured current (ADC);filtered current (ADC);"
-	    b"measured temp (ADC);"
-	    b"boost mode;"
-	    b"calib current percent\r\n")
+def writeOutFile(lines):
+	outFd = open(outFile, "wb")
+	outFd.write(b"time (ticks);current real r (A);current used r (A);current y (A);"
+		    b"temp r (*C);temp y1 (*C);temp y2 (A);"
+		    b"measured current (ADC);filtered current (ADC);"
+		    b"measured temp (ADC);"
+		    b"boost mode;"
+		    b"calib current percent\r\n")
+	outFd.write("".join(lines).encode("utf-8"))
+	outFd.close()
 
 def reset():
 	global outLines
@@ -62,6 +65,7 @@ def reset():
 
 	print("RESET")
 	outLines = []
+	writeOutFile(outLines)
 	prevTimeStamp = None
 	val_currentRealR = 0.0
 	val_currentUsedR = 0.0
@@ -91,6 +95,7 @@ def putLine(timeStamp):
 		val_calCurrPercent,
 	)
 	outLines.append(csvLine)
+	writeOutFile(outLines)
 
 def parseInt(valStr, valIdent):
 	try:
@@ -176,8 +181,5 @@ try:
 		))
 except KeyboardInterrupt as e:
 	pass
-
-outFd.write("".join(outLines).encode("utf-8"))
-outFd.close()
 
 sys.exit(0)
