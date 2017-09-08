@@ -44,10 +44,10 @@
 
 
 /* Current controller PID parameters */
-#define CONTRCURR_PID_KP		2.0
-#define CONTRCURR_PID_KI		0.05
-#define CONTRCURR_PID_KD		0.05
-#define CONTRCURR_PID_D_DECAY		1.2
+#define CONTRCURR_PID_KP		1.0
+#define CONTRCURR_PID_KI		1.0
+#define CONTRCURR_PID_KD		0.0
+#define CONTRCURR_PID_D_DECAY		1.0
 
 /* PID cut off current. PID is only active below this setpoint. */
 #define CONTRCURR_PID_CUTOFF_HYST	(AMPERE(CONF_CURRCUTOFFHYST))

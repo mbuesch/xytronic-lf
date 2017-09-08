@@ -10,7 +10,7 @@
 /* Temperature controller PID parameters */
 #define CONTRTEMP_PID_KP_NORMAL		4.0
 #define CONTRTEMP_PID_KI_NORMAL		0.04
-#define CONTRTEMP_PID_KD_NORMAL		0.5
+#define CONTRTEMP_PID_KD_NORMAL		0.1
 #define CONTRTEMP_PID_D_DECAY_NORMAL	1.2
 
 /* Temperature controller boost (1) PID parameters */
@@ -36,7 +36,7 @@
 /* Temperature to current mapping. */
 #define CONTRTEMP_MAP_TEMPLO		CELSIUS(0)
 #define CONTRTEMP_MAP_CURRLO		AMPERE(0)
-#define CONTRTEMP_MAP_TEMPHI		CELSIUS(180)
+#define CONTRTEMP_MAP_TEMPHI		CELSIUS(250)
 #define CONTRTEMP_MAP_CURRHI		AMPERE(5)
 
 /* Temperature controller default idle setpoint. */
