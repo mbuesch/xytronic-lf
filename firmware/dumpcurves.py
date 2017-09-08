@@ -24,6 +24,8 @@ import sys
 import serial
 
 
+CURR_DIV = 10.0
+
 if len(sys.argv) != 3 or "-h" in sys.argv or "--help" in sys.argv:
 	print("Usage: dumpcurves.py /dev/ttyUSB0 output.csv")
 	print("")
@@ -138,17 +140,17 @@ try:
 			print("Unknown format: %s" % line)
 			continue
 		if elems[0] == "cr1":
-			val_currentRealR = parseFixpt(elems[1], "cr1")
+			val_currentRealR = parseFixpt(elems[1], "cr1") / CURR_DIV
 		elif elems[0] == "cr2":
-			val_currentUsedR = parseFixpt(elems[1], "cr2")
+			val_currentUsedR = parseFixpt(elems[1], "cr2") / CURR_DIV
 		elif elems[0] == "cy":
-			val_currentY = parseFixpt(elems[1], "cy")
+			val_currentY = parseFixpt(elems[1], "cy") / CURR_DIV
 		elif elems[0] == "tr":
 			val_tempR = parseFixpt(elems[1], "tr")
 		elif elems[0] == "ty1":
 			val_tempY1 = parseFixpt(elems[1], "ty1")
 		elif elems[0] == "ty2":
-			val_tempY2 = parseFixpt(elems[1], "ty2")
+			val_tempY2 = parseFixpt(elems[1], "ty2") / CURR_DIV
 		elif elems[0] == "tb":
 			val_boostMode = parseInt(elems[1], "tb")
 		elif elems[0] == "mc":
@@ -174,7 +176,7 @@ try:
 		# Put the current line into the CSV.
 		putLine(timeStamp)
 
-		print("temp-r: %.02f   current-y: %.02f   current-r: %.02f" % (
+		print("temp-r: %.02f °C   current-y: %.02f A   current-r: %.02f A" % (
 			val_tempR,
 			val_currentY,
 			val_currentUsedR,
