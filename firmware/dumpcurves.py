@@ -41,9 +41,16 @@ s = serial.Serial(port = inDev, baudrate = 9600, bytesize = 8,
 
 def writeOutFile(lines):
 	outFd = open(outFile, "wb")
-	outFd.write(b"time (ticks);current real r (A);current used r (A);current y (A);"
-		    b"temp r (*C);temp y1 (*C);temp y2 (A);"
-		    b"measured current (ADC);filtered current (ADC);"
+	outFd.write(b"time (ticks);"
+		    b"current controller real r (A);"
+		    b"current controller used r (A);"
+		    b"current controller r state;"
+		    b"current controller y (A);"
+		    b"temp controller r (*C);"
+		    b"temp controller y1 (*C);"
+		    b"temp controller y2 (A);"
+		    b"measured current (ADC);"
+		    b"filtered current (ADC);"
 		    b"measured temp (ADC);"
 		    b"boost mode;"
 		    b"calib current percent\r\n")
@@ -55,6 +62,7 @@ def reset():
 	global prevTimeStamp
 	global val_currentRealR
 	global val_currentUsedR
+	global val_currentRState
 	global val_currentY
 	global val_tempR
 	global val_tempY1
@@ -71,6 +79,7 @@ def reset():
 	prevTimeStamp = None
 	val_currentRealR = 0.0
 	val_currentUsedR = 0.0
+	val_currentRState = 0
 	val_currentY = 0.0
 	val_tempR = 0.0
 	val_tempY1 = 0.0
@@ -82,10 +91,11 @@ def reset():
 	val_calCurrPercent = 0
 
 def putLine(timeStamp):
-	csvLine = "%d;%f;%f;%f;%f;%f;%f;%d;%d;%d;%d;%d\r\n" % (
+	csvLine = "%d;%f;%f;%d;%f;%f;%f;%f;%d;%d;%d;%d;%d\r\n" % (
 		timeStamp,
 		val_currentRealR,
 		val_currentUsedR,
+		val_currentRState,
 		val_currentY,
 		val_tempR,
 		val_tempY1,
@@ -143,6 +153,8 @@ try:
 			val_currentRealR = parseFixpt(elems[1], "cr1") / CURR_DIV
 		elif elems[0] == "cr2":
 			val_currentUsedR = parseFixpt(elems[1], "cr2") / CURR_DIV
+		elif elems[0] == "rs":
+			val_currentRState = parseInt(elems[1], "rs")
 		elif elems[0] == "cy":
 			val_currentY = parseFixpt(elems[1], "cy") / CURR_DIV
 		elif elems[0] == "tr":

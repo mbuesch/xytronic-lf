@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Current controller
  *
- * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,22 +54,31 @@
 #define CONTRCURR_PID_CUTOFF_HI		(AMPERE(CONF_CURRCUTOFF))
 #define CONTRCURR_PID_CUTOFF_LO		(CONTRCURR_PID_CUTOFF_HI - CONTRCURR_PID_CUTOFF_HYST)
 
+enum current_r_state {
+	RSTATE_DISABLED,
+	RSTATE_SYNCING,
+	RSTATE_ENABLED,
+};
 
 struct current_contr_context {
 	bool enabled;
-	bool pid_disabled;
 	bool restricted;
 	uint8_t emergency_flags;
+
 	struct pid pid;
+	enum current_r_state r_state;
 	fixpt_t feedback;
 	fixpt_t prev_y;
+
 	struct timer timer;
 
+	struct lp_filter_fixpt model;
+
+	/* Debug state */
 	int24_t old_current_real_feedback;
 	int24_t old_current_used_feedback;
 	int24_t old_current_control;
-
-	struct lp_filter_fixpt model;
+	int8_t old_r_state;
 };
 
 static struct current_contr_context contrcurr;
@@ -82,9 +91,9 @@ static const struct pid_k_set __flash contrcurr_factors = {
 };
 
 
-static void contrcurr_run(fixpt_t r)
+static void contrcurr_run(fixpt_t real_r)
 {
-	fixpt_t dt, y, w;
+	fixpt_t dt, y, w, r;
 
 	if (!contrcurr.enabled)
 		return;
@@ -96,25 +105,47 @@ static void contrcurr_run(fixpt_t r)
 		       int_to_fixpt(1000));
 	timer_set_now(&contrcurr.timer);
 
-	/* Check whether the PID should be enabled or disabled. */
 	w = pid_get_setpoint(&contrcurr.pid);
-	if (contrcurr.pid_disabled) {
-		if (w <= float_to_fixpt(CONTRCURR_PID_CUTOFF_LO))
-			contrcurr.pid_disabled = false;
-	} else {
+	r = real_r;
+
+	/* Check whether the actual r or the model shall be used. */
+	switch (contrcurr.r_state) {
+	case RSTATE_DISABLED:
+		/* Usage of real_r is disabled. Use the model r.
+		 * Once the setpoint drops below LO state start a r resync.
+		 */
+		if (w <= float_to_fixpt(CONTRCURR_PID_CUTOFF_LO)) {
+			contrcurr.r_state = RSTATE_SYNCING;
+		} else {
+			/* We are in the upper setpoint area.
+			 * Do not use the real feedback. Use a PT1 model instead. */
+			r = lp_filter_fixpt_run(&contrcurr.model, contrcurr.prev_y,
+						int_to_fixpt(16));
+			break;
+		}
+		/* fall through... */
+	case RSTATE_SYNCING:
+		/* Slowly re-synchronize the model r to the real_r.
+		 * Once we are reasomably close, switch back to 'enabled' state.
+		 */
+		r = lp_filter_fixpt_run(&contrcurr.model, real_r,
+					int_to_fixpt(24));
+		if (fixpt_abs(fixpt_sub(r, real_r)) < float_to_fixpt(AMPERE(0.1)))
+			contrcurr.r_state = RSTATE_ENABLED;
+		break;
+	case RSTATE_ENABLED:
+	default:
+		/* Use real_r unless the setpoint rises above HI.
+		 */
 		if (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF_HI)) {
-			contrcurr.pid_disabled = true;
+			contrcurr.r_state = RSTATE_DISABLED;
 			lp_filter_fixpt_set(&contrcurr.model, r);
 		}
+		break;
 	}
 
-	if (contrcurr.pid_disabled) {
-		/* We are in the upper setpoint area.
-		 * Do not use the real feedback. Use a PT1 model instead. */
-		r = lp_filter_fixpt_run(&contrcurr.model, contrcurr.prev_y,
-					int_to_fixpt(16));
-	}
-
+	debug_report_int8(PSTR("rs"), &contrcurr.old_r_state,
+			  (int8_t)contrcurr.r_state);
 	debug_report_int24(PSTR("cr2"), &contrcurr.old_current_used_feedback,
 			   (int24_t)r);
 
@@ -171,7 +202,7 @@ void contrcurr_set_enabled(bool enable,
 		/* Reset the controller. */
 		pwmcurr_set(int_to_fixpt(0));
 		pid_reset(&contrcurr.pid);
-		contrcurr.pid_disabled = false;
+		contrcurr.r_state = RSTATE_ENABLED;
 		contrcurr.prev_y = int_to_fixpt(0);
 		timer_set_now(&contrcurr.timer);
 	}
