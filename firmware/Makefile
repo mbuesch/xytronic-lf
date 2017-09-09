@@ -27,8 +27,8 @@ CONF_IDLE		:= 1
 CONF_IDLETOGGLE		:= $(if $(call hweq,legacy),1,0)
 CONF_PRESETS		:= 1
 CONF_KCONF		:= $(if $(call deveq,m328p),1,0)
-CONF_CURRCUTOFFHYST	:= 0.7
-CONF_CURRCUTOFF		:= 1.7
+CONF_CURRCUTOFFHYST	:= 0.1
+CONF_CURRCUTOFF		:= 1.8
 
 
 # Project name

@@ -93,7 +93,7 @@ static const struct pid_k_set __flash contrcurr_factors = {
 
 static void contrcurr_run(fixpt_t real_r)
 {
-	fixpt_t dt, y, w, r;
+	fixpt_t dt, y, r;
 
 	if (!contrcurr.enabled)
 		return;
@@ -105,16 +105,15 @@ static void contrcurr_run(fixpt_t real_r)
 		       int_to_fixpt(1000));
 	timer_set_now(&contrcurr.timer);
 
-	w = pid_get_setpoint(&contrcurr.pid);
 	r = real_r;
 
 	/* Check whether the actual r or the model shall be used. */
 	switch (contrcurr.r_state) {
 	case RSTATE_DISABLED:
 		/* Usage of real_r is disabled. Use the model r.
-		 * Once the setpoint drops below LO state start a r resync.
+		 * Once real_r drops below LO state start an r resync.
 		 */
-		if (w <= float_to_fixpt(CONTRCURR_PID_CUTOFF_LO)) {
+		if (real_r <= float_to_fixpt(CONTRCURR_PID_CUTOFF_LO)) {
 			contrcurr.r_state = RSTATE_SYNCING;
 		} else {
 			/* We are in the upper setpoint area.
@@ -135,9 +134,9 @@ static void contrcurr_run(fixpt_t real_r)
 		break;
 	case RSTATE_ENABLED:
 	default:
-		/* Use real_r unless the setpoint rises above HI.
+		/* Use real_r unless it rises above HI.
 		 */
-		if (w >= float_to_fixpt(CONTRCURR_PID_CUTOFF_HI)) {
+		if (real_r >= float_to_fixpt(CONTRCURR_PID_CUTOFF_HI)) {
 			contrcurr.r_state = RSTATE_DISABLED;
 			lp_filter_fixpt_set(&contrcurr.model, r);
 		}
