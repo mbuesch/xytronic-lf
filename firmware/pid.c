@@ -42,8 +42,6 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	fixpt_t kp, ki, kd;
 	fixpt_t p, i, d;
 	fixpt_t pid_result = int_to_fixpt(0);
-	fixpt_t y_neglim = pid->y_neglim;
-	fixpt_t y_poslim = pid->y_poslim;
 
 	/* Calculate the deviation. */
 	e = fixpt_sub(pid->setpoint, r);
@@ -60,7 +58,7 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	ki = pid->k.ki;
 	if (ki != int_to_fixpt(0)) {
 		i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(ki, e), dt));
-		i = clamp(i, y_neglim, y_poslim);
+		i = clamp(i, pid->i_neglim, pid->i_poslim);
 		pid->integr = i;
 
 		pid_result = fixpt_add(pid_result, i);
@@ -76,15 +74,18 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 		pid_result = fixpt_add(pid_result, d);
 	}
 
-	pid_result = clamp(pid_result, y_neglim, y_poslim);
+	pid_result = clamp(pid_result, pid->y_neglim, pid->y_poslim);
 
 	return pid_result;
 }
 
 void pid_init(struct pid *pid,
 	      const struct pid_k_set *k,
+	      fixpt_t i_neglim, fixpt_t i_poslim,
 	      fixpt_t y_neglim, fixpt_t y_poslim)
 {
+	pid->i_neglim = i_neglim;
+	pid->i_poslim = i_poslim;
 	pid->y_neglim = y_neglim;
 	pid->y_poslim = y_poslim;
 	pid_set_factors(pid, k);

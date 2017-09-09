@@ -19,6 +19,8 @@ static void check_common(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -40,6 +42,8 @@ static void check_P(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -69,6 +73,8 @@ static void check_P(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -102,6 +108,8 @@ static void check_P(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -135,6 +143,8 @@ static void check_P(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -175,6 +185,8 @@ static void check_I(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -220,6 +232,8 @@ static void check_I(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -265,6 +279,8 @@ static void check_I(void)
 	k.kd = float_to_fixpt(0.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -317,6 +333,8 @@ static void check_D(void)
 	k.kd = float_to_fixpt(1.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -354,6 +372,8 @@ static void check_D(void)
 	k.kd = float_to_fixpt(-1.0);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -392,6 +412,8 @@ static void check_D(void)
 	k.kd = float_to_fixpt(1.5);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));
@@ -436,6 +458,8 @@ static void check_PID(void)
 	k.kd = float_to_fixpt(1.5);
 	k.d_decay_div = float_to_fixpt(1.0);
 	pid_init(&pid, &k,
+		 float_to_fixpt(-15.0),		// I -lim
+		 float_to_fixpt(15.0),		// I +lim
 		 float_to_fixpt(-15.0),		// -lim
 		 float_to_fixpt(15.0));		// +lim
 	pid_set_setpoint(&pid, int_to_fixpt(10));

@@ -15,6 +15,10 @@ struct pid {
 	struct pid_k_set k;
 
 	fixpt_t setpoint;
+
+	fixpt_t i_neglim;
+	fixpt_t i_poslim;
+
 	fixpt_t y_neglim;
 	fixpt_t y_poslim;
 
@@ -28,6 +32,7 @@ void pid_set_factors(struct pid *pid, const struct pid_k_set *k);
 
 void pid_init(struct pid *pid,
 	      const struct pid_k_set *k,
+	      fixpt_t i_neglim, fixpt_t i_poslim,
 	      fixpt_t y_neglim, fixpt_t y_poslim);
 
 static inline void pid_set_setpoint(struct pid *pid, fixpt_t setpoint)

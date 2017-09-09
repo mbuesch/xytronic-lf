@@ -7,10 +7,15 @@
 
 #define AMPERE(ampere)			((float)(ampere) * 10.0) /* Convert to 1/10th amps */
 
+/* Current controller integral part limits. */
+#define CONTRCURR_NEGLIM_I		AMPERE(-3)
+#define CONTRCURR_POSLIM_I		AMPERE(3)
+/* Current controller final limits. */
 #define CONTRCURR_NEGLIM		AMPERE(0)
 #define CONTRCURR_POSLIM		AMPERE(5)
 
-#define CONTRCURR_RESTRICT_TOTEMP	100.0
+/* Current restriction on low temperatures. */
+#define CONTRCURR_RESTRICT_TOTEMP	CELSIUS(100)
 #define CONTRCURR_RESTRICT_MAXCURR	AMPERE(2)
 
 

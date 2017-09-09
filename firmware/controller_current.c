@@ -212,6 +212,8 @@ void contrcurr_init(void)
 
 	k_set = contrcurr_factors;
 	pid_init(&contrcurr.pid, &k_set,
+		 float_to_fixpt(CONTRCURR_NEGLIM_I),
+		 float_to_fixpt(CONTRCURR_POSLIM_I),
 		 float_to_fixpt(CONTRCURR_NEGLIM),
 		 float_to_fixpt(CONTRCURR_POSLIM));
 

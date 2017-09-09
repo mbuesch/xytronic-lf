@@ -306,6 +306,8 @@ void contrtemp_init(void)
 
 	k_set = &settings->temp_k[TEMPBOOST_NORMAL];
 	pid_init(&contrtemp.pid, k_set,
+		 float_to_fixpt(CONTRTEMP_NEGLIM_I),
+		 float_to_fixpt(CONTRTEMP_POSLIM_I),
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
 		 float_to_fixpt(CONTRTEMP_POSLIM));
 	temp_setpoint = presets_get_active_value();

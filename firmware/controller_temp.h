@@ -29,7 +29,10 @@
 # define CONTRTEMP_PID_D_DECAY_BOOST2	1.5
 #endif
 
-/* Temperature controller limits. */
+/* Temperature controller integral part limits. */
+#define CONTRTEMP_NEGLIM_I		CELSIUS(-50)
+#define CONTRTEMP_POSLIM_I		CELSIUS(50)
+/* Temperature controller final limits. */
 #define CONTRTEMP_NEGLIM		CELSIUS(0)
 #define CONTRTEMP_POSLIM		CELSIUS(480)
 
