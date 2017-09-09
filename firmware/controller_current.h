@@ -7,6 +7,12 @@
 
 #define AMPERE(ampere)			((float)(ampere) * 10.0) /* Convert to 1/10th amps */
 
+/* Current controller PID parameters */
+#define CONTRCURR_PID_KP		1.0
+#define CONTRCURR_PID_KI		0.8
+#define CONTRCURR_PID_KD		0.0
+#define CONTRCURR_PID_D_DECAY		1.0
+
 /* Current controller integral part limits. */
 #define CONTRCURR_NEGLIM_I		AMPERE(-3)
 #define CONTRCURR_POSLIM_I		AMPERE(3)
@@ -17,6 +23,11 @@
 /* Current restriction on low temperatures. */
 #define CONTRCURR_RESTRICT_TOTEMP	CELSIUS(100)
 #define CONTRCURR_RESTRICT_MAXCURR	AMPERE(2)
+
+/* PID cut off current. PID is only active below this setpoint. */
+#define CONTRCURR_PID_CUTOFF_HYST	(AMPERE(CONF_CURRCUTOFFHYST))
+#define CONTRCURR_PID_CUTOFF_HI		(AMPERE(CONF_CURRCUTOFF))
+#define CONTRCURR_PID_CUTOFF_LO		(CONTRCURR_PID_CUTOFF_HI - CONTRCURR_PID_CUTOFF_HYST)
 
 
 void contrcurr_set_feedback(fixpt_t r);

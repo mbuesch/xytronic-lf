@@ -43,17 +43,6 @@
  */
 
 
-/* Current controller PID parameters */
-#define CONTRCURR_PID_KP		1.0
-#define CONTRCURR_PID_KI		1.0
-#define CONTRCURR_PID_KD		0.0
-#define CONTRCURR_PID_D_DECAY		1.0
-
-/* PID cut off current. PID is only active below this setpoint. */
-#define CONTRCURR_PID_CUTOFF_HYST	(AMPERE(CONF_CURRCUTOFFHYST))
-#define CONTRCURR_PID_CUTOFF_HI		(AMPERE(CONF_CURRCUTOFF))
-#define CONTRCURR_PID_CUTOFF_LO		(CONTRCURR_PID_CUTOFF_HI - CONTRCURR_PID_CUTOFF_HYST)
-
 enum current_r_state {
 	RSTATE_DISABLED,
 	RSTATE_SYNCING,
