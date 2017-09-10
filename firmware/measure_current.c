@@ -35,6 +35,7 @@
 
 
 struct meascurr_context {
+	bool initialized;
 	fixpt_t prev_feedback;
 	struct lp_filter_u16 filter;
 	int16_t old_filter_report_value;
@@ -54,8 +55,13 @@ static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 	uint16_t filtered_adc;
 
 	/* Run a simple low pass filter. */
-	filtered_adc = lp_filter_u16_run(&meascurr.filter, raw_adc,
-					 MEASCURR_FILTER_SHIFT);
+	if (meascurr.initialized) {
+		filtered_adc = lp_filter_u16_run(&meascurr.filter, raw_adc,
+						 MEASCURR_FILTER_SHIFT);
+	} else {
+		lp_filter_u16_set(&meascurr.filter, raw_adc);
+		filtered_adc = raw_adc;
+	}
 	filtered_adc = min(filtered_adc, MEASURE_MAX_RESULT);
 
 	debug_report_int16(PSTR("fc"), &meascurr.old_filter_report_value,
@@ -85,6 +91,8 @@ static void meascurr_result_callback(fixpt_t measured_phys_value,
 		/* Just run the controller with the previous feedback. */
 		contrcurr_set_feedback(meascurr.prev_feedback);
 	}
+
+	meascurr.initialized = true;
 }
 
 static const struct measure_config __flash meascurr_config = {
@@ -106,5 +114,6 @@ static const struct measure_config __flash meascurr_config = {
 
 void meascurr_init(void)
 {
+	meascurr.initialized = false;
 	measure_register_channel(MEAS_CHAN_0, &meascurr_config);
 }
