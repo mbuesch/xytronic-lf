@@ -10,23 +10,23 @@
 /* Temperature controller PID parameters */
 #define CONTRTEMP_PID_KP_NORMAL		1.5
 #define CONTRTEMP_PID_KI_NORMAL		0.3
-#define CONTRTEMP_PID_KD_NORMAL		0.0
+#define CONTRTEMP_PID_KD_NORMAL		0.2
 #define CONTRTEMP_PID_D_DECAY_NORMAL	2.0
 
 /* Temperature controller boost (1) PID parameters */
 #if CONF_BOOST
-# define CONTRTEMP_PID_KP_BOOST1	6.0
-# define CONTRTEMP_PID_KI_BOOST1	0.12
-# define CONTRTEMP_PID_KD_BOOST1	1.0
-# define CONTRTEMP_PID_D_DECAY_BOOST1	1.5
+# define CONTRTEMP_PID_KP_BOOST1	1.5
+# define CONTRTEMP_PID_KI_BOOST1	0.4
+# define CONTRTEMP_PID_KD_BOOST1	0.5
+# define CONTRTEMP_PID_D_DECAY_BOOST1	2.0
 #endif
 
 /* Temperature controller boost (2) PID parameters */
 #if CONF_BOOST
-# define CONTRTEMP_PID_KP_BOOST2	12.0
-# define CONTRTEMP_PID_KI_BOOST2	0.12
-# define CONTRTEMP_PID_KD_BOOST2	1.5
-# define CONTRTEMP_PID_D_DECAY_BOOST2	1.5
+# define CONTRTEMP_PID_KP_BOOST2	1.5
+# define CONTRTEMP_PID_KI_BOOST2	0.5
+# define CONTRTEMP_PID_KD_BOOST2	1.0
+# define CONTRTEMP_PID_D_DECAY_BOOST2	2.0
 #endif
 
 /* Temperature controller integral part limits. */
