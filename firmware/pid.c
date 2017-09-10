@@ -1,7 +1,7 @@
 /*
  * PID controller
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,38 +41,29 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	fixpt_t e, de;
 	fixpt_t kp, ki, kd;
 	fixpt_t p, i, d;
-	fixpt_t pid_result = int_to_fixpt(0);
+	fixpt_t pid_result;
 
 	/* Calculate the deviation. */
 	e = fixpt_sub(pid->setpoint, r);
 
 	/* P term */
 	kp = pid->k.kp;
-	if (kp != int_to_fixpt(0)) {
-		p = fixpt_mul(kp, e);
-
-		pid_result = fixpt_add(pid_result, p);
-	}
+	p = fixpt_mul(kp, e);
+	pid_result = p;
 
 	/* I term */
 	ki = pid->k.ki;
-	if (ki != int_to_fixpt(0)) {
-		i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(ki, e), dt));
-		i = clamp(i, pid->i_neglim, pid->i_poslim);
-		pid->integr = i;
-
-		pid_result = fixpt_add(pid_result, i);
-	}
+	i = fixpt_add(pid->integr, fixpt_mul(fixpt_mul(ki, e), dt));
+	i = clamp(i, pid->i_neglim, pid->i_poslim);
+	pid->integr = i;
+	pid_result = fixpt_add(pid_result, i);
 
 	/* D term */
 	kd = pid->k.kd;
-	if (kd != int_to_fixpt(0)) {
-		de = fixpt_sub(e, pid->prev_e);
-		d = fixpt_mul_div(de, kd, dt);
-		pid->prev_e = fixpt_div(e, pid->k.d_decay_div);
-
-		pid_result = fixpt_add(pid_result, d);
-	}
+	de = fixpt_sub(e, pid->prev_e);
+	d = fixpt_mul_div(de, kd, dt);
+	pid->prev_e = fixpt_div(e, pid->k.d_decay_div);
+	pid_result = fixpt_add(pid_result, d);
 
 	pid_result = clamp(pid_result, pid->y_neglim, pid->y_poslim);
 
