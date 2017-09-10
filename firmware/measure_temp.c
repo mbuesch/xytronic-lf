@@ -70,8 +70,8 @@ static const struct measure_config __flash meastemp_config = {
 	.averaging_timeout_ms	= 50,
 
 #ifdef HW_LEGACY
-	.scale_raw_lo		= 210,
-	.scale_raw_hi		= 411,
+	.scale_raw_lo		= 209,
+	.scale_raw_hi		= 410,
 	.scale_phys_lo		= FLOAT_TO_FIXPT(CELSIUS(150)),
 	.scale_phys_hi		= FLOAT_TO_FIXPT(CELSIUS(480)),
 #endif
