@@ -56,23 +56,38 @@ hook_pre_archives()
 {
 	# Build the hex files.
 	for hw in legacy smd; do
-		for dev in 88 328p; do
-			for dbg in release debug; do
+		for dev in 88 88p 328p; do
+			local releases="release"
+			[ $dev = 328p ] && local releases="release debug"
+
+			for rel in $releases; do
 				local fwdir="$2/firmware"
-				local targetdir="$2/hex/board_$hw/atmega$dev/$dbg"
+				local targetdir="$2/hex/board_$hw/atmega$dev/$rel"
 
-				[ $dev = 88 ] && local CONF_KCONF=0
-				[ $dev != 88 ] && local CONF_KCONF=1
+				if [ $hw = legacy ]; then
+					local CONF_IDLETOGGLE=1
+				else
+					local CONF_IDLETOGGLE=0
+				fi
 
-				[ $dbg = debug ] && local CONF_DEBUG=1
-				[ $dbg != debug ] && local CONF_DEBUG=0
+				if [ $dev = 88 -o $dev = 88p ]; then
+					local CONF_KCONF=0
+				else
+					local CONF_KCONF=1
+				fi
+
+				if [ $rel = debug ]; then
+					local CONF_DEBUG=1
+				else
+					local CONF_DEBUG=0
+				fi
 
 				do_build "$fwdir" "$targetdir" \
 					HW=$hw DEV=m$dev C=1 \
 					CONF_PRESETS=1 \
 					CONF_BOOST=0 \
 					CONF_IDLE=1 \
-					CONF_IDLETOGGLE=1 \
+					CONF_IDLETOGGLE=$CONF_IDLETOGGLE \
 					CONF_DEBUG=$CONF_DEBUG \
 					CONF_KCONF=$CONF_KCONF
 			done
@@ -87,7 +102,7 @@ hook_pre_documentation()
 {
 	# Update the README
 	local makefile="$1/firmware/Makefile"
-	for arch in M88 M328P; do
+	for arch in M88 M88P M328P; do
 		local lfuse="$(grep -e "$arch"'_LFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local hfuse="$(grep -e "$arch"'_HFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
 		local efuse="$(grep -e "$arch"'_EFUSE[[:space:]]*:=' "$makefile" | head -n1 | cut -d'=' -f2 | tr -d '[[:space:]]')"
