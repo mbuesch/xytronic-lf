@@ -1,17 +1,17 @@
 # Target device.
-# May be one of: m88, m328p
-DEV			:= m88
+# May be one of: m88, m88p, m328p
+DEV			:= m88p
 
 # Target hardware.
 # May be one of: legacy, smd
-HW			:= legacy
+HW			:= smd
 
 
 streq			= $(and $(filter 1,$(words $2)),$(filter $1,$(firstword $2)))
 deveq			= $(call streq,$1,$(DEV))
 hweq			= $(call streq,$1,$(HW))
 
-ifeq ($(strip $(call deveq,m88)$(call deveq,m328p)),)
+ifeq ($(strip $(call deveq,m88)$(call deveq,m88p)$(call deveq,m328p)),)
 $(error "$$DEV:=$(DEV) is not supported")
 endif
 ifeq ($(strip $(call hweq,legacy)$(call hweq,smd)),)
@@ -64,17 +64,25 @@ BOOT_GEN_SRCS		:=
 BOOT_OFFSET		:=
 
 # Project fuse bits
-# 8 MHz, BOD 2.7 V
+# 8 MHz, BOD 2.7 V, WDT on
 M88_LFUSE		:= 0xE2
-M88_HFUSE		:= 0xDD
-M88_EFUSE		:= 0x01
+M88_HFUSE		:= 0xCD
+M88_EFUSE		:= 0xF9
+M88P_LFUSE		:= $(M88_LFUSE)
+M88P_HFUSE		:= $(M88_HFUSE)
+M88P_EFUSE		:= $(M88_EFUSE)
 M328P_LFUSE		:= 0xE2
-M328P_HFUSE		:= 0xD9
+M328P_HFUSE		:= 0xC9
 M328P_EFUSE		:= 0x05
 ifeq ($(DEV),m88)
 LFUSE			:= $(M88_LFUSE)
 HFUSE			:= $(M88_HFUSE)
 EFUSE			:= $(M88_EFUSE)
+endif
+ifeq ($(DEV),m88p)
+LFUSE			:= $(M88P_LFUSE)
+HFUSE			:= $(M88P_HFUSE)
+EFUSE			:= $(M88P_EFUSE)
 endif
 ifeq ($(DEV),m328p)
 LFUSE			:= $(M328P_LFUSE)
