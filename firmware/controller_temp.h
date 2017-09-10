@@ -8,10 +8,10 @@
 #define CELSIUS(celsius)		((float)(celsius))
 
 /* Temperature controller PID parameters */
-#define CONTRTEMP_PID_KP_NORMAL		5.0
-#define CONTRTEMP_PID_KI_NORMAL		0.2
-#define CONTRTEMP_PID_KD_NORMAL		0.5
-#define CONTRTEMP_PID_D_DECAY_NORMAL	1.2
+#define CONTRTEMP_PID_KP_NORMAL		1.5
+#define CONTRTEMP_PID_KI_NORMAL		0.3
+#define CONTRTEMP_PID_KD_NORMAL		0.0
+#define CONTRTEMP_PID_D_DECAY_NORMAL	2.0
 
 /* Temperature controller boost (1) PID parameters */
 #if CONF_BOOST
@@ -30,8 +30,8 @@
 #endif
 
 /* Temperature controller integral part limits. */
-#define CONTRTEMP_NEGLIM_I		CELSIUS(-150)
-#define CONTRTEMP_POSLIM_I		CELSIUS(150)
+#define CONTRTEMP_NEGLIM_I		CELSIUS(-30)
+#define CONTRTEMP_POSLIM_I		CELSIUS(80)
 /* Temperature controller final limits. */
 #define CONTRTEMP_NEGLIM		CELSIUS(0)
 #define CONTRTEMP_POSLIM		CELSIUS(480)
