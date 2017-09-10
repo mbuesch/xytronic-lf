@@ -9,13 +9,13 @@
 
 /* Current controller PID parameters */
 #define CONTRCURR_PID_KP		1.0
-#define CONTRCURR_PID_KI		0.8
+#define CONTRCURR_PID_KI		0.3
 #define CONTRCURR_PID_KD		0.0
 #define CONTRCURR_PID_D_DECAY		1.0
 
 /* Current controller integral part limits. */
-#define CONTRCURR_NEGLIM_I		AMPERE(-3)
-#define CONTRCURR_POSLIM_I		AMPERE(3)
+#define CONTRCURR_NEGLIM_I		AMPERE(-2.5)
+#define CONTRCURR_POSLIM_I		AMPERE(2.5)
 /* Current controller final limits. */
 #define CONTRCURR_NEGLIM		AMPERE(0)
 #define CONTRCURR_POSLIM		AMPERE(5)
