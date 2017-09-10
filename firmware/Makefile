@@ -20,7 +20,6 @@ endif
 
 
 # Build configuration
-CONF_CALIB		:= 0
 CONF_DEBUG		:= $(if $(call deveq,m328p),1,0)
 CONF_BOOST		:= 0
 CONF_IDLE		:= 1
@@ -37,7 +36,6 @@ NAME			:= xytronic-lf
 # Project source files
 SRCS			:= bitmap.c \
 			   buttons.c \
-			   $(if $(call streq,1,$(CONF_CALIB)),calib_current.c) \
 			   controller_current.c \
 			   controller_temp.c \
 			   $(if $(call streq,1,$(CONF_DEBUG)),debug_uart.c) \
@@ -103,7 +101,6 @@ BOOT_INSTRUMENT_FUNC	:=
 # Additional compiler flags
 CFLAGS			:= $(if $(call hweq,legacy),-DHW_LEGACY) \
 			   $(if $(call hweq,smd),-DHW_SMD) \
-			   -DCONF_CALIB=$(CONF_CALIB) \
 			   -DCONF_DEBUG=$(CONF_DEBUG) \
 			   -DCONF_BOOST=$(CONF_BOOST) \
 			   -DCONF_IDLE=$(CONF_IDLE) \

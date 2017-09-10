@@ -26,7 +26,6 @@
 #include "controller_temp.h"
 #include "controller_current.h"
 #include "debug_uart.h"
-#include "calib_current.h"
 #include "settings.h"
 #include "presets.h"
 
@@ -45,7 +44,6 @@ enum menu_state {
 	MENU_CHGPRESET,		/* Change temperature preset. */
 	MENU_IDLETEMP,		/* Idle temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
-	MENU_CALIB,		/* Current calibration. */
 	MENU_KP_PRE,		/* Temp KP config */
 	MENU_KP,		/* Temp KP config */
 	MENU_KI_PRE,		/* Temp KI config */
@@ -223,11 +221,6 @@ static void menu_update_display(void)
 				break;
 			menu_putstr(disp, "DBG");
 			break;
-		case MENU_CALIB:
-			if (!CONF_CALIB)
-				break;
-			menu_putstr(disp, "CAL");
-			break;
 		case MENU_KP_PRE:
 			if (!CONF_KCONF)
 				break;
@@ -287,8 +280,6 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 			return MENU_IDLETEMP;
 		if (CONF_DEBUG)
 			return MENU_DEBUG;
-		if (CONF_CALIB)
-			return MENU_CALIB;
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
@@ -298,18 +289,10 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 	case MENU_IDLETEMP:
 		if (CONF_DEBUG)
 			return MENU_DEBUG;
-		if (CONF_CALIB)
-			return MENU_CALIB;
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
 	case MENU_DEBUG:
-		if (CONF_CALIB)
-			return MENU_CALIB;
-		if (CONF_KCONF)
-			return MENU_KP_PRE;
-		return MENU_CURTEMP;
-	case MENU_CALIB:
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
@@ -376,7 +359,6 @@ static void menu_set_state(enum menu_state new_state)
 		contrtemp_set_enabled(true);
 		break;
 	case MENU_DEBUG:
-	case MENU_CALIB:
 		break;
 	}
 
@@ -539,20 +521,6 @@ static void menu_button_handler(enum button_id button,
 			}
 		}
 		break;
-	case MENU_CALIB:
-		if (!CONF_CALIB)
-			break;
-		if (bstate == BSTATE_POSEDGE) {
-			if (button != BUTTON_SET) {
-				calcurr_set_enabled(!calcurr_is_enabled());
-				menu_request_display_update();
-			}
-		}
-		if (bstate == BSTATE_NEGEDGE) {
-			if (button == BUTTON_SET)
-				calcurr_set_enabled(false);
-		}
-		break;
 	case MENU_KP_PRE:
 		break;
 	case MENU_KP:
@@ -602,7 +570,6 @@ void menu_work(void)
 	switch (menu.state) {
 	case MENU_CURTEMP:
 	case MENU_DEBUG:
-	case MENU_CALIB:
 	case MENU_KP:
 	case MENU_KI:
 	case MENU_KD:

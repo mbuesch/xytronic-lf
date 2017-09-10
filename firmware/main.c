@@ -33,7 +33,6 @@
 #include "buttons.h"
 #include "menu.h"
 #include "settings.h"
-#include "calib_current.h"
 #include "presets.h"
 
 #include <avr/io.h>
@@ -124,6 +123,5 @@ int main(void)
 		display_work();
 		buttons_work();
 		settings_work();
-		calcurr_work();
 	}
 }

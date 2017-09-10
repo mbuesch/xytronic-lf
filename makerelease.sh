@@ -69,7 +69,6 @@ hook_pre_archives()
 
 				do_build "$fwdir" "$targetdir" \
 					HW=$hw DEV=m$dev C=1 \
-					CONF_CALIB=0 \
 					CONF_PRESETS=1 \
 					CONF_BOOST=0 \
 					CONF_IDLE=1 \
