@@ -30,7 +30,6 @@ LIBS:contrib
 LIBS:valves
 LIBS:tl431
 LIBS:switches
-LIBS:lf1600-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -195,11 +194,11 @@ Wire Wire Line
 	3950 5200 3950 5450
 Connection ~ 3950 5200
 Wire Wire Line
-	3950 5950 3050 5950
+	3050 5950 3950 5950
 Wire Wire Line
 	3500 5950 3500 6100
 Wire Wire Line
-	3950 5750 3950 5950
+	3950 5950 3950 5750
 Connection ~ 3500 5950
 Wire Wire Line
 	2800 4800 5450 4800
@@ -250,7 +249,7 @@ Connection ~ 6100 4800
 Text Notes 7400 4600 0    157  ~ 0
 XXX
 Text Notes 7400 4750 0    39   ~ 0
-Fix:\nC12 replaced by: 100nF/63V film cap
+Fix:\nC12 should be replaced by: 100nF/63V film cap
 Wire Wire Line
 	4450 4050 4450 4250
 Wire Wire Line
@@ -259,7 +258,7 @@ Connection ~ 4450 4800
 Connection ~ 3550 4050
 Connection ~ 3050 4050
 Text Notes 4150 3950 0    39   ~ 0
-Fix:\nC12b was added due to\nremoval of the original C12
+Fix:\nC12b should be added due to\nremoval of the original C12
 $Comp
 L CP C8
 U 1 1 5793C4A9

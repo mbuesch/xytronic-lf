@@ -30,7 +30,6 @@ LIBS:contrib
 LIBS:valves
 LIBS:tl431
 LIBS:switches
-LIBS:lf1600-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -60,6 +59,8 @@ $Comp
 L LM6161 U2
 U 1 1 54956736
 P 6300 5200
+AR Path="/54956736" Ref="U2"  Part="1" 
+AR Path="/5495298F/54956736" Ref="U2"  Part="1" 
 F 0 "U2" H 6500 5500 60  0000 C CNN
 F 1 "OP07DP" H 6500 5400 60  0000 C CNN
 F 2 "" H 6300 5200 60  0000 C CNN
@@ -170,7 +171,7 @@ L R R17
 U 1 1 54963BC9
 P 5350 1700
 F 0 "R17" V 5430 1700 40  0000 C CNN
-F 1 "R" V 5357 1701 40  0000 C CNN
+F 1 "2.7 M" V 5357 1701 40  0000 C CNN
 F 2 "~" V 5280 1700 30  0000 C CNN
 F 3 "~" H 5350 1700 30  0000 C CNN
 	1    5350 1700
@@ -323,7 +324,7 @@ L R R14
 U 1 1 54965E3E
 P 5650 4700
 F 0 "R14" V 5730 4700 40  0000 C CNN
-F 1 "10 k" V 5657 4701 40  0000 C CNN
+F 1 "R" V 5657 4701 40  0000 C CNN
 F 2 "~" V 5580 4700 30  0000 C CNN
 F 3 "~" H 5650 4700 30  0000 C CNN
 	1    5650 4700
@@ -395,7 +396,7 @@ Wire Wire Line
 Text Notes 800  1550 0    60   ~ 0
 Sensor\nR = 53 Ohms @ 20 °C
 Text Notes 3300 5700 0    39   ~ 0
-Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R12 was removed (bridged).
+Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R12 should be removed (bridged).
 Wire Wire Line
 	3550 5200 3550 5400
 Wire Wire Line
@@ -442,10 +443,10 @@ Wire Wire Line
 Connection ~ 5650 5200
 Wire Wire Line
 	5800 4050 9100 4050
-Text Notes 5750 4450 0    39   ~ 0
-R14 is 20k in newer models
+Text Notes 5700 4500 0    39   ~ 0
+R14 = 10k (legacy through-hole board)\nR14 = 20k (SMD board)
 Text Notes 8750 5750 0    39   ~ 0
-D5 and D6 connection is not correctly performed in\nolder through-hole based (non-SMD) models.
+D5 and D6 connection is not correctly performed on\nlegacy through-hole based (non-SMD) board.
 $Comp
 L CP C17
 U 1 1 5794C14D

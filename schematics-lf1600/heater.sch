@@ -30,7 +30,6 @@ LIBS:contrib
 LIBS:valves
 LIBS:tl431
 LIBS:switches
-LIBS:lf1600-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -287,7 +286,7 @@ Heater element\nR = 3.5 Ohms @ 20 °C
 Wire Wire Line
 	7000 3850 7000 3100
 Text Notes 6800 5100 0    39   ~ 0
-Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R28 was removed (bridged).
+Fix:\nThe input to the ADC needs to be of low impedance\nto help charging the ADC capacitor quickly.\nSo R28 should be removed (bridged).
 Wire Wire Line
 	6750 5350 6750 5150
 Wire Wire Line
