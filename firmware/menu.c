@@ -171,13 +171,14 @@ static void menu_update_display(void)
 	show_heating = true;
 	disp[0] = '\0';
 
-	if (displayed_error) {
-		menu_putstr(disp, "Err ");
-		disp[3] = (char)('0' + displayed_error);
-		show_heating = false;
-	} else {
-		switch (menu.state) {
-		case MENU_CURTEMP:
+	switch (menu.state) {
+	case MENU_CURTEMP:
+		if (displayed_error) {
+			menu_putstr(disp, "Err ");
+			disp[3] = (char)('0' + displayed_error);
+			show_heating = false;
+		} else {
+
 			if (contrtemp_is_idle()) {
 				symbol = "L.";
 			} else {
@@ -198,66 +199,66 @@ static void menu_update_display(void)
 				}
 			}
 			menu_put_temp(disp, contrtemp_get_feedback(), symbol);
-			break;
-		case MENU_SELPRESET:
-		case MENU_CHGPRESET:
-			if (CONF_PRESETS) {
-				active_index = presets_get_active_index();
-				_symbol[0] = (char)('1' + active_index);
-				_symbol[1] = '.';
-				_symbol[2] = '\0';
-				symbol = _symbol;
-			} else
-				symbol = " ";
-			menu_put_temp(disp, presets_get_active_value(), symbol);
-			break;
-		case MENU_IDLETEMP:
-			if (!CONF_IDLE)
-				break;
-			menu_put_temp(disp, get_settings()->temp_idle_setpoint, "L");
-			break;
-		case MENU_DEBUG:
-			if (!CONF_DEBUG)
-				break;
-			menu_putstr(disp, "DBG");
-			break;
-		case MENU_KP_PRE:
-			if (!CONF_KCONF)
-				break;
-			menu_putstr(disp, " P");
-			show_heating = false;
-			break;
-		case MENU_KP:
-			if (!CONF_KCONF)
-				break;
-			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kp, 2);
-			show_heating = false;
-			break;
-		case MENU_KI_PRE:
-			if (!CONF_KCONF)
-				break;
-			menu_putstr(disp, " I");
-			show_heating = false;
-			break;
-		case MENU_KI:
-			if (!CONF_KCONF)
-				break;
-			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].ki, 3);
-			show_heating = false;
-			break;
-		case MENU_KD_PRE:
-			if (!CONF_KCONF)
-				break;
-			menu_putstr(disp, " D");
-			show_heating = false;
-			break;
-		case MENU_KD:
-			if (!CONF_KCONF)
-				break;
-			menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kd, 2);
-			show_heating = false;
-			break;
 		}
+		break;
+	case MENU_SELPRESET:
+	case MENU_CHGPRESET:
+		if (CONF_PRESETS) {
+			active_index = presets_get_active_index();
+			_symbol[0] = (char)('1' + active_index);
+			_symbol[1] = '.';
+			_symbol[2] = '\0';
+			symbol = _symbol;
+		} else
+			symbol = " ";
+		menu_put_temp(disp, presets_get_active_value(), symbol);
+		break;
+	case MENU_IDLETEMP:
+		if (!CONF_IDLE)
+			break;
+		menu_put_temp(disp, get_settings()->temp_idle_setpoint, "L");
+		break;
+	case MENU_DEBUG:
+		if (!CONF_DEBUG)
+			break;
+		menu_putstr(disp, "DBG");
+		break;
+	case MENU_KP_PRE:
+		if (!CONF_KCONF)
+			break;
+		menu_putstr(disp, " P");
+		show_heating = false;
+		break;
+	case MENU_KP:
+		if (!CONF_KCONF)
+			break;
+		menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kp, 2);
+		show_heating = false;
+		break;
+	case MENU_KI_PRE:
+		if (!CONF_KCONF)
+			break;
+		menu_putstr(disp, " I");
+		show_heating = false;
+		break;
+	case MENU_KI:
+		if (!CONF_KCONF)
+			break;
+		menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].ki, 3);
+		show_heating = false;
+		break;
+	case MENU_KD_PRE:
+		if (!CONF_KCONF)
+			break;
+		menu_putstr(disp, " D");
+		show_heating = false;
+		break;
+	case MENU_KD:
+		if (!CONF_KCONF)
+			break;
+		menu_put_fixpt(disp, get_settings()->temp_k[boost_mode].kd, 2);
+		show_heating = false;
+		break;
 	}
 
 	/* Show the 'is heating' dot. */
@@ -463,11 +464,6 @@ static void stop_ramping(void)
 static void menu_button_handler(enum button_id button,
 				enum button_state bstate)
 {
-	if (menu.displayed_error) {
-		/* We have an error. Ignore all buttons. */
-		return;
-	}
-
 	switch (menu.state) {
 	case MENU_CURTEMP:
 		start_ramping_button(button, bstate, (CONF_PRESETS),
