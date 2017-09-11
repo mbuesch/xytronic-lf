@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Temperature measurement routines
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,6 @@ static const struct measure_config __flash meastemp_config = {
 	.scale_phys_hi		= FLOAT_TO_FIXPT(CELSIUS(480)),
 #endif
 #ifdef HW_SMD
-#warning "FIXME: The temperature scaling is not correct for the SMD hardware."
 	.scale_raw_lo		= 210,
 	.scale_raw_hi		= 411,
 	.scale_phys_lo		= FLOAT_TO_FIXPT(CELSIUS(150)),
