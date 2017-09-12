@@ -78,11 +78,6 @@ int main(void)
 	TIMSK0 = 0u;
 	TIMSK1 = 0u;
 
-	/* Wait a bit for the capacitors to charge
-	 * and the reference voltage to stabilize.
-	 */
-	_delay_ms(300);
-
 	/* Initialize basic system functions. */
 	timer_init();
 	buttons_init();
