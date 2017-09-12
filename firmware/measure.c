@@ -90,13 +90,6 @@ static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref,
 
 	mb();
 
-	/* Mask the multiplexer bits. */
-	mux &= (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0);
-	/* Mask the prescaler bits. */
-	ps &= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-	/* Mask the reference bits. */
-	ref &= (1 << REFS1) | (1 << REFS0);
-
 	/* Free-running mode selection. */
 	if (freerunning)
 		trig = 1 << ADATE;
