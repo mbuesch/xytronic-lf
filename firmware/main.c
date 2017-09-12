@@ -74,6 +74,10 @@ void early_init(void)
 int main(void) _mainfunc;
 int main(void)
 {
+	/* Disable all interrupt sources. */
+	TIMSK0 = 0u;
+	TIMSK1 = 0u;
+
 	/* Wait a bit for the capacitors to charge
 	 * and the reference voltage to stabilize.
 	 */
