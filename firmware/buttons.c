@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Button routines
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,6 @@
 struct buttons_context {
 	uint8_t prev_state;
 	struct timer debounce_timer;
-	button_handler_t handlers[NR_BUTTONS];
 };
 
 static struct buttons_context buttons;
@@ -72,12 +71,6 @@ static uint8_t buttons_get_raw(void)
 	return state;
 }
 
-void buttons_register_handler(enum button_id button,
-			      button_handler_t handler)
-{
-	buttons.handlers[button] = handler;
-}
-
 uint8_t button_is_pressed(enum button_id button)
 {
 	uint8_t state, mask;
@@ -88,11 +81,22 @@ uint8_t button_is_pressed(enum button_id button)
 	return state & mask;
 }
 
+void contrtemp_button_handler(enum button_id button,
+			      enum button_state bstate);
+void menu_button_handler(enum button_id button,
+			 enum button_state bstate);
+
+static void call_button_handlers(enum button_id id, enum button_state bstate)
+{
+	contrtemp_button_handler(id, bstate);
+	menu_button_handler(id, bstate);
+}
+
 void buttons_work(void)
 {
 	uint8_t state, pos_edge, neg_edge, mask;
 	int8_t i;
-	button_handler_t handler;
+	enum button_id id;
 
 	if (!timer_expired(&buttons.debounce_timer))
 		return;
@@ -104,17 +108,16 @@ void buttons_work(void)
 	buttons.prev_state = state;
 
 	for (i = 0; i < NR_BUTTONS; i++) {
+		id = (enum button_id)i;
 		mask = button_id_to_port_mask[i];
-		handler = buttons.handlers[i];
 
-		if (handler) {
-			if (pos_edge & mask)
-				handler((enum button_id)i, BSTATE_POSEDGE);
-			else if (neg_edge & mask)
-				handler((enum button_id)i, BSTATE_NEGEDGE);
-			if (state & mask)
-				handler((enum button_id)i, BSTATE_PRESSED);
-		}
+		if (pos_edge & mask)
+			call_button_handlers(id, BSTATE_POSEDGE);
+		else if (neg_edge & mask)
+			call_button_handlers(id, BSTATE_NEGEDGE);
+
+		if (state & mask)
+			call_button_handlers(id, BSTATE_PRESSED);
 	}
 }
 

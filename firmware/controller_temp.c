@@ -296,6 +296,23 @@ static void contrtemp_idle_button_handler(enum button_id button,
 }
 #endif
 
+void contrtemp_button_handler(enum button_id button,
+			      enum button_state bstate)
+{
+	if (button != BUTTON_IRON)
+		return;
+
+#if CONF_BOOST
+	contrtemp_boost_button_handler(button, bstate);
+#elif CONF_IDLE
+	contrtemp_idle_button_handler(button, bstate);
+#endif
+
+#if (CONF_BOOST) && (CONF_IDLE)
+# error "Cannot simultaneously enable CONF_BOOST and CONF_IDLE"
+#endif
+}
+
 void contrtemp_init(void)
 {
 	struct pid_k_set *k_set;
@@ -316,18 +333,4 @@ void contrtemp_init(void)
 	/* Enable the controller. */
 	do_set_enabled(true);
 	do_set_emerg(false);
-
-	/* Register handler for the iron button. */
-#if CONF_BOOST
-	buttons_register_handler(BUTTON_IRON,
-				 contrtemp_boost_button_handler);
-#endif
-#if CONF_IDLE
-	buttons_register_handler(BUTTON_IRON,
-				 contrtemp_idle_button_handler);
-#endif
-
-#if (CONF_BOOST) && (CONF_IDLE)
-# error "Cannot simultaneously enable CONF_BOOST and CONF_IDLE"
-#endif
 }

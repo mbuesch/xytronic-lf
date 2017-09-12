@@ -525,9 +525,12 @@ static void stop_ramping(void)
 }
 
 /* Handler for SET, MINUS and PLUS buttons */
-static void menu_button_handler(enum button_id button,
-				enum button_state bstate)
+void menu_button_handler(enum button_id button,
+			 enum button_state bstate)
 {
+	if (button == BUTTON_IRON)
+		return;
+
 	switch (menu.state) {
 	case MENU_CURTEMP:
 		start_ramping_button(button, bstate, (CONF_PRESETS),
@@ -711,10 +714,6 @@ void menu_work(void)
 
 void menu_init(void)
 {
-	buttons_register_handler(BUTTON_SET, menu_button_handler);
-	buttons_register_handler(BUTTON_PLUS, menu_button_handler);
-	buttons_register_handler(BUTTON_MINUS, menu_button_handler);
-
 	if (CONF_DEBUG) {
 		if (button_is_pressed(BUTTON_SET)) {
 			debug_enable(true);
