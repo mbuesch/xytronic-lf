@@ -109,6 +109,11 @@ static const uint8_t __flash char_to_segment_map[] = {
 			  (1 << SSEG_G),
 };
 
+static const uint8_t __flash segment_mask_minus =
+			  (0 << SSEG_A) | (0 << SSEG_B) | (0 << SSEG_C) |
+			  (0 << SSEG_D) | (0 << SSEG_E) | (0 << SSEG_F) |
+			  (1 << SSEG_G);
+
 static void mux_write(const struct sseg_digit_data *ddata,
 		      bool enable)
 {
@@ -163,6 +168,8 @@ void sseg_digit_set(struct sseg_digit_data *ddata,
 	else if (digit >= 'A' &&
 		 digit <= (char)('A' + ARRAY_SIZE(char_to_segment_map) - 1))
 		segment_mask = char_to_segment_map[digit - 'A'];
+	else if (digit == '-')
+		segment_mask = segment_mask_minus;
 	else
 		segment_mask = 0;
 	if (dp)
