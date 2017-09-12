@@ -26,8 +26,13 @@
 #include "controller_temp.h"
 #include "controller_current.h"
 #include "debug_uart.h"
+#include "menu.h"
+#include "settings.h"
 
 #include <string.h>
+
+
+#define MEASTEMP_CHAN	MEAS_CHAN_1
 
 
 struct meastemp_context {
@@ -37,6 +42,21 @@ struct meastemp_context {
 
 static struct meastemp_context meastemp;
 
+
+void meastemp_adjust_set(fixpt_t adjustment)
+{
+#if CONF_ADJ
+	measure_adjust_set(MEASTEMP_CHAN, adjustment);
+	get_settings()->temp_adj = adjustment;
+	store_settings();
+	menu_request_display_update();
+#endif
+}
+
+fixpt_t meastemp_adjust_get(void)
+{
+	return measure_adjust_get(MEASTEMP_CHAN);
+}
 
 static void meastemp_result_callback(fixpt_t measured_phys_value,
 				     enum measure_plausibility plaus)
@@ -92,5 +112,8 @@ static const struct measure_config __flash meastemp_config = {
 
 void meastemp_init(void)
 {
-	measure_register_channel(MEAS_CHAN_1, &meastemp_config);
+	measure_register_channel(MEASTEMP_CHAN, &meastemp_config);
+#if CONF_ADJ
+	measure_adjust_set(MEASTEMP_CHAN, get_settings()->temp_adj);
+#endif
 }

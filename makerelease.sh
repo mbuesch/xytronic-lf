@@ -89,6 +89,7 @@ hook_pre_archives()
 					CONF_IDLE=1 \
 					CONF_IDLETOGGLE=$CONF_IDLETOGGLE \
 					CONF_DEBUG=$CONF_DEBUG \
+					CONF_ADJ=1 \
 					CONF_KCONF=$CONF_KCONF
 			done
 		done

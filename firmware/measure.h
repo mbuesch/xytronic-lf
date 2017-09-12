@@ -88,6 +88,10 @@ struct measure_config {
 };
 
 
+void measure_adjust_set(enum measure_chan chan,
+			fixpt_t adjustment);
+fixpt_t measure_adjust_get(enum measure_chan chan);
+
 void measure_register_channel(enum measure_chan chan,
 			      const struct measure_config __flash *config);
 

@@ -12,7 +12,8 @@ struct settings {
 	fixpt_t temp_idle_setpoint;
 	fixpt_t temp_setpoint[3];
 	uint8_t temp_setpoint_active;
-	uint8_t reserved[14];
+	fixpt_t temp_adj;
+	uint8_t reserved[11];
 	uint8_t serial;
 } _packed;
 

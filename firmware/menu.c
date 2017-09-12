@@ -25,6 +25,7 @@
 #include "timer.h"
 #include "controller_temp.h"
 #include "controller_current.h"
+#include "measure_temp.h"
 #include "debug_uart.h"
 #include "settings.h"
 #include "presets.h"
@@ -36,6 +37,7 @@
 #define MENU_CHGPRESET_TIMEOUT	3000
 #define MENU_IDLETEMP_TIMEOUT	3000
 #define MENU_KCONF_PRE_TIMEOUT	1500
+#define MENU_ADJ_PRE_TIMEOUT	1500
 
 
 enum menu_state {
@@ -44,6 +46,8 @@ enum menu_state {
 	MENU_CHGPRESET,		/* Change temperature preset. */
 	MENU_IDLETEMP,		/* Idle temperature setpoint. */
 	MENU_DEBUG,		/* Debug enable. */
+	MENU_ADJ_PRE,		/* Temp adjust */
+	MENU_ADJ,		/* Temp adjust */
 	MENU_KP_PRE,		/* Temp KP config */
 	MENU_KP,		/* Temp KP config */
 	MENU_KI_PRE,		/* Temp KI config */
@@ -85,30 +89,36 @@ struct menu_context {
 static struct menu_context menu;
 
 
-static void int_to_ascii_align_right(char *buf, uint8_t align_to_digit,
+static void int_to_ascii_align_right(char *buf,
+				     uint8_t align_to_digit,
 				     int16_t val,
 				     int16_t min_val, int16_t max_val,
 				     char fill_char)
 {
-	uint8_t i;
+	int8_t i, d;
+	bool neg;
 
 	val = clamp(val, min_val, max_val);
+	neg = val < 0;
+	if (neg)
+		val = -val;
 
-	/* Fill all digits with NUL. Needed for shifting. */
-	memset(buf, '\0', align_to_digit + 1u);
+	i = (int8_t)align_to_digit;
+	buf[i + 1] = '\0';
+	do {
+		d = (int8_t)(val % 10);
+		val /= 10;
 
-	/* Format the value. */
-	itoa(val, buf, 10);
+		buf[i--] = (char)('0' + d);
+		if (i < 0)
+			break;
+	} while (val);
 
-	/* Right-align the number, if requested. */
-	if (align_to_digit > 0) {
-		/* Right-shift until the rightmost digit is non-NUL. */
-		while (buf[align_to_digit] == '\0') {
-			for (i = align_to_digit; i > 0; i--)
-				buf[i] = buf[i - 1];
-			buf[0] = fill_char;
-		}
-	}
+	if (neg && i >= 0)
+		buf[i--] = '-';
+
+	while (i >= 0)
+		buf[i--] = fill_char;
 }
 
 #define menu_putstr(dest, str)	strcpy((dest), (str))
@@ -118,10 +128,11 @@ static void menu_put_temp(char *disp, fixpt_t temp, const char *symbol)
 	int16_t temp_int;
 
 	temp_int = (int16_t)fixpt_to_int(temp);
-	int_to_ascii_align_right(disp, 2,
+	int_to_ascii_align_right(disp,
+				 2,
 				 temp_int,
-				 (int16_t)CONTRTEMP_NEGLIM,
-				 (int16_t)CONTRTEMP_POSLIM,
+				 -99,
+				 999,
 				 ' ');
 	menu_putstr(disp + 3, symbol);
 }
@@ -223,6 +234,18 @@ static void menu_update_display(void)
 			break;
 		menu_putstr(disp, "DBG");
 		break;
+	case MENU_ADJ_PRE:
+		if (!CONF_ADJ)
+			break;
+		menu_putstr(disp, "ADJC.");
+		show_heating = false;
+		break;
+	case MENU_ADJ:
+		if (!CONF_ADJ)
+			break;
+		menu_put_temp(disp, meastemp_adjust_get(), "C.");
+		show_heating = false;
+		break;
 	case MENU_KP_PRE:
 		if (!CONF_KCONF)
 			break;
@@ -281,6 +304,8 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 			return MENU_IDLETEMP;
 		if (CONF_DEBUG)
 			return MENU_DEBUG;
+		if (CONF_ADJ)
+			return MENU_ADJ_PRE;
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
@@ -290,10 +315,24 @@ static enum menu_state next_menu_state(enum menu_state cur_state)
 	case MENU_IDLETEMP:
 		if (CONF_DEBUG)
 			return MENU_DEBUG;
+		if (CONF_ADJ)
+			return MENU_ADJ_PRE;
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
 	case MENU_DEBUG:
+		if (CONF_ADJ)
+			return MENU_ADJ_PRE;
+		if (CONF_KCONF)
+			return MENU_KP_PRE;
+		return MENU_CURTEMP;
+	case MENU_ADJ_PRE:
+		if (CONF_ADJ)
+			return MENU_ADJ;
+		if (CONF_KCONF)
+			return MENU_KP_PRE;
+		return MENU_CURTEMP;
+	case MENU_ADJ:
 		if (CONF_KCONF)
 			return MENU_KP_PRE;
 		return MENU_CURTEMP;
@@ -342,6 +381,16 @@ static void menu_set_state(enum menu_state new_state)
 	case MENU_IDLETEMP:
 		timer_arm(&menu.timeout, MENU_IDLETEMP_TIMEOUT);
 		break;
+	case MENU_ADJ_PRE:
+		if (!CONF_ADJ)
+			break;
+		timer_arm(&menu.timeout, MENU_ADJ_PRE_TIMEOUT);
+		/* fall through... */
+	case MENU_ADJ:
+		if (!CONF_ADJ)
+			break;
+		contrtemp_set_enabled(false);
+		break;
 	case MENU_KP_PRE:
 	case MENU_KI_PRE:
 	case MENU_KD_PRE:
@@ -371,13 +420,13 @@ static void menu_set_next_state(void)
 	menu_set_state(next_menu_state(menu.state));
 }
 
-static fixpt_t do_ramp_temp(fixpt_t temp, bool up)
+static fixpt_t do_ramp_temp(fixpt_t temp, bool up,
+			    fixpt_t min_val, fixpt_t max_val)
 {
 	return fixpt_add_limited(temp,
-				 (up ? float_to_fixpt(1.0) :
-				       float_to_fixpt(-1.0)),
-				 float_to_fixpt(CONTRTEMP_NEGLIM),
-				 float_to_fixpt(CONTRTEMP_POSLIM));
+				 (up ? float_to_fixpt(CELSIUS(1.0)) :
+				       float_to_fixpt(CELSIUS(-1.0))),
+				 min_val, max_val);
 }
 
 static void settemp_ramp_handler(bool up)
@@ -385,7 +434,9 @@ static void settemp_ramp_handler(bool up)
 	fixpt_t setpoint;
 
 	setpoint = presets_get_active_value();
-	setpoint = do_ramp_temp(setpoint, up);
+	setpoint = do_ramp_temp(setpoint, up,
+				float_to_fixpt(CONTRTEMP_NEGLIM),
+				float_to_fixpt(CONTRTEMP_POSLIM));
 	presets_set_active_value(setpoint);
 
 	menu_set_state(MENU_CHGPRESET);
@@ -396,16 +447,29 @@ static void idletemp_ramp_handler(bool up)
 	fixpt_t setpoint;
 
 	setpoint = get_settings()->temp_idle_setpoint;
-	setpoint = do_ramp_temp(setpoint, up);
+	setpoint = do_ramp_temp(setpoint, up,
+				float_to_fixpt(CONTRTEMP_NEGLIM),
+				float_to_fixpt(CONTRTEMP_POSLIM));
 	contrtemp_set_idle_setpoint(setpoint);
 }
 
-static void do_ramp_k(fixpt_t *k, fixpt_t inc, fixpt_t max, bool up)
+static void do_ramp_k(fixpt_t *k, fixpt_t inc, fixpt_t max_val, bool up)
 {
 	*k = fixpt_add_limited(*k, (up ? inc : fixpt_neg(inc)),
-			       float_to_fixpt(0.0), max);
+			       float_to_fixpt(0.0), max_val);
 	store_settings();
 	contrtemp_update_pid_config();
+}
+
+static void adj_ramp_handler(bool up)
+{
+	fixpt_t temp_adj;
+
+	temp_adj = meastemp_adjust_get();
+	temp_adj = do_ramp_temp(temp_adj, up,
+				float_to_fixpt(CELSIUS(-99)),
+				float_to_fixpt(CELSIUS(99)));
+	meastemp_adjust_set(temp_adj);
 }
 
 static void kconf_kp_ramp_handler(bool up)
@@ -517,6 +581,14 @@ static void menu_button_handler(enum button_id button,
 			}
 		}
 		break;
+	case MENU_ADJ_PRE:
+		break;
+	case MENU_ADJ:
+		if (!CONF_ADJ)
+			break;
+		start_ramping_button(button, bstate, false,
+				     adj_ramp_handler);
+		break;
 	case MENU_KP_PRE:
 		break;
 	case MENU_KP:
@@ -566,10 +638,12 @@ void menu_work(void)
 	switch (menu.state) {
 	case MENU_CURTEMP:
 	case MENU_DEBUG:
+	case MENU_ADJ:
 	case MENU_KP:
 	case MENU_KI:
 	case MENU_KD:
 		break;
+	case MENU_ADJ_PRE:
 	case MENU_KP_PRE:
 	case MENU_KI_PRE:
 	case MENU_KD_PRE:
@@ -595,10 +669,9 @@ void menu_work(void)
 		error |= 2;
 	if (error != menu.displayed_error) {
 		menu.displayed_error = error;
+		stop_ramping();
 		menu.display_update_requested = true;
 	}
-	if (error)
-		stop_ramping();
 
 	/* Update heating condition. */
 	heating = contrtemp_is_heating_up();

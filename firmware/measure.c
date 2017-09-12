@@ -47,6 +47,10 @@ struct meas_chan_context {
 
 	int16_t old_report_value;
 
+#if CONF_ADJ
+	fixpt_t adjustment;
+#endif
+
 	bool plaus_timeout;
 	bool plaus_timeout_timer_running;
 	struct timer plaus_timeout_timer;
@@ -158,7 +162,6 @@ static void measure_handle_result(void)
 			   (int16_t)raw_adc);
 
 	/* Filter the raw adc value, if we have a filter. */
-	//TODO we should filter the phys value instead of the raw value, so that we only need a fixpt implementation of the filter.
 	if (config->filter_callback)
 		raw_adc = config->filter_callback(raw_adc);
 
@@ -168,6 +171,11 @@ static void measure_handle_result(void)
 		     (int16_t)config->scale_raw_hi,
 		     config->scale_phys_lo,
 		     config->scale_phys_hi);
+
+	/* Apply the physical value adjustment. */
+#if CONF_ADJ
+	phys = fixpt_sub(phys, active_chan->adjustment);
+#endif
 
 	/* Plausibility check. */
 	is_plausible = true;
@@ -244,6 +252,10 @@ void measure_register_channel(enum measure_chan chan,
 	/* Register the channel. */
 	meas.channels[chan].config = config;
 
+#if CONF_ADJ
+	meas.channels[chan].adjustment = int_to_fixpt(0);
+#endif
+
 	/* Disable digital input on the pin. */
 	mux = config->mux;
 	if (mux == MEAS_MUX_ADC0 ||
@@ -283,6 +295,23 @@ void measure_work(void)
 		measure_handle_result();
 		adc_trigger_next_chan();
 	}
+}
+
+void measure_adjust_set(enum measure_chan chan,
+			fixpt_t adjustment)
+{
+#if CONF_ADJ
+	meas.channels[chan].adjustment = adjustment;
+#endif
+}
+
+fixpt_t measure_adjust_get(enum measure_chan chan)
+{
+#if CONF_ADJ
+	return meas.channels[chan].adjustment;
+#else
+	return int_to_fixpt(0);
+#endif
 }
 
 void measure_init(void)
