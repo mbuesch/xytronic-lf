@@ -50,7 +50,7 @@ void meascurr_filter_reset(void)
 	lp_filter_u16_reset(&meascurr.filter);
 }
 
-static uint16_t meascurr_filter_callback(uint16_t raw_adc)
+uint16_t meascurr_filter_handler(uint16_t raw_adc)
 {
 	uint16_t filtered_adc;
 
@@ -70,8 +70,8 @@ static uint16_t meascurr_filter_callback(uint16_t raw_adc)
 	return filtered_adc;
 }
 
-static void meascurr_result_callback(fixpt_t measured_phys_value,
-				     enum measure_plausibility plaus)
+void meascurr_result_handler(fixpt_t measured_phys_value,
+			     enum measure_plausibility plaus)
 {
 	uint8_t emergency_flags;
 
@@ -95,9 +95,10 @@ static void meascurr_result_callback(fixpt_t measured_phys_value,
 	meascurr.initialized = true;
 }
 
-static const struct measure_config __flash meascurr_config = {
+const struct measure_config __flash meascurr_config = {
 	.name			= "mc",
 	.mux			= MEAS_MUX_ADC2,
+	.did			= MEAS_DID_ADC2,
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
 	.averaging_timeout_ms	= 5,
@@ -108,12 +109,9 @@ static const struct measure_config __flash meascurr_config = {
 	.plaus_neglim		= FLOAT_TO_FIXPT(CONTRCURR_NEGLIM),
 	.plaus_poslim		= FLOAT_TO_FIXPT(CONTRCURR_POSLIM),
 	.plaus_timeout_ms	= 3000,
-	.filter_callback	= meascurr_filter_callback,
-	.result_callback	= meascurr_result_callback,
 };
 
 void meascurr_init(void)
 {
 	meascurr.initialized = false;
-	measure_register_channel(MEAS_CHAN_0, &meascurr_config);
 }

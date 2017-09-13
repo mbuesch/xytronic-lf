@@ -32,9 +32,6 @@
 #include <string.h>
 
 
-#define MEASTEMP_CHAN	MEAS_CHAN_1
-
-
 struct meastemp_context {
 	fixpt_t prev_feedback;
 };
@@ -46,7 +43,7 @@ static struct meastemp_context meastemp;
 void meastemp_adjust_set(fixpt_t adjustment)
 {
 #if CONF_ADJ
-	measure_adjust_set(MEASTEMP_CHAN, adjustment);
+	measure_adjust_set(MEAS_CHAN_TEMP, adjustment);
 	get_settings()->temp_adj = adjustment;
 	store_settings();
 	menu_request_display_update();
@@ -55,11 +52,11 @@ void meastemp_adjust_set(fixpt_t adjustment)
 
 fixpt_t meastemp_adjust_get(void)
 {
-	return measure_adjust_get(MEASTEMP_CHAN);
+	return measure_adjust_get(MEAS_CHAN_TEMP);
 }
 
-static void meastemp_result_callback(fixpt_t measured_phys_value,
-				     enum measure_plausibility plaus)
+void meastemp_result_handler(fixpt_t measured_phys_value,
+			     enum measure_plausibility plaus)
 {
 	/* Set/reset emergency status. */
 	if (plaus == MEAS_PLAUSIBLE)
@@ -80,10 +77,11 @@ static void meastemp_result_callback(fixpt_t measured_phys_value,
 	}
 }
 
-static const struct measure_config __flash meastemp_config = {
+const struct measure_config __flash meastemp_config = {
 	.name			= "mt",
 
 	.mux			= MEAS_MUX_ADC1,
+	.did			= MEAS_DID_ADC1,
 	.ps			= MEAS_PS_64,
 	.ref			= MEAS_REF_AREF,
 
@@ -105,15 +103,11 @@ static const struct measure_config __flash meastemp_config = {
 	.plaus_neglim		= FLOAT_TO_FIXPT(CELSIUS(-20)),
 	.plaus_poslim		= FLOAT_TO_FIXPT(CELSIUS(500)),
 	.plaus_timeout_ms	= 3000,
-
-	.filter_callback	= NULL,
-	.result_callback	= meastemp_result_callback,
 };
 
 void meastemp_init(void)
 {
-	measure_register_channel(MEASTEMP_CHAN, &meastemp_config);
 #if CONF_ADJ
-	measure_adjust_set(MEASTEMP_CHAN, get_settings()->temp_adj);
+	measure_adjust_set(MEAS_CHAN_TEMP, get_settings()->temp_adj);
 #endif
 }

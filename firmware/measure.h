@@ -18,6 +18,15 @@
 #define MEAS_MUX_BG		((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0))
 #define MEAS_MUX_GND		((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0))
 
+/* Digital-input-disable selections */
+#define MEAS_DID_NONE		0u
+#define MEAS_DID_ADC0		(1u << ADC0D)
+#define MEAS_DID_ADC1		(1u << ADC1D)
+#define MEAS_DID_ADC2		(1u << ADC2D)
+#define MEAS_DID_ADC3		(1u << ADC3D)
+#define MEAS_DID_ADC4		(1u << ADC4D)
+#define MEAS_DID_ADC5		(1u << ADC5D)
+
 /* Prescaler selections */
 #define MEAS_PS_2		((0 << ADPS2) | (0 << ADPS1) | (1 << ADPS0))
 #define MEAS_PS_4		((0 << ADPS2) | (1 << ADPS1) | (0 << ADPS0))
@@ -36,11 +45,10 @@
 #define MEASURE_MAX_RESULT	0x3FFu
 
 enum measure_chan {
-	MEAS_CHAN_0,
-	MEAS_CHAN_1,
-
-	NR_MEAS_CHANS
+	MEAS_CHAN_CURRENT,
+	MEAS_CHAN_TEMP,
 };
+#define NR_MEAS_CHANS	2
 
 enum measure_plausibility {
 	MEAS_PLAUSIBLE,
@@ -58,6 +66,8 @@ struct measure_config {
 
 	/* The ADC multiplexer setting. One of MEAS_MUX_... */
 	uint8_t mux;
+	/* The digital-input-disable setting. One of MEAS_DID_... */
+	uint8_t did;
 	/* The ADC prescaler setting. One of MEAS_PS_... */
 	uint8_t ps;
 	/* The ADC reference setting. One of MEAS_REF_... */
@@ -80,20 +90,12 @@ struct measure_config {
 	fixpt_t plaus_neglim;
 	fixpt_t plaus_poslim;
 	uint16_t plaus_timeout_ms;
-
-	/* Result callback function. */
-	measure_result_cb_t result_callback;
-	/* Filter callback function. */
-	measure_filter_cb_t filter_callback;
 };
 
 
 void measure_adjust_set(enum measure_chan chan,
 			fixpt_t adjustment);
 fixpt_t measure_adjust_get(enum measure_chan chan);
-
-void measure_register_channel(enum measure_chan chan,
-			      const struct measure_config __flash *config);
 
 void measure_start(void);
 void measure_work(void);

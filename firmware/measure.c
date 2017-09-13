@@ -42,6 +42,10 @@
 #define TS_T1CAP		((1 << ADTS2) | (1 << ADTS1) | (1 << ADTS0))
 
 
+extern const struct measure_config __flash meastemp_config;
+extern const struct measure_config __flash meascurr_config;
+
+
 struct meas_chan_context {
 	const struct measure_config __flash *config;
 
@@ -67,8 +71,55 @@ struct meas_context {
 	bool result_available;
 };
 
-static struct meas_context meas;
+static struct meas_context meas = {
+	.channels[MEAS_CHAN_CURRENT] = {
+		.config		= &meascurr_config,
+#if CONF_ADJ
+		.adjustment	= FLOAT_TO_FIXPT(0),
+#endif
+	},
+	.channels[MEAS_CHAN_TEMP] = {
+		.config		= &meastemp_config,
+#if CONF_ADJ
+		.adjustment	= FLOAT_TO_FIXPT(0),
+#endif
+	},
+};
 
+
+uint16_t meascurr_filter_handler(uint16_t raw_adc);
+
+static uint16_t measure_user_filter_handler(enum measure_chan chan_id,
+					    uint16_t raw_adc)
+{
+	switch (chan_id) {
+	case MEAS_CHAN_TEMP:
+	default:
+		return raw_adc;
+	case MEAS_CHAN_CURRENT:
+		return meascurr_filter_handler(raw_adc);
+	}
+}
+
+void meastemp_result_handler(fixpt_t measured_phys_value,
+			     enum measure_plausibility plaus);
+void meascurr_result_handler(fixpt_t measured_phys_value,
+			     enum measure_plausibility plaus);
+
+static void measure_user_result_handler(enum measure_chan chan_id,
+					fixpt_t phys,
+					enum measure_plausibility plaus)
+{
+	switch (chan_id) {
+	case MEAS_CHAN_TEMP:
+		meastemp_result_handler(phys, plaus);
+		break;
+	case MEAS_CHAN_CURRENT:
+	default:
+		meascurr_result_handler(phys, plaus);
+		break;
+	}
+}
 
 static void adc_disable(void)
 {
@@ -83,12 +134,10 @@ static void adc_busywait(void)
 	do { } while (ADCSRA & (1 << ADSC));
 }
 
-static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref,
+static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref, uint8_t did,
 			bool irq, bool freerunning)
 {
 	uint8_t trig, ie;
-
-	mb();
 
 	/* Free-running mode selection. */
 	if (freerunning)
@@ -102,61 +151,59 @@ static void adc_trigger(uint8_t mux, uint8_t ps, uint8_t ref,
 	else
 		ie = 0 << ADIE;
 
+	mb();
+
+	/* Disable the digital input */
+	DIDR0 |= did;
+
 	/* Set multiplexer and start conversion. */
 	ADMUX = ref | (0 << ADLAR) | mux;
 	ADCSRB = (0 << ACME) | TS_FREERUN;
 	ADCSRA = (1 << ADEN) | (1 << ADSC) | ps | ie | trig;
 }
 
-static void adc_trigger_chan(struct meas_chan_context *chan)
-{
-	const struct measure_config __flash *config = chan ? chan->config : NULL;
-
-	adc_disable();
-	meas.avg_sum = 0;
-	meas.avg_count = 0;
-	if (config) {
-		timer_arm(&meas.avg_timer,
-			  config->averaging_timeout_ms);
-		adc_trigger(config->mux, config->ps, config->ref,
-			    true, true);
-	} else {
-		adc_trigger(MEAS_MUX_GND, MEAS_PS_64, MEAS_REF_AREF,
-			    true, false);
-	}
-}
-
 static void adc_trigger_next_chan(void)
 {
+	const struct measure_config __flash *config;
 	uint8_t active_chan;
 
 	/* Switch to the next channel. */
 	active_chan = ring_next(meas.active_chan, ARRAY_SIZE(meas.channels) - 1u);
 	meas.active_chan = active_chan;
-	adc_trigger_chan(&meas.channels[meas.active_chan]);
+	config = meas.channels[active_chan].config;
+
+	/* Reset the averaging. */
+	meas.avg_sum = 0;
+	meas.avg_count = 0;
+	timer_arm(&meas.avg_timer,
+		  config->averaging_timeout_ms);
+
+	/* Start the ADC in freerunning mode. */
+	adc_trigger(config->mux, config->ps, config->ref, config->did,
+		    true, true);
 }
 
 static void measure_handle_result(void)
 {
 	struct meas_chan_context *active_chan;
+	enum measure_chan active_chan_id;
 	const struct measure_config __flash *config;
 	uint16_t raw_adc;
 	fixpt_t phys;
-	bool is_plausible;
 	enum measure_plausibility plaus;
 
-	active_chan = &meas.channels[meas.active_chan];
+	active_chan_id = meas.active_chan;
+	active_chan = &meas.channels[active_chan_id];
 	config = active_chan->config;
 
 	/* Calculate the result of the averaging. */
-	raw_adc = (uint16_t)(meas.avg_sum / (uint32_t)meas.avg_count);
+	raw_adc = (uint16_t)(meas.avg_sum / meas.avg_count);
 
 	debug_report_int16(config->name, &active_chan->old_report_value,
 			   (int16_t)raw_adc);
 
 	/* Filter the raw adc value, if we have a filter. */
-	if (config->filter_callback)
-		raw_adc = config->filter_callback(raw_adc);
+	raw_adc = measure_user_filter_handler(active_chan_id, raw_adc);
 
 	/* Scale raw to phys. */
 	phys = scale((int16_t)raw_adc,
@@ -171,47 +218,38 @@ static void measure_handle_result(void)
 #endif
 
 	/* Plausibility check. */
-	is_plausible = true;
 	if (phys < config->plaus_neglim) {
 		phys = config->plaus_neglim;
-		is_plausible = false;
+		plaus = MEAS_NOT_PLAUSIBLE;
 	} else if (phys > config->plaus_poslim) {
 		phys = config->plaus_poslim;
-		is_plausible = false;
-	}
+		plaus = MEAS_NOT_PLAUSIBLE;
+	} else {
+		plaus = MEAS_PLAUSIBLE;
 
-	if (is_plausible) {
 		active_chan->plaus_timeout_timer_running = false;
 		active_chan->plaus_timeout = false;
-	} else {
-		if (!active_chan->plaus_timeout_timer_running) {
-			timer_arm(&active_chan->plaus_timeout_timer,
-				  config->plaus_timeout_ms);
-			active_chan->plaus_timeout_timer_running = true;
-		}
+	}
+
+	if (plaus != MEAS_PLAUSIBLE &&
+	    !active_chan->plaus_timeout_timer_running) {
+		timer_arm(&active_chan->plaus_timeout_timer,
+			  config->plaus_timeout_ms);
+		active_chan->plaus_timeout_timer_running = true;
 	}
 
 	if (active_chan->plaus_timeout_timer_running &&
-	    !active_chan->plaus_timeout &&
 	    timer_expired(&active_chan->plaus_timeout_timer))
 		active_chan->plaus_timeout = true;
 
-	/* Call the result callback. */
-	if (is_plausible) {
-		plaus = MEAS_PLAUSIBLE;
-	} else {
-		if (active_chan->plaus_timeout)
-			plaus = MEAS_PLAUS_TIMEOUT;
-		else
-			plaus = MEAS_NOT_PLAUSIBLE;
-	}
-	config->result_callback(phys, plaus);
+	if (active_chan->plaus_timeout)
+		plaus = MEAS_PLAUS_TIMEOUT;
+
+	measure_user_result_handler(active_chan_id, phys, plaus);
 }
 
 ISR(ADC_vect)
 {
-	struct meas_chan_context *active_chan;
-	const struct measure_config __flash *config;
 	uint16_t raw_adc;
 
 	mb();
@@ -219,70 +257,30 @@ ISR(ADC_vect)
 	/* Read the raw ADC value. */
 	raw_adc = ADC;
 
-	active_chan = &meas.channels[meas.active_chan];
-	config = active_chan->config;
-
-	if (config) {
-		/* Add it to the averaging sum and check if we are done. */
-		meas.avg_sum += raw_adc;
-		meas.avg_count += 1;
-		if (timer_expired(&meas.avg_timer)) {
-			meas.result_available = true;
-			adc_disable();
-		}
-	} else {
-		adc_trigger_next_chan();
+	/* Add it to the averaging sum and check if we are done. */
+	meas.avg_sum += raw_adc;
+	meas.avg_count += 1;
+	if (timer_expired(&meas.avg_timer)) {
+		meas.result_available = true;
+		adc_disable();
 	}
 
 	mb();
 }
 
-void measure_register_channel(enum measure_chan chan,
-			      const struct measure_config __flash *config)
-{
-	uint8_t mux;
-
-	/* Register the channel. */
-	meas.channels[chan].config = config;
-
-#if CONF_ADJ
-	meas.channels[chan].adjustment = int_to_fixpt(0);
-#endif
-
-	/* Disable digital input on the pin. */
-	mux = config->mux;
-	if (mux == MEAS_MUX_ADC0 ||
-	    mux == MEAS_MUX_ADC1 ||
-	    mux == MEAS_MUX_ADC2 ||
-	    mux == MEAS_MUX_ADC3 ||
-	    mux == MEAS_MUX_ADC4 ||
-	    mux == MEAS_MUX_ADC5) {
-		static const uint8_t mux2didr[] = {
-			[MEAS_MUX_ADC0] = 1u << ADC0D,
-			[MEAS_MUX_ADC1] = 1u << ADC1D,
-			[MEAS_MUX_ADC2] = 1u << ADC2D,
-			[MEAS_MUX_ADC3] = 1u << ADC3D,
-			[MEAS_MUX_ADC4] = 1u << ADC4D,
-			[MEAS_MUX_ADC5] = 1u << ADC5D,
-		};
-		DIDR0 |= mux2didr[mux];
-	}
-}
-
 void measure_start(void)
 {
-	adc_trigger_chan(&meas.channels[0]);
+	adc_trigger_next_chan();
 }
 
 void measure_work(void)
 {
-	uint8_t sreg;
 	bool result_available;
 
-	sreg = irq_disable_save();
+	irq_disable();
 	result_available = meas.result_available;
 	meas.result_available = false;
-	irq_restore(sreg);
+	irq_enable();
 
 	if (result_available) {
 		measure_handle_result();
@@ -310,8 +308,8 @@ fixpt_t measure_adjust_get(enum measure_chan chan)
 void measure_init(void)
 {
 	/* Discard the first measurement. */
-	adc_trigger_chan(NULL);
+	adc_trigger(MEAS_MUX_GND, MEAS_PS_64, MEAS_REF_AREF, MEAS_DID_NONE,
+		    true, false);
 	adc_busywait();
-	(void)ADC;
 	adc_disable();
 }
