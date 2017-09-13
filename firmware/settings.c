@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Settings handling
  *
- * Copyright (c) 2015-2016 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,15 +37,22 @@ struct settings_context {
 
 	struct settings cache;
 
+#if CONF_EERING
 	uint8_t ee_index;
+#endif
 	uint8_t ee_write_offset;
 };
 
 
 static struct settings_context settings;
 
+#if CONF_EERING
+# define NR_EE_SETTINGS		((E2END + 1) / sizeof(struct settings))
+#else
+# define NR_EE_SETTINGS		1
+#endif
+
 /* The permanent EEPROM storage. */
-#define NR_EE_SETTINGS	((E2END + 1) / sizeof(struct settings))
 static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 	[0 ... NR_EE_SETTINGS - 1] = {
 		.temp_k[TEMPBOOST_NORMAL] = {
@@ -77,7 +84,6 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 #if CONF_IDLE
 		.temp_idle_setpoint	= FLOAT_TO_FIXPT(CONTRTEMP_DEF_IDLE_SETPOINT),
 #endif
-
 		.serial		= 0,
 	},
 };
@@ -85,16 +91,12 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 
 static uint8_t ee_read_byte(uint16_t addr)
 {
-	uint8_t sreg, data;
-
-	sreg = irq_disable_save();
+	uint8_t data;
 
 	eeprom_busy_wait();
 	EEAR = addr;
 	EECR |= (1 << EERE);
 	data = EEDR;
-
-	irq_restore(sreg);
 
 	return data;
 }
@@ -111,9 +113,12 @@ ISR(EE_READY_vect)
 {
 	uint16_t address;
 	uint8_t data;
-	uint8_t index, offset;
+	uint8_t offset;
+	uint8_t index = 0u;
 
+#if CONF_EERING
 	index = settings.ee_index;
+#endif
 	offset = settings.ee_write_offset;
 
 	address = (uint16_t)((uint8_t *)&ee_settings[index] + offset);
@@ -136,8 +141,7 @@ ISR(EE_READY_vect)
 		EECR |= (1 << EEPE);
 	}
 
-	offset++;
-	settings.ee_write_offset = offset;
+	settings.ee_write_offset = ++offset;
 	if (offset >= sizeof(struct settings)) {
 		/* Done writing. Disable the interrupt. */
 		EECR &= (uint8_t)~(1 << EERIE);
@@ -157,22 +161,23 @@ void store_settings(void)
 
 void settings_work(void)
 {
-	uint8_t sreg;
-
 	if (!settings.store_request)
 		return;
 	if (!timer_expired(&settings.store_timer))
 		return;
+
+	irq_disable();
+
 	settings.store_request = false;
 
+#if CONF_EERING
 	/* Increment the serial number. This might wrap. */
 	settings.cache.serial++;
-
-	sreg = irq_disable_save();
 
 	/* Increment the store index. */
 	settings.ee_index = ring_next(settings.ee_index,
 				      ARRAY_SIZE(ee_settings) - 1u);
+#endif
 
 	/* Reset the store byte offset. */
 	settings.ee_write_offset = 0;
@@ -182,13 +187,15 @@ void settings_work(void)
 	 */
 	EECR |= (1 << EERIE);
 
-	irq_restore(sreg);
+	irq_enable();
 }
 
 void settings_init(void)
 {
-	uint8_t next_index, found_index;
-	uint8_t serial, next_serial;
+#if CONF_EERING
+	uint8_t next_index, serial, next_serial;
+#endif
+	uint8_t found_index = 0u;
 
 #ifndef __CHECKER__
 	build_assert(sizeof(struct settings) == 64);
@@ -196,6 +203,7 @@ void settings_init(void)
 	build_assert(SEA_SIZE(struct settings, temp_k) >= NR_BOOST_MODES);
 	build_assert(SEA_SIZE(struct settings, temp_setpoint) >= NR_PRESETS);
 
+#if CONF_EERING
 	/* Find the latest settings in the eeprom.
 	 * The latest setting is the one with the largest
 	 * index. However, wrap around must be considered.
@@ -214,6 +222,7 @@ void settings_init(void)
 		serial = next_serial;
 	} while (next_index != 0);
 	settings.ee_index = found_index;
+#endif /* CONF_EERING */
 
 	/* Read settings from EEPROM. */
 	ee_read_block(&settings.cache,
