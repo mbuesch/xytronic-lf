@@ -526,6 +526,9 @@ static void stop_ramping(void)
 
 /* Handler for SET, MINUS and PLUS buttons */
 void menu_button_handler(enum button_id button,
+			 enum button_state bstate);
+
+void menu_button_handler(enum button_id button,
 			 enum button_state bstate)
 {
 	if (button == BUTTON_IRON)

@@ -56,6 +56,9 @@ fixpt_t meastemp_adjust_get(void)
 }
 
 void meastemp_result_handler(fixpt_t measured_phys_value,
+			     enum measure_plausibility plaus);
+
+void meastemp_result_handler(fixpt_t measured_phys_value,
 			     enum measure_plausibility plaus)
 {
 	/* Set/reset emergency status. */
@@ -77,6 +80,8 @@ void meastemp_result_handler(fixpt_t measured_phys_value,
 	}
 }
 
+extern
+const struct measure_config __flash meastemp_config;
 const struct measure_config __flash meastemp_config = {
 	.name			= "mt",
 

@@ -50,6 +50,8 @@ void meascurr_filter_reset(void)
 	lp_filter_u16_reset(&meascurr.filter);
 }
 
+uint16_t meascurr_filter_handler(uint16_t raw_adc);
+
 uint16_t meascurr_filter_handler(uint16_t raw_adc)
 {
 	uint16_t filtered_adc;
@@ -69,6 +71,9 @@ uint16_t meascurr_filter_handler(uint16_t raw_adc)
 
 	return filtered_adc;
 }
+
+void meascurr_result_handler(fixpt_t measured_phys_value,
+			     enum measure_plausibility plaus);
 
 void meascurr_result_handler(fixpt_t measured_phys_value,
 			     enum measure_plausibility plaus)
@@ -95,6 +100,8 @@ void meascurr_result_handler(fixpt_t measured_phys_value,
 	meascurr.initialized = true;
 }
 
+extern
+const struct measure_config __flash meascurr_config;
 const struct measure_config __flash meascurr_config = {
 	.name			= "mc",
 	.mux			= MEAS_MUX_ADC2,

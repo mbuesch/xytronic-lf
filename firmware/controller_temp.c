@@ -297,6 +297,9 @@ static void contrtemp_idle_button_handler(enum button_id button,
 #endif
 
 void contrtemp_button_handler(enum button_id button,
+			      enum button_state bstate);
+
+void contrtemp_button_handler(enum button_id button,
 			      enum button_state bstate)
 {
 	if (button != BUTTON_IRON)
