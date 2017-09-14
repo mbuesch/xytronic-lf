@@ -50,29 +50,9 @@ typedef double fixptfloat_t;
 #endif
 
 
-static inline fixpt_big_t fixpt_inflate(fixpt_t a)
-{
-	return (fixpt_big_t)a;
-}
+fixpt_big_t fixpt_inflate(fixpt_t a);
 
 fixpt_t fixpt_deflate(fixpt_big_t a);
-
-static inline fixpt_big_t int_to_fixpt_big(int32_t i)
-{
-	return (fixpt_big_t)(i << FIXPT_SHIFT);
-}
-
-static inline fixpt_t int_to_fixpt(int32_t i)
-{
-	return fixpt_deflate(int_to_fixpt_big(i));
-}
-
-int32_t fixpt_big_to_int(fixpt_big_t p);
-
-static inline int32_t fixpt_to_int(fixpt_t p)
-{
-	return fixpt_big_to_int(fixpt_inflate(p));
-}
 
 #define FLOAT_TO_FIXPT_BIG(f)	((fixpt_big_t)(						\
 		((f) < 0.0) ?								\
@@ -83,25 +63,42 @@ static inline int32_t fixpt_to_int(fixpt_t p)
 
 #define FLOAT_TO_FIXPT(f)	((fixpt_t)FLOAT_TO_FIXPT_BIG(f))
 
-static inline fixpt_big_t float_to_fixpt_big(fixptfloat_t f)
+static alwaysinline fixpt_big_t float_to_fixpt_big(fixptfloat_t f)
 {
 	return (fixpt_big_t)FLOAT_TO_FIXPT_BIG(f);
 }
 
-static inline fixpt_t float_to_fixpt(fixptfloat_t f)
+static alwaysinline fixpt_t float_to_fixpt(fixptfloat_t f)
 {
 	return fixpt_deflate(float_to_fixpt_big(f));
 }
 
-static inline fixptfloat_t fixpt_big_to_float(fixpt_big_t p)
+static alwaysinline fixptfloat_t fixpt_big_to_float(fixpt_big_t p)
 {
 	return (fixptfloat_t)p / (fixptfloat_t)(1L << FIXPT_SHIFT);
 }
 
-static inline fixptfloat_t fixpt_to_float(fixpt_t p)
+static alwaysinline fixptfloat_t fixpt_to_float(fixpt_t p)
 {
 	return fixpt_big_to_float(fixpt_inflate(p));
 }
+
+#define INT_TO_FIXPT_BIG(i)	((fixpt_big_t)((int32_t)(i) << FIXPT_SHIFT))
+#define INT_TO_FIXPT(i)		((fixpt_t)INT_TO_FIXPT_BIG(i))
+
+fixpt_big_t _do_int32_to_fixpt_big(int32_t i);
+#define int_to_fixpt_big(i)	choose_expr(is_constant(i),		\
+					    INT_TO_FIXPT_BIG(i),	\
+					    _do_int32_to_fixpt_big(i))
+
+fixpt_t _do_int32_to_fixpt(int32_t i);
+#define int_to_fixpt(i)		choose_expr(is_constant(i),		\
+					    INT_TO_FIXPT(i),		\
+					    _do_int32_to_fixpt(i))
+
+int32_t fixpt_big_to_int(fixpt_big_t p);
+
+int32_t fixpt_to_int(fixpt_t p);
 
 /* Get the integer part of a fixpt_t.
  */
@@ -113,25 +110,11 @@ uint32_t fixpt_get_dec_fract(fixpt_t p, uint8_t nr_digits);
 
 /* Calculate: a + b
  */
-static inline fixpt_big_t fixpt_big_add(fixpt_big_t a, fixpt_big_t b)
-{
-	fixpt_big_t tmp;
-
-	tmp = a + b;
-
-	return tmp;
-}
+fixpt_big_t fixpt_big_add(fixpt_big_t a, fixpt_big_t b);
 
 /* Calculate: a - b
  */
-static inline fixpt_big_t fixpt_big_sub(fixpt_big_t a, fixpt_big_t b)
-{
-	fixpt_big_t tmp;
-
-	tmp = a - b;
-
-	return tmp;
-}
+fixpt_big_t fixpt_big_sub(fixpt_big_t a, fixpt_big_t b);
 
 /* Calculate: a * b
  */
@@ -147,70 +130,27 @@ fixpt_big_t fixpt_big_mul_div(fixpt_big_t a, fixpt_big_t b, fixpt_big_t c);
 
 /* Calculate: a + b
  */
-static inline fixpt_t fixpt_add(fixpt_t a, fixpt_t b)
-{
-	fixpt_big_t tmp;
-
-	tmp = fixpt_big_add(fixpt_inflate(a), fixpt_inflate(b));
-
-	return fixpt_deflate(tmp);
-}
+fixpt_t fixpt_add(fixpt_t a, fixpt_t b);
 
 /* Calculate: a - b
  */
-static inline fixpt_t fixpt_sub(fixpt_t a, fixpt_t b)
-{
-	fixpt_big_t tmp;
-
-	tmp = fixpt_big_sub(fixpt_inflate(a), fixpt_inflate(b));
-
-	return fixpt_deflate(tmp);
-}
+fixpt_t fixpt_sub(fixpt_t a, fixpt_t b);
 
 /* Calculate: a * b
  */
-static inline fixpt_t fixpt_mul(fixpt_t a, fixpt_t b)
-{
-	fixpt_big_t tmp;
-
-	tmp = fixpt_big_mul(fixpt_inflate(a), fixpt_inflate(b));
-
-	return fixpt_deflate(tmp);
-}
+fixpt_t fixpt_mul(fixpt_t a, fixpt_t b);
 
 /* Calculate: a / b
  */
-static inline fixpt_t fixpt_div(fixpt_t a, fixpt_t b)
-{
-	fixpt_big_t tmp;
-
-	tmp = fixpt_big_div(fixpt_inflate(a), fixpt_inflate(b));
-
-	return fixpt_deflate(tmp);
-}
+fixpt_t fixpt_div(fixpt_t a, fixpt_t b);
 
 /* Calculate: (a * b) / c
  */
-static inline fixpt_t fixpt_mul_div(fixpt_t a, fixpt_t b, fixpt_t c)
-{
-	fixpt_big_t tmp;
-
-	tmp = fixpt_big_mul_div(fixpt_inflate(a),
-				fixpt_inflate(b),
-				fixpt_inflate(c));
-
-	return fixpt_deflate(tmp);
-}
+fixpt_t fixpt_mul_div(fixpt_t a, fixpt_t b, fixpt_t c);
 
 /* Calculate: -a
  */
-static inline fixpt_t fixpt_neg(fixpt_t a)
-{
-	if (a <= FIXPT_MIN)
-		return FIXPT_MAX;
-
-	return (fixpt_t)-a;
-}
+fixpt_t fixpt_neg(fixpt_t a);
 
 /* Calculate: Absolute value of a
  */

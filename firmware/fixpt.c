@@ -2,7 +2,7 @@
  * Xytronic LF-1600
  * Fixed point data type
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,11 @@
 #include "fixpt.h"
 
 
+fixpt_big_t fixpt_inflate(fixpt_t a)
+{
+	return (fixpt_big_t)a;
+}
+
 fixpt_t fixpt_deflate(fixpt_big_t a)
 {
 	if (a >= FIXPT_MAX)
@@ -30,6 +35,16 @@ fixpt_t fixpt_deflate(fixpt_big_t a)
 		return FIXPT_MIN;
 
 	return (fixpt_t)a;
+}
+
+fixpt_big_t _do_int32_to_fixpt_big(int32_t i)
+{
+	return INT_TO_FIXPT_BIG(i);
+}
+
+fixpt_t _do_int32_to_fixpt(int32_t i)
+{
+	return fixpt_deflate(INT_TO_FIXPT_BIG(i));
 }
 
 int32_t fixpt_big_to_int(fixpt_big_t p)
@@ -45,6 +60,11 @@ int32_t fixpt_big_to_int(fixpt_big_t p)
 	}
 
 	return i;
+}
+
+int32_t fixpt_to_int(fixpt_t p)
+{
+	return fixpt_big_to_int(fixpt_inflate(p));
 }
 
 int32_t fixpt_get_int_part(fixpt_t p)
@@ -69,6 +89,24 @@ uint32_t fixpt_get_dec_fract(fixpt_t p, uint8_t nr_digits)
 					 (uint32_t)(1UL << FIXPT_SHIFT));
 
 	return dec_fract;
+}
+
+fixpt_big_t fixpt_big_add(fixpt_big_t a, fixpt_big_t b)
+{
+	fixpt_big_t tmp;
+
+	tmp = a + b;
+
+	return tmp;
+}
+
+fixpt_big_t fixpt_big_sub(fixpt_big_t a, fixpt_big_t b)
+{
+	fixpt_big_t tmp;
+
+	tmp = a - b;
+
+	return tmp;
 }
 
 fixpt_big_t fixpt_big_mul(fixpt_big_t a, fixpt_big_t b)
@@ -120,6 +158,61 @@ fixpt_big_t fixpt_big_mul_div(fixpt_big_t a, fixpt_big_t b, fixpt_big_t c)
 	tmp = fixpt_big_div(tmp, c);
 
 	return tmp;
+}
+
+fixpt_t fixpt_add(fixpt_t a, fixpt_t b)
+{
+	fixpt_big_t tmp;
+
+	tmp = fixpt_big_add(fixpt_inflate(a), fixpt_inflate(b));
+
+	return fixpt_deflate(tmp);
+}
+
+fixpt_t fixpt_sub(fixpt_t a, fixpt_t b)
+{
+	fixpt_big_t tmp;
+
+	tmp = fixpt_big_sub(fixpt_inflate(a), fixpt_inflate(b));
+
+	return fixpt_deflate(tmp);
+}
+
+fixpt_t fixpt_mul(fixpt_t a, fixpt_t b)
+{
+	fixpt_big_t tmp;
+
+	tmp = fixpt_big_mul(fixpt_inflate(a), fixpt_inflate(b));
+
+	return fixpt_deflate(tmp);
+}
+
+fixpt_t fixpt_div(fixpt_t a, fixpt_t b)
+{
+	fixpt_big_t tmp;
+
+	tmp = fixpt_big_div(fixpt_inflate(a), fixpt_inflate(b));
+
+	return fixpt_deflate(tmp);
+}
+
+fixpt_t fixpt_mul_div(fixpt_t a, fixpt_t b, fixpt_t c)
+{
+	fixpt_big_t tmp;
+
+	tmp = fixpt_big_mul_div(fixpt_inflate(a),
+				fixpt_inflate(b),
+				fixpt_inflate(c));
+
+	return fixpt_deflate(tmp);
+}
+
+fixpt_t fixpt_neg(fixpt_t a)
+{
+	if (a <= FIXPT_MIN)
+		return FIXPT_MAX;
+
+	return (fixpt_t)-a;
 }
 
 fixpt_t fixpt_abs(fixpt_t a)
