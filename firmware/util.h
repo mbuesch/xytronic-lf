@@ -111,6 +111,9 @@ int32_t pow_int(int16_t b, uint8_t e);
 /* Do-not-inline function attribute. */
 #define noinline		__attribute__((__noinline__))
 
+/* Always-inline function attribute. */
+#define alwaysinline		inline __attribute__((__always_inline__))
+
 /* Pure-function attribute. */
 #define pure_fn			__attribute__((__pure__))
 
@@ -135,27 +138,34 @@ int32_t pow_int(int16_t b, uint8_t e);
 # define unreachable()		while (1)
 #endif
 
+/* Returns true, if the expression is known to be constant at compile time. */
+#define is_constant(exp)	__builtin_constant_p(exp)
+
+/* Compile-time equivalent to the ?: operator */
+#define choose_expr(cond, exp1, exp2)	__builtin_choose_expr(cond, exp1, exp2)
+
+
 /* Non-standard integer types. */
 typedef __int24		int24_t;
 typedef __uint24	uint24_t;
 
 
 /* Disable interrupts globally. */
-static inline void irq_disable(void)
+static alwaysinline void irq_disable(void)
 {
 	cli();
 	mb();
 }
 
 /* Enable interrupts globally. */
-static inline void irq_enable(void)
+static alwaysinline void irq_enable(void)
 {
 	mb();
 	sei();
 }
 
 /* Save flags and disable interrupts globally. */
-static inline uint8_t irq_disable_save(void)
+static alwaysinline uint8_t irq_disable_save(void)
 {
 	uint8_t sreg = SREG;
 	cli();
@@ -164,20 +174,20 @@ static inline uint8_t irq_disable_save(void)
 }
 
 /* Restore interrupt flags. */
-static inline void irq_restore(uint8_t sreg_flags)
+static alwaysinline void irq_restore(uint8_t sreg_flags)
 {
 	mb();
 	SREG = sreg_flags;
 }
 
 /* Check whether the interrupt-enable flag is set in 'sreg_flags' */
-static inline bool __irqs_enabled(uint8_t sreg_flags)
+static alwaysinline bool __irqs_enabled(uint8_t sreg_flags)
 {
 	return !!(sreg_flags & (1 << SREG_I));
 }
 
 /* Check whether interrupts are enabled globally. */
-static inline bool irqs_enabled(void)
+static alwaysinline bool irqs_enabled(void)
 {
 	return __irqs_enabled(SREG);
 }
