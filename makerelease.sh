@@ -41,8 +41,8 @@ do_build()
 	echo "Building configuration:  $*"
 	mkdir -p "$targetdir"
 
-	echo "$*" > "$targetdir/build_config.txt"
-	make -C "$fwdir" all "$@"
+	echo "$*" | tr '[:space:]' '\n' > "$targetdir/build_config.txt"
+	make -C "$fwdir" all "$@" C=1
 
 	echo "Fuse configuration:" > "$targetdir/fuses.txt"
 	echo >> "$targetdir/fuses.txt"
@@ -83,7 +83,7 @@ hook_pre_archives()
 				fi
 
 				do_build "$fwdir" "$targetdir" \
-					HW=$hw DEV=m$dev C=1 \
+					HW=$hw DEV=m$dev \
 					CONF_PRESETS=1 \
 					CONF_BOOST=0 \
 					CONF_IDLE=1 \
