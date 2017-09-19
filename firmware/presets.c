@@ -29,22 +29,8 @@
 
 
 #if CONF_PRESETS
-struct presets_context {
-	uint8_t active;
-};
-
-static struct presets_context presets;
-#endif
-
-
-#if CONF_PRESETS
-static void presets_update_index(uint8_t active)
+static void presets_store(void)
 {
-	struct settings *settings;
-
-	presets.active = active;
-	settings = get_settings();
-	settings->temp_setpoint_active = active;
 	store_settings();
 	contrtemp_update_setpoint();
 	menu_request_display_update();
@@ -54,27 +40,31 @@ static void presets_update_index(uint8_t active)
 void presets_next(void)
 {
 #if CONF_PRESETS
-	uint8_t active;
+	struct settings *settings;
 
-	active = ring_next(presets.active, NR_PRESETS - 1u);
-	presets_update_index(active);
+	settings = get_settings();
+	settings->temp_setpoint_active = ring_next(settings->temp_setpoint_active,
+						   NR_PRESETS - 1u);
+	presets_store();
 #endif
 }
 
 void presets_prev(void)
 {
 #if CONF_PRESETS
-	uint8_t active;
+	struct settings *settings;
 
-	active = ring_prev(presets.active, NR_PRESETS - 1u);
-	presets_update_index(active);
+	settings = get_settings();
+	settings->temp_setpoint_active = ring_prev(settings->temp_setpoint_active,
+						   NR_PRESETS - 1u);
+	presets_store();
 #endif
 }
 
 uint8_t presets_get_active_index(void)
 {
 #if CONF_PRESETS
-	return presets.active;
+	return get_settings()->temp_setpoint_active;
 #else
 	return 0u;
 #endif
@@ -87,7 +77,7 @@ fixpt_t presets_get_active_value(void)
 	fixpt_t value;
 
 	settings = get_settings();
-	active_index = presets_get_active_index();
+	active_index = settings->temp_setpoint_active;
 	value = settings->temp_setpoint[active_index];
 
 	return value;
@@ -99,19 +89,12 @@ void presets_set_active_value(fixpt_t value)
 	uint8_t active_index;
 
 	settings = get_settings();
-	active_index = presets_get_active_index();
+	active_index = settings->temp_setpoint_active;
 	settings->temp_setpoint[active_index] = value;
-	store_settings();
-	contrtemp_update_setpoint();
+
+	presets_store();
 }
 
 void presets_init(void)
 {
-#if CONF_PRESETS
-	struct settings *settings;
-
-	settings = get_settings();
-	presets.active = min(settings->temp_setpoint_active,
-			     NR_PRESETS - 1u);
-#endif
 }
