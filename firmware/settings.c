@@ -79,6 +79,9 @@ static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
 #if CONF_PRESETS
 		.temp_setpoint[1]	= FLOAT_TO_FIXPT(PRESET_DEFAULT1),
 		.temp_setpoint[2]	= FLOAT_TO_FIXPT(PRESET_DEFAULT2),
+		.temp_setpoint[3]	= FLOAT_TO_FIXPT(PRESET_DEFAULT3),
+		.temp_setpoint[4]	= FLOAT_TO_FIXPT(PRESET_DEFAULT4),
+		.temp_setpoint[5]	= FLOAT_TO_FIXPT(PRESET_DEFAULT5),
 #endif
 		.temp_setpoint_active	= PRESET_DEFAULT_INDEX,
 #if CONF_IDLE

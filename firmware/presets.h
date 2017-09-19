@@ -6,20 +6,26 @@
 
 #if CONF_PRESETS
 
+/* Presets feature ENABLED */
+
 /* The global number of presets available. */
-#define NR_PRESETS		3
+#define NR_PRESETS		6
 
 /* Preset default values. */
-#define PRESET_DEFAULT0		330.0
-#define PRESET_DEFAULT1		350.0
-#define PRESET_DEFAULT2		370.0
-#define PRESET_DEFAULT_INDEX	1
+#define PRESET_DEFAULT0		CELSIUS(305)
+#define PRESET_DEFAULT1		CELSIUS(320)
+#define PRESET_DEFAULT2		CELSIUS(335)
+#define PRESET_DEFAULT3		CELSIUS(350)
+#define PRESET_DEFAULT4		CELSIUS(365)
+#define PRESET_DEFAULT5		CELSIUS(380)
+#define PRESET_DEFAULT_INDEX	3
 
 #else /* CONF_PRESETS */
 
-#define NR_PRESETS		1
+/* Presets feature DISABLED */
 
-#define PRESET_DEFAULT0		350.0
+#define NR_PRESETS		1
+#define PRESET_DEFAULT0		CELSIUS(350)
 #define PRESET_DEFAULT_INDEX	0
 
 #endif /* CONF_PRESETS */
