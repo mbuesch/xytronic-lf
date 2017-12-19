@@ -118,13 +118,14 @@ DEFINE_CFLAGS		:= -DF_CPU=$(F_CPU) \
 MAIN_CFLAGS		:= -mmcu=$(GCC_ARCH) \
 			   -std=gnu11 \
 			   -g \
-			   $(if $(call _streq,$(DEBUG),1),-ffunction-sections) \
-			   $(if $(call _streq,$(DEBUG),1),-fdata-sections) \
+			   -ffunction-sections \
+			   -fdata-sections \
 			   $(OPTIMIZE_CFLAGS) \
 			   $(WARN_CFLAGS) \
 			   $(DEFINE_CFLAGS)
 
-MAIN_LDFLAGS		:=
+MAIN_LDFLAGS		:= -Wl,-gc-sections \
+			   $(if $(call _streq,$(LTO),1),,-fwhole-program)
 
 INSTRUMENT_CFLAGS	:= -DINSTRUMENT_FUNCTIONS=1 \
 			   -finstrument-functions \
@@ -148,12 +149,10 @@ BOOT_CFLAGS		:= $(MAIN_CFLAGS) -DBOOTLOADER \
 			   -include sparse.h
 
 LDFLAGS			:= $(MAIN_LDFLAGS) \
-			   $(if $(call _streq,$(LTO),1),,-fwhole-program) \
 			   -Wl,-Map,$(MAP) \
 			   $(LDFLAGS)
 
 BOOT_LDFLAGS		:= $(MAIN_LDFLAGS) \
-			   $(if $(call _streq,$(LTO),1),,-fwhole-program) \
 			   -Wl,--section-start=.text=$(BOOT_OFFSET) \
 			   -Wl,-Map,$(BOOT_MAP) \
 			   $(BOOT_LDFLAGS)
