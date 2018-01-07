@@ -142,7 +142,11 @@ int32_t pow_int(int16_t b, uint8_t e);
 #define is_constant(exp)	__builtin_constant_p(exp)
 
 /* Compile-time equivalent to the ?: operator */
-#define choose_expr(cond, exp1, exp2)	__builtin_choose_expr(cond, exp1, exp2)
+#if defined(__GNUC__) && __GNUC__ >= 5 && __GNUC_MINOR__ >= 4
+# define choose_expr(cond, exp1, exp2)	__builtin_choose_expr(cond, exp1, exp2)
+#else
+# define choose_expr(cond, exp1, exp2)	((cond) ? (exp1) : (exp2))
+#endif
 
 
 /* Non-standard integer types. */
