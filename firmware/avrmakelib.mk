@@ -1,7 +1,7 @@
 ######################################################
 # AVR make library                                   #
-# Copyright (c) 2015-2017 Michael Buesch <m@bues.ch> #
-# Version 1.8                                        #
+# Copyright (c) 2015-2018 Michael Buesch <m@bues.ch> #
+# Version 1.9                                        #
 ######################################################
 
 ifeq ($(NAME),)
@@ -135,7 +135,7 @@ MAIN_SPARSEFLAGS	:= -gcc-base-dir=/usr/lib/avr \
 			   -I/usr/lib/avr/include \
 			   -D__STDC_HOSTED__=1 \
 			   -D__AVR_ARCH__=5 \
-			   -D__AVR_$(subst MEGA,mega,$(call _uppercase,$(GCC_ARCH)))__=1 \
+			   -D__AVR_$(subst TINY,tiny,$(subst MEGA,mega,$(call _uppercase,$(GCC_ARCH))))__=1 \
 			   -Wsparse-all -Wsparse-error
 
 CFLAGS			:= $(MAIN_CFLAGS) \
