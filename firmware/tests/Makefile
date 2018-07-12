@@ -1,5 +1,5 @@
 CPPFLAGS	:= -I.. -Ifake -DF_CPU=8000000UL \
-		   -DTESTSUITE=1
+		   -DTESTSUITE=1 -D_DEFAULT_SOURCE
 CFLAGS		:= -std=c11 -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 		   -Wsuggest-attribute=noreturn -Wundef -Wpointer-arith \
 		   -Wcast-qual -Wlogical-op -Wshadow -Wconversion \
