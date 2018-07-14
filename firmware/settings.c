@@ -200,7 +200,7 @@ void settings_init(void)
 #endif
 	uint8_t found_index = 0u;
 
-#ifndef __CHECKER__
+#if !defined(__CHECKER__) && !defined(SIMULATOR)
 	build_assert(sizeof(struct settings) == 64);
 #endif
 	build_assert(SEA_SIZE(struct settings, temp_k) >= NR_BOOST_MODES);

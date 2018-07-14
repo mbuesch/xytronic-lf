@@ -106,7 +106,7 @@ void debug_print_int32(const char __flash *prefix, int32_t value)
 {
 	char buf[10 + 1 + 1];
 
-#ifndef __CHECKER__
+#if !defined(__CHECKER__) && !defined(SIMULATOR)
 	build_assert(sizeof(long) == sizeof(value));
 #endif
 	ltoa(value, buf, 10);

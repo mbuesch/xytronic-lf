@@ -192,7 +192,7 @@ static void measure_handle_result(void)
 	fixpt_t phys;
 	enum measure_plausibility plaus;
 
-	active_chan_id = meas.active_chan;
+	active_chan_id = (enum measure_chan)meas.active_chan;
 	active_chan = &meas.channels[active_chan_id];
 	config = active_chan->config;
 

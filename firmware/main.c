@@ -70,6 +70,27 @@ void early_init(void)
 	wdt_enable(WDTO_2S);
 }
 
+/* One iteration of the main loop. */
+static void main_loop_once(void)
+{
+	wdt_reset();
+
+	/* Handle measurement results (if any).
+	 * This will also run the controllers, if needed.
+	 */
+	measure_work();
+
+	/* Handle user interface events. */
+	menu_work();
+	display_work();
+	buttons_work();
+	settings_work();
+}
+
+#ifndef RUN_MAIN_LOOP
+# define RUN_MAIN_LOOP	1
+#endif
+
 /* Main entry point. */
 int main(void) _mainfunc;
 int main(void)
@@ -109,18 +130,8 @@ int main(void)
 
 	wdt_enable(WDTO_250MS);
 	irq_enable();
-	while (1) {
-		wdt_reset();
+	while (RUN_MAIN_LOOP)
+		main_loop_once();
 
-		/* Handle measurement results (if any).
-		 * This will also run the controllers, if needed.
-		 */
-		measure_work();
-
-		/* Handle user interface events. */
-		menu_work();
-		display_work();
-		buttons_work();
-		settings_work();
-	}
+	return 0;
 }

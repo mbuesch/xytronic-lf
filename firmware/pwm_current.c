@@ -60,8 +60,8 @@ void pwmcurr_init(void)
 	DDRB |= (1 << DDB1);
 
 	/* Set frequency and initial duty cycle. */
-	ICR1 = PWMCURR_MAX_DUTY;
-	OCR1A = PWMCURR_MAX_DUTY;
+	ICR1 = (uint16_t)PWMCURR_MAX_DUTY;
+	OCR1A = (uint16_t)PWMCURR_MAX_DUTY;
 	/* Enable timer: Fast PWM (Mode 14), OC1A clr/set, PS 256 */
 	TCCR1A = (1 << COM1A1) | (0 << COM1A0) |
 		 (0 << COM1B1) | (0 << COM1B0) |

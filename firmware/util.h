@@ -154,20 +154,27 @@ typedef __int24		int24_t;
 typedef __uint24	uint24_t;
 
 
+#ifndef irq_disable
 /* Disable interrupts globally. */
 static alwaysinline void irq_disable(void)
 {
 	cli();
 	mb();
 }
+#define irq_disable irq_disable
+#endif
 
+#ifndef irq_enable
 /* Enable interrupts globally. */
 static alwaysinline void irq_enable(void)
 {
 	mb();
 	sei();
 }
+#define irq_enable irq_enable
+#endif
 
+#ifndef irq_disable_save
 /* Save flags and disable interrupts globally. */
 static alwaysinline uint8_t irq_disable_save(void)
 {
@@ -176,13 +183,18 @@ static alwaysinline uint8_t irq_disable_save(void)
 	mb();
 	return sreg;
 }
+#define irq_disable_save irq_disable_save
+#endif
 
+#ifndef irq_restore
 /* Restore interrupt flags. */
 static alwaysinline void irq_restore(uint8_t sreg_flags)
 {
 	mb();
 	SREG = sreg_flags;
 }
+#define irq_restore irq_restore
+#endif
 
 /* Check whether the interrupt-enable flag is set in 'sreg_flags' */
 static alwaysinline bool __irqs_enabled(uint8_t sreg_flags)
@@ -197,7 +209,10 @@ static alwaysinline bool irqs_enabled(void)
 }
 
 /* Indirect special function register access. */
+#ifndef sfr_addr_t
 typedef uint16_t sfr_addr_t;
+#define sfr_addr_t		sfr_addr_t
+#endif
 #define SFR_ADDR(sfr)		_SFR_ADDR(sfr)
 #define SFR_BYTE(sfr_addr)	_MMIO_BYTE(sfr_addr)
 
