@@ -72,18 +72,36 @@ struct meas_context {
 };
 
 static struct meas_context meas = {
-	.channels[MEAS_CHAN_CURRENT] = {
-		.config		= &meascurr_config,
+	.channels = {
+		/* MEAS_CHAN_CURRENT */
+		{
+			.config				= &meascurr_config,
+			.old_report_value		= 0,
 #if CONF_ADJ
-		.adjustment	= FLOAT_TO_FIXPT(0),
+			.adjustment			= FLOAT_TO_FIXPT(0),
 #endif
-	},
-	.channels[MEAS_CHAN_TEMP] = {
-		.config		= &meastemp_config,
+			.plaus_timeout			= false,
+			.plaus_timeout_timer_running	= false,
+			.plaus_timeout_timer		= { },
+		},
+		/* MEAS_CHAN_TEMP */
+		{
+			.config				= &meastemp_config,
+			.old_report_value		= 0,
 #if CONF_ADJ
-		.adjustment	= FLOAT_TO_FIXPT(0),
+			.adjustment			= FLOAT_TO_FIXPT(0),
 #endif
+			.plaus_timeout			= false,
+			.plaus_timeout_timer_running	= false,
+			.plaus_timeout_timer		= { },
+
+		},
 	},
+	.active_chan		= 0,
+	.avg_count		= 0,
+	.avg_sum		= 0,
+	.avg_timer		= { },
+	.result_available	= false,
 };
 
 

@@ -31,6 +31,12 @@
 #include <avr/eeprom.h>
 
 
+#ifndef ee_addr_t
+typedef uint16_t ee_addr_t;
+#define ee_addr_t ee_addr_t
+#endif
+
+
 struct settings_context {
 	struct timer store_timer;
 	bool store_request;
@@ -54,45 +60,54 @@ static struct settings_context settings;
 
 /* The permanent EEPROM storage. */
 static struct settings EEMEM ee_settings[NR_EE_SETTINGS] = {
-	[0 ... NR_EE_SETTINGS - 1] = {
-		.temp_k[TEMPBOOST_NORMAL] = {
+	{
+		.temp_k = {
+			/* TEMPBOOST_NORMAL */
+			{
 			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_NORMAL),
 			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_NORMAL),
 			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_NORMAL),
 			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_NORMAL),
-		},
+			},
 #if CONF_BOOST
-		.temp_k[TEMPBOOST_BOOST1] = {
+			/* TEMPBOOST_BOOST1 */
+			{
 			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST1),
 			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST1),
 			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST1),
 			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST1),
-		},
-		.temp_k[TEMPBOOST_BOOST2] = {
+			},
+			/* TEMPBOOST_BOOST2 */
+			{
 			.kp		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KP_BOOST2),
 			.ki		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KI_BOOST2),
 			.kd		= FLOAT_TO_FIXPT(CONTRTEMP_PID_KD_BOOST2),
 			.d_decay_div	= FLOAT_TO_FIXPT(CONTRTEMP_PID_D_DECAY_BOOST2),
+			},
+#endif
 		},
-#endif
-		.temp_setpoint[0]	= FLOAT_TO_FIXPT(PRESET_DEFAULT0),
-#if CONF_PRESETS
-		.temp_setpoint[1]	= FLOAT_TO_FIXPT(PRESET_DEFAULT1),
-		.temp_setpoint[2]	= FLOAT_TO_FIXPT(PRESET_DEFAULT2),
-		.temp_setpoint[3]	= FLOAT_TO_FIXPT(PRESET_DEFAULT3),
-		.temp_setpoint[4]	= FLOAT_TO_FIXPT(PRESET_DEFAULT4),
-		.temp_setpoint[5]	= FLOAT_TO_FIXPT(PRESET_DEFAULT5),
-#endif
-		.temp_setpoint_active	= PRESET_DEFAULT_INDEX,
 #if CONF_IDLE
 		.temp_idle_setpoint	= FLOAT_TO_FIXPT(CONTRTEMP_DEF_IDLE_SETPOINT),
 #endif
-		.serial		= 0,
+		.temp_setpoint		= {
+			FLOAT_TO_FIXPT(PRESET_DEFAULT0),
+#if CONF_PRESETS
+			FLOAT_TO_FIXPT(PRESET_DEFAULT1),
+			FLOAT_TO_FIXPT(PRESET_DEFAULT2),
+			FLOAT_TO_FIXPT(PRESET_DEFAULT3),
+			FLOAT_TO_FIXPT(PRESET_DEFAULT4),
+			FLOAT_TO_FIXPT(PRESET_DEFAULT5),
+#endif
+		},
+		.temp_setpoint_active	= PRESET_DEFAULT_INDEX,
+		.temp_adj		= INT_TO_FIXPT(0),
+		.reserved		= { },
+		.serial			= 0,
 	},
 };
 
 
-static uint8_t ee_read_byte(uint16_t addr)
+static uint8_t ee_read_byte(ee_addr_t addr)
 {
 	uint8_t data;
 
@@ -104,9 +119,9 @@ static uint8_t ee_read_byte(uint16_t addr)
 	return data;
 }
 
-static void ee_read_block(void *dest, uint16_t addr, uint8_t count)
+static void ee_read_block(void *dest, ee_addr_t addr, uint8_t count)
 {
-	uint8_t *d = dest;
+	uint8_t *d = (uint8_t *)dest;
 
 	for ( ; count; count--, d++, addr++)
 		*d = ee_read_byte(addr);
@@ -114,7 +129,7 @@ static void ee_read_block(void *dest, uint16_t addr, uint8_t count)
 
 ISR(EE_READY_vect)
 {
-	uint16_t address;
+	ee_addr_t address;
 	uint8_t data;
 	uint8_t offset;
 	uint8_t index = 0u;
@@ -124,7 +139,7 @@ ISR(EE_READY_vect)
 #endif
 	offset = settings.ee_write_offset;
 
-	address = (uint16_t)((uint8_t *)&ee_settings[index] + offset);
+	address = (ee_addr_t)((uint8_t *)&ee_settings[index] + offset);
 	data = *((uint8_t *)&settings.cache + offset);
 
 	EEAR = address;
@@ -211,14 +226,14 @@ void settings_init(void)
 	 * The latest setting is the one with the largest
 	 * index. However, wrap around must be considered.
 	 */
-	serial = ee_read_byte((uint16_t)&ee_settings[0].serial);
+	serial = ee_read_byte((ee_addr_t)&ee_settings[0].serial);
 	next_index = 0;
 	do {
 		found_index = next_index;
 
 		next_index = ring_next(next_index, ARRAY_SIZE(ee_settings) + 1u);
 
-		next_serial = ee_read_byte((uint16_t)&ee_settings[next_index].serial);
+		next_serial = ee_read_byte((ee_addr_t)&ee_settings[next_index].serial);
 		if (next_serial != ((serial + 1u) & 0xFFu))
 			break;
 
@@ -229,6 +244,6 @@ void settings_init(void)
 
 	/* Read settings from EEPROM. */
 	ee_read_block(&settings.cache,
-		      (uint16_t)&ee_settings[found_index],
+		      (ee_addr_t)&ee_settings[found_index],
 		      sizeof(settings.cache));
 }
