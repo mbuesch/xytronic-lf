@@ -171,8 +171,19 @@ void debug_report_int8(const char __flash *prefix,
 
 void debug_enable(bool enable)
 {
+	bool display_en;
+
+#ifdef SIMULATOR
+	enable = true;
+	display_en = true;
+#else
+	/* The display and the UART share pins.
+	 * Disable the display, if UART is enabled. */
+	display_en = !enable;
+#endif
+
 	debug_enabled = enable;
-	display_enable(!enable);
+	display_enable(display_en);
 	if (enable) {
 		debug_uart_enable();
 		debug_uart_tx_string(to_memx(PSTR("\r\nst\r\n")));
