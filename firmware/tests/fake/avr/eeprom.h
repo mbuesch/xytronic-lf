@@ -2,7 +2,7 @@
 #define FAKE_EEPROM_H_
 
 
-#define EEMEM
+#define EEMEM			__attribute__((section("eeprom")))
 
 #define eeprom_is_ready()	1
 #define eeprom_busy_wait()	do { } while (!eeprom_is_ready())

@@ -3,6 +3,99 @@
 
 #include <endian.h>
 #include <stdint.h>
+#include <mutex>
+
+
+template <typename T> class FakeIO
+{
+public:
+	FakeIO()
+		: m_read_hook(NULL)
+		, m_read_hook_running(false)
+		, m_write_hook(NULL)
+		, m_write_hook_running(false)
+	{
+	}
+	virtual ~FakeIO()
+	{
+	}
+
+	FakeIO & operator=(const T &other)
+	{
+		std::lock_guard<std::recursive_mutex> locker(m_mutex);
+
+		T prev_value = m_reg;
+		m_reg = other;
+		call_write_hook(prev_value);
+
+		return *this;
+	}
+
+	FakeIO & operator|=(const T &other)
+	{
+		std::lock_guard<std::recursive_mutex> locker(m_mutex);
+
+		T prev_value = m_reg;
+		m_reg |= other;
+		call_write_hook(prev_value);
+
+		return *this;
+	}
+
+	FakeIO & operator&=(const T &other)
+	{
+		std::lock_guard<std::recursive_mutex> locker(m_mutex);
+
+		T prev_value = m_reg;
+		m_reg &= other;
+		call_write_hook(prev_value);
+
+		return *this;
+	}
+
+	operator T()
+	{
+		std::lock_guard<std::recursive_mutex> locker(m_mutex);
+
+		call_read_hook();
+		return m_reg;
+	}
+
+	void set_read_hook(void (*read_hook)(FakeIO<T> &io))
+	{
+		m_read_hook = read_hook;
+	}
+	void set_write_hook(void (*write_hook)(FakeIO<T> &io, T prev_value))
+	{
+		m_write_hook = write_hook;
+	}
+
+protected:
+	void call_read_hook()
+	{
+		if (m_read_hook && !m_read_hook_running) {
+			m_read_hook_running = true;
+			m_read_hook(*this);
+			m_read_hook_running = false;
+		}
+	}
+	void call_write_hook(T prev_value)
+	{
+		if (m_write_hook && !m_write_hook_running) {
+			m_write_hook_running = true;
+			m_write_hook(*this, prev_value);
+			m_write_hook_running = false;
+		}
+	}
+
+protected:
+	std::recursive_mutex m_mutex;
+	volatile T m_reg;
+	void (*m_read_hook)(FakeIO<T> &io);
+	bool m_read_hook_running;
+	void (*m_write_hook)(FakeIO<T> &io, T prev_value);
+	bool m_write_hook_running;
+};
 
 
 #define _SFR_ADDR(x) (&(x))
@@ -220,15 +313,10 @@ extern volatile uint8_t EECR;
 extern volatile uint8_t EEDR;
 #define EEDR	EEDR
 
-extern volatile uint16_t EEAR;
+typedef uintptr_t ee_addr_t;
+#define ee_addr_t ee_addr_t
+extern volatile ee_addr_t EEAR;
 #define EEAR	EEAR
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-# define EEARL	(*(((uint8_t *)&EEAR) + 0))
-# define EEARH	(*(((uint8_t *)&EEAR) + 1))
-#else
-# define ADCL	(*(((uint8_t *)&EEAR) + 1))
-# define ADCH	(*(((uint8_t *)&EEAR) + 0))
-#endif
 
 #define E2END	0x3FF
 
@@ -285,6 +373,55 @@ extern volatile uint8_t DIDR0;
 #define AIN0D	0
 extern volatile uint8_t DIDR1;
 #define DIDR1	DIDR1
+
+
+#define RXC0	7
+#define TXC0	6
+#define UDRE0	5
+#define FE0	4
+#define DOR0	3
+#define UPE0	2
+#define U2X0	1
+#define MPCM0	0
+extern FakeIO<uint8_t> UCSR0A;
+#define UCSR0A	UCSR0A
+
+#define RXCIE0	7
+#define TXCIE0	6
+#define UDRIE0	5
+#define RXEN0	4
+#define TXEN0	3
+#define UCSZ02	2
+#define RXB80	1
+#define TXB80	0
+extern  FakeIO<uint8_t> UCSR0B;
+#define UCSR0B	UCSR0B
+
+#define UMSEL01	7
+#define UMSEL00	6
+#define UPM01	5
+#define UPM00	4
+#define USBS0	3
+#define UCSZ01	2
+#define UDORD0	2
+#define UCSZ00	1
+#define UCPHA0	1
+#define UCPOL0	0
+extern FakeIO<uint8_t> UCSR0C;
+#define UCSR0C	UCSR0C
+
+extern volatile uint16_t UBRR0;
+#define UBRR0	UBRR0
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+# define UBRR0L	(*(((uint8_t *)&UBRR0) + 0))
+# define UBRR0H	(*(((uint8_t *)&UBRR0) + 1))
+#else
+# define UBRR0L	(*(((uint8_t *)&UBRR0) + 1))
+# define UBRR0H	(*(((uint8_t *)&UBRR0) + 0))
+#endif
+
+extern FakeIO<uint8_t> UDR0;
+#define UDR0	UDR0
 
 
 #endif /* FAKE_IO_H_ */

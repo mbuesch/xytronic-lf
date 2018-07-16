@@ -41,4 +41,10 @@ volatile uint8_t DIDR1;
 
 volatile uint8_t EECR;
 volatile uint8_t EEDR;
-volatile uint16_t EEAR;
+volatile ee_addr_t EEAR;
+
+FakeIO<uint8_t> UCSR0A;
+FakeIO<uint8_t> UCSR0B;
+FakeIO<uint8_t> UCSR0C;
+volatile uint16_t UBRR0;
+FakeIO<uint8_t> UDR0;

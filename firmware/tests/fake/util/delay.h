@@ -7,35 +7,34 @@
 #include <math.h>
 #include <stdio.h>
 
-static inline void _msleep_(unsigned int msecs)
+
+static inline void _usleep__(uint64_t us)
 {
 	int err;
-	struct timespec time;
+	struct timespec tv;
 
-	time.tv_sec = 0;
-	while (msecs >= 1000) {
-		time.tv_sec++;
-		msecs -= 1000;
+	tv.tv_sec = 0;
+	while (us >= 1000000u) {
+		tv.tv_sec++;
+		us -= 1000000u;
 	}
-	time.tv_nsec = msecs;
-	time.tv_nsec *= 1000000;
+	tv.tv_nsec = (int64_t)us * 1000;
 	do {
-		err = nanosleep(&time, &time);
+		err = nanosleep(&tv, &tv);
 	} while (err && errno == EINTR);
-	if (err) {
-		fprintf(stderr, "nanosleep() failed with: %s\n",
-			strerror(errno));
-	}
+	if (err)
+		perror("nanosleep()");
 }
 
 static inline void _delay_ms(double ms)
 {
-	_msleep_((unsigned int)ceil(ms));
+	_usleep__((uint64_t)ceil(ms * 1000.0));
 }
 
 static inline void _delay_us(double us)
 {
-	_msleep_(1);
+	_usleep__((uint64_t)ceil(us));
 }
+
 
 #endif /* FAKE_DELAY_H_ */
