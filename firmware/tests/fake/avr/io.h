@@ -61,6 +61,24 @@ public:
 		return m_reg;
 	}
 
+	volatile uint8_t * low_byte()
+	{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		return reinterpret_cast<volatile uint8_t *>(&m_reg) + 0;
+#else
+		return reinterpret_cast<volatile uint8_t *>(&m_reg) + 1;
+#endif
+	}
+
+	volatile uint8_t * high_byte()
+	{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		return reinterpret_cast<volatile uint8_t *>(&m_reg) + 1;
+#else
+		return reinterpret_cast<volatile uint8_t *>(&m_reg) + 0;
+#endif
+	}
+
 	void set_read_hook(void (*read_hook)(FakeIO<T> &io))
 	{
 		m_read_hook = read_hook;
@@ -98,12 +116,12 @@ protected:
 };
 
 
-#define _SFR_ADDR(x) (&(x))
-#define _MMIO_BYTE(x) (*(uint8_t *)(x))
-typedef volatile uint8_t * sfr_addr_t;
-#define sfr_addr_t sfr_addr_t
+#define _SFR_ADDR(x)		(static_cast<void *>(&(x)))
+#define _MMIO_BYTE(x)		(*(static_cast<FakeIO<uint8_t> *>(x)))
+typedef void *			sfr_addr_t;
+#define sfr_addr_t		sfr_addr_t
 
-extern volatile uint8_t MCUCSR;
+extern FakeIO<uint8_t> MCUCSR;
 #define MCUCSR	MCUCSR
 #define MCUSR	MCUCSR
 
@@ -115,7 +133,7 @@ extern volatile uint8_t MCUCSR;
 #define PB5	5
 #define PB6	6
 #define PB7	7
-extern volatile uint8_t PORTB;
+extern FakeIO<uint8_t> PORTB;
 #define PORTB	PORTB
 #define PC0	0
 #define PC1	1
@@ -125,7 +143,7 @@ extern volatile uint8_t PORTB;
 #define PC5	5
 #define PC6	6
 #define PC7	7
-extern volatile uint8_t PORTC;
+extern FakeIO<uint8_t> PORTC;
 #define PORTC	PORTC
 #define PD0	0
 #define PD1	1
@@ -135,7 +153,7 @@ extern volatile uint8_t PORTC;
 #define PD5	5
 #define PD6	6
 #define PD7	7
-extern volatile uint8_t PORTD;
+extern FakeIO<uint8_t> PORTD;
 #define PORTD	PORTD
 #define DDB0	0
 #define DDB1	1
@@ -145,7 +163,7 @@ extern volatile uint8_t PORTD;
 #define DDB5	5
 #define DDB6	6
 #define DDB7	7
-extern volatile uint8_t DDRB;
+extern FakeIO<uint8_t> DDRB;
 #define DDRB	DDRB
 #define DDC0	0
 #define DDC1	1
@@ -155,7 +173,7 @@ extern volatile uint8_t DDRB;
 #define DDC5	5
 #define DDC6	6
 #define DDC7	7
-extern volatile uint8_t DDRC;
+extern FakeIO<uint8_t> DDRC;
 #define DDRC	DDRC
 #define DDD0	0
 #define DDD1	1
@@ -165,7 +183,7 @@ extern volatile uint8_t DDRC;
 #define DDD5	5
 #define DDD6	6
 #define DDD7	7
-extern volatile uint8_t DDRD;
+extern FakeIO<uint8_t> DDRD;
 #define DDRD	DDRD
 #define PINB0	0
 #define PINB1	1
@@ -175,7 +193,7 @@ extern volatile uint8_t DDRD;
 #define PINB5	5
 #define PINB6	6
 #define PINB7	7
-extern volatile uint8_t PINB;
+extern FakeIO<uint8_t> PINB;
 #define PINB	PINB
 #define PINC0	0
 #define PINC1	1
@@ -185,7 +203,7 @@ extern volatile uint8_t PINB;
 #define PINC5	5
 #define PINC6	6
 #define PINC7	7
-extern volatile uint8_t PINC;
+extern FakeIO<uint8_t> PINC;
 #define PINC	PINC
 #define PIND0	0
 #define PIND1	1
@@ -195,33 +213,33 @@ extern volatile uint8_t PINC;
 #define PIND5	5
 #define PIND6	6
 #define PIND7	7
-extern volatile uint8_t PIND;
+extern FakeIO<uint8_t> PIND;
 #define PIND	PIND
 
 #define OCIE0B	2
 #define OCIE0A	1
 #define TOIE0	0
-extern volatile uint8_t TIMSK0;
+extern FakeIO<uint8_t> TIMSK0;
 #define TIMSK0	TIMSK0
 
 #define OCF0B	2
 #define OCF0A	1
 #define TOV0	0
-extern volatile uint8_t TIFR0;
+extern FakeIO<uint8_t> TIFR0;
 #define TIFR0	TIFR0
 
 #define ICIE1	5
 #define OCIE1B	2
 #define OCIE1A	1
 #define TOIE1	0
-extern volatile uint8_t TIMSK1;
+extern FakeIO<uint8_t> TIMSK1;
 #define TIMSK1	TIMSK1
 
 #define ICF1	5
 #define OCF1B	2
 #define OCF1A	1
 #define TOV1	0
-extern volatile uint8_t TIFR1;
+extern FakeIO<uint8_t> TIFR1;
 #define TIFR1	TIFR1
 
 #define SREG_C	0
@@ -232,7 +250,7 @@ extern volatile uint8_t TIFR1;
 #define SREG_H	5
 #define SREG_T	6
 #define SREG_I	7
-extern volatile uint8_t SREG;
+extern FakeIO<uint8_t> SREG;
 #define SREG	SREG
 
 #define COM0A1	7
@@ -264,40 +282,40 @@ extern volatile uint8_t SREG;
 #define FOC1A	7
 #define FOC1B	6
 
-extern volatile uint8_t OCR0A;
+extern FakeIO<uint8_t> OCR0A;
 #define OCR0A	OCR0A
 
-extern volatile uint8_t OCR0B;
+extern FakeIO<uint8_t> OCR0B;
 #define OCR0B	OCR0B
 
-extern volatile uint8_t TCNT0;
+extern FakeIO<uint8_t> TCNT0;
 #define TCNT0	TCNT0
 
-extern volatile uint8_t TCCR0A;
+extern FakeIO<uint8_t> TCCR0A;
 #define TCCR0A	TCCR0A
 
-extern volatile uint8_t TCCR0B;
+extern FakeIO<uint8_t> TCCR0B;
 #define TCCR0B	TCCR0B
 
-extern volatile uint16_t OCR1A;
+extern FakeIO<uint16_t> OCR1A;
 #define OCR1A	OCR1A
 
-extern volatile uint16_t OCR1B;
+extern FakeIO<uint16_t> OCR1B;
 #define OCR1B	OCR1B
 
-extern volatile uint16_t ICR1;
+extern FakeIO<uint16_t> ICR1;
 #define ICR1	ICR1
 
-extern volatile uint8_t TCNT1;
+extern FakeIO<uint8_t> TCNT1;
 #define TCNT1	TCNT1
 
-extern volatile uint8_t TCCR1A;
+extern FakeIO<uint8_t> TCCR1A;
 #define TCCR1A	TCCR1A
 
-extern volatile uint8_t TCCR1B;
+extern FakeIO<uint8_t> TCCR1B;
 #define TCCR1B	TCCR1B
 
-extern volatile uint8_t TCCR1C;
+extern FakeIO<uint8_t> TCCR1C;
 #define TCCR1C	TCCR1C
 
 
@@ -307,30 +325,25 @@ extern volatile uint8_t TCCR1C;
 #define EEMPE	2
 #define EEPE	1
 #define EERE	0
-extern volatile uint8_t EECR;
+extern FakeIO<uint8_t> EECR;
 #define EECR	EECR
 
-extern volatile uint8_t EEDR;
+extern FakeIO<uint8_t> EEDR;
 #define EEDR	EEDR
 
 typedef uintptr_t ee_addr_t;
 #define ee_addr_t ee_addr_t
-extern volatile ee_addr_t EEAR;
+extern FakeIO<ee_addr_t> EEAR;
 #define EEAR	EEAR
 
 #define E2END	0x3FF
 
 
-extern volatile uint16_t ADC;
+extern FakeIO<uint16_t> ADC;
 #define ADC	ADC
 #define ADCW	ADC
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-# define ADCL	(*(((uint8_t *)&ADC) + 0))
-# define ADCH	(*(((uint8_t *)&ADC) + 1))
-#else
-# define ADCL	(*(((uint8_t *)&ADC) + 1))
-# define ADCH	(*(((uint8_t *)&ADC) + 0))
-#endif
+#define ADCL	(*(ADC.low_byte()))
+#define ADCH	(*(ADC.high_byte()))
 
 #define ADEN	7
 #define ADSC	6
@@ -340,14 +353,14 @@ extern volatile uint16_t ADC;
 #define ADPS2	2
 #define ADPS1	1
 #define ADPS0	0
-extern volatile uint8_t ADCSRA;
+extern FakeIO<uint8_t> ADCSRA;
 #define ADCSRA	ADCSRA
 
 #define ACME	6
 #define ADTS2	2
 #define ADTS1	1
 #define ADTS0	0
-extern volatile uint8_t ADCSRB;
+extern FakeIO<uint8_t> ADCSRB;
 #define ADCSRB	ADCSRB
 
 #define REFS1	7
@@ -357,7 +370,7 @@ extern volatile uint8_t ADCSRB;
 #define MUX2	2
 #define MUX1	1
 #define MUX0	0
-extern volatile uint8_t ADMUX;
+extern FakeIO<uint8_t> ADMUX;
 #define ADMUX	ADMUX
 
 #define ADC5D	5
@@ -366,12 +379,12 @@ extern volatile uint8_t ADMUX;
 #define ADC2D	2
 #define ADC1D	1
 #define ADC0D	0
-extern volatile uint8_t DIDR0;
+extern FakeIO<uint8_t> DIDR0;
 #define DIDR0	DIDR0
 
 #define AIN1D	1
 #define AIN0D	0
-extern volatile uint8_t DIDR1;
+extern FakeIO<uint8_t> DIDR1;
 #define DIDR1	DIDR1
 
 
@@ -394,7 +407,7 @@ extern FakeIO<uint8_t> UCSR0A;
 #define UCSZ02	2
 #define RXB80	1
 #define TXB80	0
-extern  FakeIO<uint8_t> UCSR0B;
+extern FakeIO<uint8_t> UCSR0B;
 #define UCSR0B	UCSR0B
 
 #define UMSEL01	7
@@ -410,15 +423,10 @@ extern  FakeIO<uint8_t> UCSR0B;
 extern FakeIO<uint8_t> UCSR0C;
 #define UCSR0C	UCSR0C
 
-extern volatile uint16_t UBRR0;
+extern FakeIO<uint16_t> UBRR0;
 #define UBRR0	UBRR0
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-# define UBRR0L	(*(((uint8_t *)&UBRR0) + 0))
-# define UBRR0H	(*(((uint8_t *)&UBRR0) + 1))
-#else
-# define UBRR0L	(*(((uint8_t *)&UBRR0) + 1))
-# define UBRR0H	(*(((uint8_t *)&UBRR0) + 0))
-#endif
+#define UBRR0L	(*(UBRR0.low_byte()))
+#define UBRR0H	(*(UBRR0.high_byte()))
 
 extern FakeIO<uint8_t> UDR0;
 #define UDR0	UDR0
