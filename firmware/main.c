@@ -71,7 +71,10 @@ void early_init(void)
 }
 
 /* One iteration of the main loop. */
-static void main_loop_once(void)
+#ifndef SIMULATOR
+static
+#endif
+void main_loop_once(void)
 {
 	wdt_reset();
 
