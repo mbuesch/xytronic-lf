@@ -27,6 +27,44 @@ extern "C" {
 #include <Python.h>
 
 
+static PyObject * xy_simulator_adc_set(PyObject *self, PyObject *args)
+{
+	int adc_index;
+	unsigned int adc_value;
+	bool ok;
+
+	if (!PyArg_ParseTuple(args, "iI", &adc_index, &adc_value))
+		return NULL;
+
+	ok = simulator_adc_set(adc_index, std::min(adc_value, (unsigned int)UINT16_MAX));
+	if (!ok) {
+		PyErr_SetString(PyExc_RuntimeError, "simulator_adc_set() failed");
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject * xy_simulator_pwm_get(PyObject *self, PyObject *args)
+{
+	int pwm_index;
+	uint16_t value, max_value;
+	bool ok;
+	PyObject *retTuple;
+
+	if (!PyArg_ParseTuple(args, "i", &pwm_index))
+		return NULL;
+
+	ok = simulator_pwm_get(pwm_index, &value, &max_value);
+	if (!ok) {
+		PyErr_SetString(PyExc_RuntimeError, "simulator_pwm_get() failed");
+		return NULL;
+	}
+	retTuple = Py_BuildValue("II", (unsigned int)value, (unsigned int)max_value);
+
+	return retTuple;
+}
+
 static PyObject * xy_simulator_uart_get_tx(PyObject *self, PyObject *args)
 {
 	uint8_t buf[4096];
@@ -63,6 +101,8 @@ static void xy_free(void *arg)
 }
 
 static PyMethodDef xy_methods[] = {
+	{ "simulator_adc_set", xy_simulator_adc_set, METH_VARARGS, "", },
+	{ "simulator_pwm_get", xy_simulator_pwm_get, METH_VARARGS, "", },
 	{ "simulator_uart_get_tx", xy_simulator_uart_get_tx, METH_NOARGS, "", },
 	{ "simulator_mainloop_once", xy_simulator_mainloop_once, METH_NOARGS, "", },
 	{ "simulator_exit", xy_simulator_exit, METH_NOARGS, "", },

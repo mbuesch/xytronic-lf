@@ -45,20 +45,41 @@
 
 
 #define memory_barrier()	__asm__ __volatile__("" : : : "memory")
+#define ARRAY_SIZE(x)		(sizeof(x) / sizeof((x)[0]))
 #define _stringify(x)		#x
 #define stringify(x)		_stringify(x)
 
 
+/* Simulator context */
 static int sim_initialized;
 static std::thread io_thread;
 static volatile int io_thread_stop;
-static volatile int irq_suspend_request;
-static volatile int irq_suspended;
 
+/* EEPROM */
 extern const uint8_t __start_eeprom;
 extern const uint8_t __stop_eeprom;
+static std::recursive_mutex eeprom_mutex;
 
+/* UART */
+static uint8_t uart_tx_buf[4096];
+static unsigned int uart_tx_buf_write;
+static unsigned int uart_tx_buf_read;
+static std::recursive_mutex uart_mutex;
 
+/* ADC */
+static int ADC_vect_pending;
+static int adc_conversion_running;
+static uint64_t adc_conversion_start;
+static uint16_t adc_values[11];
+static std::recursive_mutex adc_mutex;
+
+/* Timer 0 */
+static int TIMER0_COMPA_vect_pending;
+static uint64_t timer0_prevsample;
+
+/* Interrupts */
+static volatile int irq_suspend_request;
+static volatile int irq_suspended;
 ISR(ADC_vect);
 ISR(EE_READY_vect);
 ISR(TIMER0_COMPA_vect);
@@ -174,6 +195,8 @@ static void EEDR_read_hook(FakeIO<uint8_t> &io)
 	uint16_t offset;
 	uint8_t *ee_pointer;
 
+	std::lock_guard<std::recursive_mutex> locker(eeprom_mutex);
+
 	if (EECR & (1 << EERE)) {
 		addr = EEAR;
 		ee_pointer = (uint8_t *)addr;
@@ -194,17 +217,12 @@ static void UCSR0A_read_hook(FakeIO<uint8_t> &io)
 	UCSR0A |= (1 << UDRE0);
 }
 
-static uint8_t uart_tx_buf[4096];
-static unsigned int uart_tx_buf_write;
-static unsigned int uart_tx_buf_read;
-static std::recursive_mutex uart_mutex;
-
 static void UDR0_write_hook(FakeIO<uint8_t> &io, uint8_t prev_value)
 {
 	std::lock_guard<std::recursive_mutex> locker(uart_mutex);
 
 	uart_tx_buf[uart_tx_buf_write] = UDR0;
-	if (++uart_tx_buf_write >= sizeof(uart_tx_buf))
+	if (++uart_tx_buf_write >= ARRAY_SIZE(uart_tx_buf))
 		uart_tx_buf_write = 0;
 }
 
@@ -216,12 +234,6 @@ static void UDR0_write_hook(FakeIO<uint8_t> &io, uint8_t prev_value)
 			print_exit_irqhandler(stringify(name));		\
 		}							\
 	} while (0)
-
-static int ADC_vect_pending;
-static int TIMER0_COMPA_vect_pending;
-static uint64_t timer0_prevsample;
-static int adc_conversion_running;
-static uint64_t adc_conversion_start;
 
 /* Simulate timer0 hardware */
 static void simulate_timer0(uint64_t systime_ms)
@@ -244,6 +256,7 @@ static void simulate_adc(uint64_t systime_ms)
 	uint16_t adc_value;
 	uint32_t adc_hz, adc_ps;
 	uint64_t conv_runtime_ms;
+	uint8_t mux;
 
 	switch (ADCSRA & ((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))) {
 	case MEAS_PS_2:
@@ -274,27 +287,48 @@ static void simulate_adc(uint64_t systime_ms)
 	adc_hz = F_CPU / adc_ps;
 	conv_runtime_ms = (uint64_t)ceil((1000.0 / adc_hz) * 13);
 
-	switch (ADMUX & ((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0))) {
-	case MEAS_MUX_ADC1:
-		/* Temperature sensor */
-		adc_value = 123;
-		break;
-	case MEAS_MUX_ADC2:
-		/* Current sensor */
-		adc_value = 345;
-		break;
-	case MEAS_MUX_ADC0:
-	case MEAS_MUX_ADC3:
-	case MEAS_MUX_ADC4:
-	case MEAS_MUX_ADC5:
-	case MEAS_MUX_ADC6:
-	case MEAS_MUX_ADC7:
-	case MEAS_MUX_ADC8:
-	case MEAS_MUX_BG:
-	case MEAS_MUX_GND:
-	default:
-		adc_value = 0;
-		break;
+	mux = (ADMUX & ((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0)));
+	{
+		std::lock_guard<std::recursive_mutex> locker(adc_mutex);
+
+		switch (mux) {
+		case MEAS_MUX_ADC0:
+			adc_value = adc_values[0];
+			break;
+		case MEAS_MUX_ADC1:
+			adc_value = adc_values[1];
+			break;
+		case MEAS_MUX_ADC2:
+			adc_value = adc_values[2];
+			break;
+		case MEAS_MUX_ADC3:
+			adc_value = adc_values[3];
+			break;
+		case MEAS_MUX_ADC4:
+			adc_value = adc_values[4];
+			break;
+		case MEAS_MUX_ADC5:
+			adc_value = adc_values[5];
+			break;
+		case MEAS_MUX_ADC6:
+			adc_value = adc_values[6];
+			break;
+		case MEAS_MUX_ADC7:
+			adc_value = adc_values[7];
+			break;
+		case MEAS_MUX_ADC8:
+			adc_value = adc_values[8];
+			break;
+		case MEAS_MUX_BG:
+			adc_value = adc_values[9];
+			break;
+		case MEAS_MUX_GND:
+			adc_value = adc_values[10];
+			break;
+		default:
+			adc_value = 0;
+			break;
+		}
 	}
 
 	if (adc_conversion_running) {
@@ -333,7 +367,9 @@ static void io_thread_func(void)
 		simulate_timer0(systime_ms);
 		simulate_adc(systime_ms);
 
-		/* Execute interrupt handlers */
+		/* Execute interrupt handlers.
+		 * Note that in the simulator the IRQ handlers do actually
+		 * run in parallel with the main thread outside of cli-sections. */
 		suspended = irq_suspend_request;
 		irq_suspended = suspended;
 		if (!suspended) {
@@ -353,13 +389,35 @@ size_t simulator_uart_get_tx(uint8_t *buf, size_t max_bytes)
 	while (max_bytes > 0 && uart_tx_buf_read != uart_tx_buf_write) {
 		*buf = uart_tx_buf[uart_tx_buf_read];
 		count++;
-		if (++uart_tx_buf_read >= sizeof(uart_tx_buf))
+		if (++uart_tx_buf_read >= ARRAY_SIZE(uart_tx_buf))
 			uart_tx_buf_read = 0;
 		max_bytes--;
 		buf++;
 	}
 
 	return count;
+}
+
+bool simulator_pwm_get(int pwm_index, uint16_t *value, uint16_t *max_value)
+{
+	switch (pwm_index) {
+	case 1:
+		*value = OCR1A;
+		*max_value = ICR1;
+		return true;
+	}
+	return false;
+}
+
+bool simulator_adc_set(int adc_index, uint16_t value)
+{
+	std::lock_guard<std::recursive_mutex> locker(adc_mutex);
+
+	if (adc_index >= 0 && adc_index < (int)ARRAY_SIZE(adc_values)) {
+		adc_values[adc_index] = value;
+		return true;
+	}
+	return false;
 }
 
 void main_loop_once(void);
