@@ -33,7 +33,7 @@ uint16_t lp_filter_u16_run(struct lp_filter_u16 *lp, uint16_t in,
 	lp->filter_buf = buf;
 	out = buf >> filter_shift;
 
-	return (uint16_t)min(out, (uint16_t)UINT16_MAX);
+	return (uint16_t)min(out, (uint24_t)UINT16_MAX);
 }
 
 fixpt_t lp_filter_fixpt_run(struct lp_filter_fixpt *lp, fixpt_t in,
