@@ -15,7 +15,7 @@ struct settings {
 	fixpt_t temp_adj;
 	uint8_t reserved[2];
 	uint8_t serial;
-} _packed;
+};
 
 
 struct settings * get_settings(void);
