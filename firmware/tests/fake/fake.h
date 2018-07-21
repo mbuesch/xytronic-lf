@@ -5,10 +5,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "int24.h"
 
-/* This __(u)int24 is 32 bits wide. This might cause problems. */
-typedef uint32_t __uint24;
-typedef int32_t __int24;
+
+typedef Int24 __int24;
+typedef UInt24 __uint24;
+
 
 static inline char *utoa(unsigned int val, char *s, int radix)
 {

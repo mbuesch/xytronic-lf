@@ -1,7 +1,7 @@
 CPPFLAGS	:= -I.. -Ifake -DF_CPU=8000000UL \
 		   -DTESTSUITE=1 -D_DEFAULT_SOURCE
 
-CXXFLAGS	:= -std=c++17 -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
+CXXFLAGS	:= -std=c++17 -fconcepts -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 		   -Wsuggest-attribute=noreturn -Wundef -Wpointer-arith \
 		   -Wcast-qual -Wlogical-op -Wshadow -Wconversion \
 		   -Wno-shift-negative-value
@@ -19,7 +19,7 @@ TESTS		:= test_common \
 TEST_BINS	:= $(foreach t,$(TESTS),$(t).run)
 
 %.o: %.c test.h
-	$(CXX) -o $@ -c $(CPPFLAGS) $(CFLAGS) $<
+	$(CXX) -o $@ -c $(CPPFLAGS) $(CXXFLAGS) $<
 
 test_%.run: test_%.o fake/fake.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $(LDFLAGS) $^
