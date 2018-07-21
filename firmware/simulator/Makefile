@@ -42,7 +42,7 @@ CPPFLAGS	:= -I.. -I../tests/fake \
 		   -DCONF_CURRCUTOFF=$(CONF_CURRCUTOFF) \
 		   -DCONF_CURRCUTOFFHYST=$(CONF_CURRCUTOFFHYST)
 
-CXXFLAGS	:= -std=c++17 -g -O2 -pthread -fPIC \
+CXXFLAGS	:= -std=c++17 -g -O2 -pthread -fPIC -fconcepts \
 		   -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 		   -Wsuggest-attribute=noreturn -Wundef -Wpointer-arith \
 		   -Wno-shift-negative-value \

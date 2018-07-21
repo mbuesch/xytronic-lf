@@ -27,6 +27,45 @@ extern "C" {
 #include <Python.h>
 
 
+static PyObject * xy_simulator_setting_write(PyObject *self, PyObject *args)
+{
+	int value = 0;
+	char *name = NULL;
+	bool ok;
+
+	if (!PyArg_ParseTuple(args, "si", &name, &value))
+		return NULL;
+
+	ok = simulator_setting_access(name, &value, true);
+	if (!ok) {
+		PyErr_SetString(PyExc_RuntimeError, "simulator_settings_access() failed");
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+static PyObject * xy_simulator_setting_read(PyObject *self, PyObject *args)
+{
+	int value = 0;
+	char *name = NULL;
+	bool ok;
+	PyObject *retValue;
+
+	if (!PyArg_ParseTuple(args, "s", &name))
+		return NULL;
+
+	ok = simulator_setting_access(name, &value, false);
+	if (!ok) {
+		PyErr_SetString(PyExc_RuntimeError, "simulator_settings_access() failed");
+		return NULL;
+	}
+	retValue = Py_BuildValue("i", value);
+
+	return retValue;
+}
+
+
 static PyObject * xy_simulator_adc_set(PyObject *self, PyObject *args)
 {
 	int adc_index;
@@ -101,6 +140,8 @@ static void xy_free(void *arg)
 }
 
 static PyMethodDef xy_methods[] = {
+	{ "simulator_setting_write", xy_simulator_setting_write, METH_VARARGS, "", },
+	{ "simulator_setting_read", xy_simulator_setting_read, METH_VARARGS, "", },
 	{ "simulator_adc_set", xy_simulator_adc_set, METH_VARARGS, "", },
 	{ "simulator_pwm_get", xy_simulator_pwm_get, METH_VARARGS, "", },
 	{ "simulator_uart_get_tx", xy_simulator_uart_get_tx, METH_NOARGS, "", },

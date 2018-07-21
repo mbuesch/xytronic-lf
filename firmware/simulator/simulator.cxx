@@ -35,6 +35,7 @@
 
 #include "../timer.h"
 #include "../measure.h"
+#include "../settings.h"
 
 #include <thread>
 #include <mutex>
@@ -417,6 +418,43 @@ bool simulator_adc_set(int adc_index, uint16_t value)
 		adc_values[adc_index] = value;
 		return true;
 	}
+	return false;
+}
+
+#define SETTINGS_ACCESS(_field, _name, _value, _write) do {		\
+		if (strcmp(_name, stringify(_field)) == 0) {		\
+			if (_write)					\
+				get_settings()->_field = *(_value);	\
+			else						\
+				(*_value) = get_settings()->_field;	\
+			return true;					\
+		}							\
+	} while (0)
+
+bool simulator_setting_access(const char *name, int *value, bool write)
+{
+	SETTINGS_ACCESS(temp_k[0].kp, name, value, write);
+	SETTINGS_ACCESS(temp_k[0].ki, name, value, write);
+	SETTINGS_ACCESS(temp_k[0].kd, name, value, write);
+	SETTINGS_ACCESS(temp_k[0].d_decay_div, name, value, write);
+	SETTINGS_ACCESS(temp_k[1].kp, name, value, write);
+	SETTINGS_ACCESS(temp_k[1].ki, name, value, write);
+	SETTINGS_ACCESS(temp_k[1].kd, name, value, write);
+	SETTINGS_ACCESS(temp_k[1].d_decay_div, name, value, write);
+	SETTINGS_ACCESS(temp_k[2].kp, name, value, write);
+	SETTINGS_ACCESS(temp_k[2].ki, name, value, write);
+	SETTINGS_ACCESS(temp_k[2].kd, name, value, write);
+	SETTINGS_ACCESS(temp_k[2].d_decay_div, name, value, write);
+	SETTINGS_ACCESS(temp_idle_setpoint, name, value, write);
+	SETTINGS_ACCESS(temp_setpoint[0], name, value, write);
+	SETTINGS_ACCESS(temp_setpoint[1], name, value, write);
+	SETTINGS_ACCESS(temp_setpoint[2], name, value, write);
+	SETTINGS_ACCESS(temp_setpoint[3], name, value, write);
+	SETTINGS_ACCESS(temp_setpoint[4], name, value, write);
+	SETTINGS_ACCESS(temp_setpoint[5], name, value, write);
+	SETTINGS_ACCESS(temp_setpoint_active, name, value, write);
+	SETTINGS_ACCESS(temp_adj, name, value, write);
+	SETTINGS_ACCESS(serial, name, value, write);
 	return false;
 }
 

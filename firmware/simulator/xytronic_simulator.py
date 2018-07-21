@@ -32,6 +32,33 @@ class Simulator(object):
 	ADC_TEMP	= 1
 	ADC_CURRENT	= 2
 	PWM_CURRENT	= 1
+	FIXPT_SIZE	= 24
+	FIXPT_SHIFT	= 6
+
+	SETTINGS = {
+		"temp_k[0].kp"		: "fixpt_t",
+		"temp_k[0].ki"		: "fixpt_t",
+		"temp_k[0].kd"		: "fixpt_t",
+		"temp_k[0].d_decay_div"	: "fixpt_t",
+		"temp_k[1].kp"		: "fixpt_t",
+		"temp_k[1].ki"		: "fixpt_t",
+		"temp_k[1].kd"		: "fixpt_t",
+		"temp_k[1].d_decay_div"	: "fixpt_t",
+		"temp_k[2].kp"		: "fixpt_t",
+		"temp_k[2].ki"		: "fixpt_t",
+		"temp_k[2].kd"		: "fixpt_t",
+		"temp_k[2].d_decay_div"	: "fixpt_t",
+		"temp_idle_setpoint"	: "fixpt_t",
+		"temp_setpoint[0]"	: "fixpt_t",
+		"temp_setpoint[1]"	: "fixpt_t",
+		"temp_setpoint[2]"	: "fixpt_t",
+		"temp_setpoint[3]"	: "fixpt_t",
+		"temp_setpoint[4]"	: "fixpt_t",
+		"temp_setpoint[5]"	: "fixpt_t",
+		"temp_setpoint_active"	: "uint8_t",
+		"temp_adj"		: "fixpt_t",
+		"serial"		: "uint8_t",
+	}
 
 	def __init__(self):
 		self.xy = pyxytronic
@@ -41,6 +68,17 @@ class Simulator(object):
 	def run(self):
 		self.xy.simulator_mainloop_once()
 		self.__handle_debuginterface()
+
+	def setting_get(self, name):
+		value = self.xy.simulator_setting_read(name)
+		if self.SETTINGS[name] == "fixpt_t":
+			value = self.__fixptToFloat(value)
+		return value
+
+	def setting_set(self, name, value):
+		if self.SETTINGS[name] == "fixpt_t":
+			value = self.__floatToFixpt(value)
+		self.xy.simulator_setting_write(name, value)
 
 	def pwm_current_get(self):
 		value, maxValue = self.xy.simulator_pwm_get(self.PWM_CURRENT)
@@ -95,6 +133,32 @@ class Simulator(object):
 				if line:
 					return line.decode("utf-8", "ignore").strip()
 		return ""
+
+	@classmethod
+	def __floatToFixpt(cls, f):
+		f = float(f)
+		if f < 0.0:
+			return int((f * float(1 << cls.FIXPT_SHIFT)) - 0.5)
+		return int((f * float(1 << cls.FIXPT_SHIFT)) + 0.5)
+
+	@classmethod
+	def __fixptToFloat(cls, fixpt):
+		mask = (1 << cls.FIXPT_SIZE) - 1
+		upperMask = (mask >> cls.FIXPT_SHIFT) << cls.FIXPT_SHIFT
+		lowerMask = mask ^ upperMask
+
+		# sign
+		if fixpt & (1 << (cls.FIXPT_SIZE - 1)):
+			fixpt = -((~fixpt + 1) & mask)
+
+		fact = -1 if fixpt < 0 else 1
+		fixpt *= fact
+
+		f = float((fixpt & upperMask) >> cls.FIXPT_SHIFT)
+		f += float(fixpt & lowerMask) / float(lowerMask + 1)
+
+		f *= fact
+		return f
 
 	def __reset_debuginterface(self):
 		self.__dbg_currentRealR = 0.0
