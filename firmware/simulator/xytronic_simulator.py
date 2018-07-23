@@ -26,7 +26,6 @@ import time
 import sys
 
 
-
 class Simulator(object):
 	CURR_DIV	= 10.0
 	ADC_TEMP	= 1
@@ -49,12 +48,7 @@ class Simulator(object):
 		"temp_k[2].kd"		: "fixpt_t",
 		"temp_k[2].d_decay_div"	: "fixpt_t",
 		"temp_idle_setpoint"	: "fixpt_t",
-		"temp_setpoint[0]"	: "fixpt_t",
-		"temp_setpoint[1]"	: "fixpt_t",
-		"temp_setpoint[2]"	: "fixpt_t",
-		"temp_setpoint[3]"	: "fixpt_t",
-		"temp_setpoint[4]"	: "fixpt_t",
-		"temp_setpoint[5]"	: "fixpt_t",
+		"temp_setpoint"		: "fixpt_t",
 		"temp_setpoint_active"	: "uint8_t",
 		"temp_adj"		: "fixpt_t",
 		"serial"		: "uint8_t",
@@ -64,10 +58,16 @@ class Simulator(object):
 		self.xy = pyxytronic
 		self.__uartbuf = bytearray()
 		self.__reset_debuginterface()
+		self.__runHook = []
+
+	def addRunHook(self, hook):
+		self.__runHook.append(hook)
 
 	def run(self):
 		self.xy.simulator_mainloop_once()
 		self.__handle_debuginterface()
+		for hook in self.__runHook:
+			hook();
 
 	def setting_get(self, name):
 		value = self.xy.simulator_setting_read(name)
@@ -161,18 +161,18 @@ class Simulator(object):
 		return f
 
 	def __reset_debuginterface(self):
-		self.__dbg_currentRealR = 0.0
-		self.__dbg_currentUsedR = 0.0
-		self.__dbg_currentRState = 0
-		self.__dbg_currentY = 0.0
-		self.__dbg_tempR = 0.0
-		self.__dbg_tempY1 = 0.0
-		self.__dbg_tempY2 = 0.0
-		self.__dbg_measCurr = 0
-		self.__dbg_filtCurr = 0
-		self.__dbg_measTemp = 0
-		self.__dbg_boostMode = 0
-		self.__dbg_calCurrPercent = 0
+		self.dbg_currentRealR = 0.0
+		self.dbg_currentUsedR = 0.0
+		self.dbg_currentRState = 0
+		self.dbg_currentY = 0.0
+		self.dbg_tempR = 0.0
+		self.dbg_tempY1 = 0.0
+		self.dbg_tempY2 = 0.0
+		self.dbg_measCurr = 0
+		self.dbg_filtCurr = 0
+		self.dbg_measTemp = 0
+		self.dbg_boostMode = 0
+		self.dbg_calCurrPercent = 0
 
 	@classmethod
 	def __parseInt(cls, valStr, valIdent):
@@ -214,38 +214,32 @@ class Simulator(object):
 			self.error("Unknown format: %s" % line)
 			return
 		if elems[0] == "cr1":
-			self.__dbg_currentRealR = self.__parseFixpt(elems[1], "cr1") / self.CURR_DIV
+			self.dbg_currentRealR = self.__parseFixpt(elems[1], "cr1") / self.CURR_DIV
 		elif elems[0] == "cr2":
-			self.__dbg_currentUsedR = self.__parseFixpt(elems[1], "cr2") / self.CURR_DIV
+			self.dbg_currentUsedR = self.__parseFixpt(elems[1], "cr2") / self.CURR_DIV
 		elif elems[0] == "rs":
-			self.__dbg_currentRState = self.__parseInt(elems[1], "rs")
+			self.dbg_currentRState = self.__parseInt(elems[1], "rs")
 		elif elems[0] == "cy":
-			self.__dbg_currentY = self.__parseFixpt(elems[1], "cy") / self.CURR_DIV
+			self.dbg_currentY = self.__parseFixpt(elems[1], "cy") / self.CURR_DIV
 		elif elems[0] == "tr":
-			self.__dbg_tempR = self.__parseFixpt(elems[1], "tr")
+			self.dbg_tempR = self.__parseFixpt(elems[1], "tr")
 		elif elems[0] == "ty1":
-			self.__dbg_tempY1 = self.__parseFixpt(elems[1], "ty1")
+			self.dbg_tempY1 = self.__parseFixpt(elems[1], "ty1")
 		elif elems[0] == "ty2":
-			self.__dbg_tempY2 = self.__parseFixpt(elems[1], "ty2") / self.CURR_DIV
+			self.dbg_tempY2 = self.__parseFixpt(elems[1], "ty2") / self.CURR_DIV
 		elif elems[0] == "tb":
-			self.__dbg_boostMode = self.__parseInt(elems[1], "tb")
+			self.dbg_boostMode = self.__parseInt(elems[1], "tb")
 		elif elems[0] == "mc":
-			self.__dbg_measCurr = self.__parseInt(elems[1], "mc")
+			self.dbg_measCurr = self.__parseInt(elems[1], "mc")
 		elif elems[0] == "fc":
-			self.__dbg_filtCurr = self.__parseInt(elems[1], "fc")
+			self.dbg_filtCurr = self.__parseInt(elems[1], "fc")
 		elif elems[0] == "mt":
-			self.__dbg_measTemp = self.__parseInt(elems[1], "mt")
+			self.dbg_measTemp = self.__parseInt(elems[1], "mt")
 		elif elems[0] == "cc":
-			self.__dbg_calCurrPercent = self.__parseInt(elems[1], "cc")
+			self.dbg_calCurrPercent = self.__parseInt(elems[1], "cc")
 		else:
 			self.error("Unknown elem: %s" % elems[0])
 			return
-
-		self.info("temp-r: %.02f °C   current-y: %.02f A   current-r: %.02f A" % (
-			self.__dbg_tempR,
-			self.__dbg_currentY,
-			self.__dbg_currentUsedR,
-		))
 
 	@classmethod
 	def error(cls, msg):
@@ -255,14 +249,31 @@ class Simulator(object):
 	def info(cls, msg):
 		print(msg)
 
+class IronTempSimulator(object):
+	def __init__(self, sim):
+		self.sim = sim
+		self.sim.addRunHook(self.__run)
+
+	def __run(self):
+		self.sim.adc_temp_set(100)#TODO
+
+class IronCurrentSimulator(object):
+	def __init__(self, sim):
+		self.sim = sim
+		self.sim.addRunHook(self.__run)
+
+	def __run(self):
+		curY = self.sim.pwm_current_get()
+		self.sim.adc_current_set(4)#TODO
+
 def main():
 	pyxytronic.simulator_init()
 	try:
 		sim = Simulator()
+		tempSim = IronTempSimulator(sim)
+		curSim = IronCurrentSimulator(sim)
 		while 1:
 			sim.run()
-			sim.adc_temp_set(100)
-			sim.adc_current_set(4)
 			time.sleep(0.0005)
 	finally:
 		pyxytronic.simulator_exit()

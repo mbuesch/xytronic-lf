@@ -36,6 +36,8 @@
 #include "../timer.h"
 #include "../measure.h"
 #include "../settings.h"
+#include "../menu.h"
+#include "../measure_temp.h"
 
 #include <thread>
 #include <mutex>
@@ -450,40 +452,57 @@ bool simulator_adc_set(int adc_index, uint16_t value)
 	return false;
 }
 
-#define SETTINGS_ACCESS(_field, _name, _value, _write) do {		\
-		if (strcmp(_name, stringify(_field)) == 0) {		\
-			if (_write)					\
+#define SETTINGS_ACCESS(_field, _compare_name, _name, _value, _write) ({ \
+		bool retval = false;					\
+		if (strcmp(_name, _compare_name) == 0) {		\
+			if (_write) {					\
 				get_settings()->_field = *(_value);	\
-			else						\
+				store_settings();			\
+			} else						\
 				(*_value) = get_settings()->_field;	\
-			return true;					\
+			retval = true;					\
 		}							\
-	} while (0)
+		retval;							\
+	})
 
 bool simulator_setting_access(const char *name, int *value, bool write)
 {
-	SETTINGS_ACCESS(temp_k[0].kp, name, value, write);
-	SETTINGS_ACCESS(temp_k[0].ki, name, value, write);
-	SETTINGS_ACCESS(temp_k[0].kd, name, value, write);
-	SETTINGS_ACCESS(temp_k[0].d_decay_div, name, value, write);
-	SETTINGS_ACCESS(temp_k[1].kp, name, value, write);
-	SETTINGS_ACCESS(temp_k[1].ki, name, value, write);
-	SETTINGS_ACCESS(temp_k[1].kd, name, value, write);
-	SETTINGS_ACCESS(temp_k[1].d_decay_div, name, value, write);
-	SETTINGS_ACCESS(temp_k[2].kp, name, value, write);
-	SETTINGS_ACCESS(temp_k[2].ki, name, value, write);
-	SETTINGS_ACCESS(temp_k[2].kd, name, value, write);
-	SETTINGS_ACCESS(temp_k[2].d_decay_div, name, value, write);
-	SETTINGS_ACCESS(temp_idle_setpoint, name, value, write);
-	SETTINGS_ACCESS(temp_setpoint[0], name, value, write);
-	SETTINGS_ACCESS(temp_setpoint[1], name, value, write);
-	SETTINGS_ACCESS(temp_setpoint[2], name, value, write);
-	SETTINGS_ACCESS(temp_setpoint[3], name, value, write);
-	SETTINGS_ACCESS(temp_setpoint[4], name, value, write);
-	SETTINGS_ACCESS(temp_setpoint[5], name, value, write);
-	SETTINGS_ACCESS(temp_setpoint_active, name, value, write);
-	SETTINGS_ACCESS(temp_adj, name, value, write);
-	SETTINGS_ACCESS(serial, name, value, write);
+	struct settings *s = get_settings();
+
+	if (SETTINGS_ACCESS(temp_k[0].kp, "temp_k[0].kp", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[0].ki, "temp_k[0].ki", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[0].kd, "temp_k[0].kd", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[0].d_decay_div, "temp_k[0].d_decay_div", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[1].kp, "temp_k[1].kp", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[1].ki, "temp_k[1].ki", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[1].kd, "temp_k[1].kd", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[1].d_decay_div, "temp_k[1].d_decay_div", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[2].kp, "temp_k[2].kp", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[2].ki, "temp_k[2].ki", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[2].kd, "temp_k[2].kd", name, value, write) ||
+	    SETTINGS_ACCESS(temp_k[2].d_decay_div, "temp_k[2].d_decay_div", name, value, write)) {
+		contrtemp_update_pid_config();
+		return true;
+	}
+	if (SETTINGS_ACCESS(temp_idle_setpoint, "temp_idle_setpoint", name, value, write)) {
+		contrtemp_set_idle_setpoint(get_settings()->temp_idle_setpoint);
+		return true;
+	}
+	if (SETTINGS_ACCESS(temp_setpoint[s->temp_setpoint_active], "temp_setpoint", name, value, write) ||
+	    SETTINGS_ACCESS(temp_setpoint_active, "temp_setpoint_active", name, value, write)) {
+		contrtemp_update_setpoint();
+		menu_request_display_update();
+		return true;
+	}
+	if (strcmp(name, "temp_adj") == 0) {
+		if (write)
+			meastemp_adjust_set(*value);
+		else
+			*value = meastemp_adjust_get();
+		return true;
+	}
+	if (SETTINGS_ACCESS(serial, "serial", name, value, write))
+		return true;
 	return false;
 }
 
