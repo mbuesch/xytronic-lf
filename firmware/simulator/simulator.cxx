@@ -51,36 +51,65 @@
 #define stringify(x)		_stringify(x)
 
 
-/* Simulator context */
-static int sim_initialized;
-static std::thread io_thread;
-static volatile int io_thread_stop;
+struct sim_context {
+	/* Simulator context */
+	int initialized;
+	std::thread io_thread;
+	volatile int io_thread_stop;
 
-/* EEPROM */
+	/* EEPROM */
+	std::recursive_mutex eeprom_mutex;
+
+	/* UART */
+	uint8_t uart_tx_buf[4096];
+	unsigned int uart_tx_buf_write;
+	unsigned int uart_tx_buf_read;
+	std::recursive_mutex uart_mutex;
+
+	/* ADC */
+	int ADC_vect_pending;
+	int adc_conversion_running;
+	uint64_t adc_conversion_start;
+	uint16_t adc_values[11];
+	std::recursive_mutex adc_mutex;
+
+	/* Timer 0 */
+	int TIMER0_COMPA_vect_pending;
+	uint64_t timer0_prevsample;
+
+	/* Interrupts */
+	volatile int irq_suspend_request;
+	volatile int irq_suspended;
+
+	void reset()
+	{
+		initialized = 0;
+		io_thread_stop = 0;
+
+		memset(uart_tx_buf, 0, sizeof(uart_tx_buf));
+		uart_tx_buf_write = 0;
+		uart_tx_buf_read = 0;
+
+		ADC_vect_pending = 0;
+		adc_conversion_running = 0;
+		adc_conversion_start = 0;
+		memset(adc_values, 0, sizeof(adc_values));
+
+		TIMER0_COMPA_vect_pending = 0;
+		timer0_prevsample = 0;
+
+		irq_suspend_request = 0;
+		irq_suspended = 0;
+	}
+};
+
+struct sim_context sim;
+
+/* Firmware EEPROM memory */
 extern const uint8_t __start_eeprom;
 extern const uint8_t __stop_eeprom;
-static std::recursive_mutex eeprom_mutex;
 
-/* UART */
-static uint8_t uart_tx_buf[4096];
-static unsigned int uart_tx_buf_write;
-static unsigned int uart_tx_buf_read;
-static std::recursive_mutex uart_mutex;
-
-/* ADC */
-static int ADC_vect_pending;
-static int adc_conversion_running;
-static uint64_t adc_conversion_start;
-static uint16_t adc_values[11];
-static std::recursive_mutex adc_mutex;
-
-/* Timer 0 */
-static int TIMER0_COMPA_vect_pending;
-static uint64_t timer0_prevsample;
-
-/* Interrupts */
-static volatile int irq_suspend_request;
-static volatile int irq_suspended;
+/* Declare firmware interrupt service routines */
 ISR(ADC_vect);
 ISR(EE_READY_vect);
 ISR(TIMER0_COMPA_vect);
@@ -108,7 +137,7 @@ ISR(TIMER0_COMPA_vect);
 
 static bool this_is_io_thread()
 {
-	return std::this_thread::get_id() == io_thread.get_id();
+	return std::this_thread::get_id() == sim.io_thread.get_id();
 }
 
 void sim_irq_disable(void)
@@ -117,8 +146,8 @@ void sim_irq_disable(void)
 	print_enter_irqendis("irq_disable");
 
 	if (!this_is_io_thread()) {
-		irq_suspend_request = 1;
-		while (!irq_suspended && !io_thread_stop)
+		sim.irq_suspend_request = 1;
+		while (!sim.irq_suspended && !sim.io_thread_stop)
 			std::this_thread::yield();
 
 		SREG &= (uint8_t)~(1u << SREG_I);
@@ -134,8 +163,8 @@ void sim_irq_enable(void)
 	print_enter_irqendis("irq_enable");
 
 	if (!this_is_io_thread()) {
-		irq_suspend_request = 0;
-		while (irq_suspended && !io_thread_stop)
+		sim.irq_suspend_request = 0;
+		while (sim.irq_suspended && !sim.io_thread_stop)
 			std::this_thread::yield();
 
 		SREG |= (1u << SREG_I);
@@ -196,7 +225,7 @@ static void EEDR_read_hook(FakeIO<uint8_t> &io)
 	uint16_t offset;
 	uint8_t *ee_pointer;
 
-	std::lock_guard<std::recursive_mutex> locker(eeprom_mutex);
+	std::lock_guard<std::recursive_mutex> locker(sim.eeprom_mutex);
 
 	if (EECR & (1 << EERE)) {
 		addr = EEAR;
@@ -220,17 +249,17 @@ static void UCSR0A_read_hook(FakeIO<uint8_t> &io)
 
 static void UDR0_write_hook(FakeIO<uint8_t> &io, uint8_t prev_value)
 {
-	std::lock_guard<std::recursive_mutex> locker(uart_mutex);
+	std::lock_guard<std::recursive_mutex> locker(sim.uart_mutex);
 
-	uart_tx_buf[uart_tx_buf_write] = UDR0;
-	if (++uart_tx_buf_write >= ARRAY_SIZE(uart_tx_buf))
-		uart_tx_buf_write = 0;
+	sim.uart_tx_buf[sim.uart_tx_buf_write] = UDR0;
+	if (++sim.uart_tx_buf_write >= ARRAY_SIZE(sim.uart_tx_buf))
+		sim.uart_tx_buf_write = 0;
 }
 
 #define run_IRQ_vect(name) do {						\
-		if (name##_pending) {					\
+		if (sim.name##_pending) {				\
 			print_enter_irqhandler(stringify(name));	\
-			name##_pending = 0;				\
+			sim.name##_pending = 0;				\
 			name();						\
 			print_exit_irqhandler(stringify(name));		\
 		}							\
@@ -240,13 +269,13 @@ static void UDR0_write_hook(FakeIO<uint8_t> &io, uint8_t prev_value)
 static void simulate_timer0(uint64_t systime_ms)
 {
 	if (TCCR0B & ((1 << CS02) | (1 << CS01) | (1 << CS00))) {
-		uint64_t diff_ms = systime_ms - timer0_prevsample;
+		uint64_t diff_ms = systime_ms - sim.timer0_prevsample;
 		double count_per_ms = TIMERCPS / 1000.0;
 		double call_count = diff_ms * count_per_ms;
 
 		if (call_count >= 1.0) {
-			TIMER0_COMPA_vect_pending = 1;
-			timer0_prevsample = systime_ms;
+			sim.TIMER0_COMPA_vect_pending = 1;
+			sim.timer0_prevsample = systime_ms;
 		}
 	}
 }
@@ -290,41 +319,41 @@ static void simulate_adc(uint64_t systime_ms)
 
 	mux = (ADMUX & ((1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (1 << MUX0)));
 	{
-		std::lock_guard<std::recursive_mutex> locker(adc_mutex);
+		std::lock_guard<std::recursive_mutex> locker(sim.adc_mutex);
 
 		switch (mux) {
 		case MEAS_MUX_ADC0:
-			adc_value = adc_values[0];
+			adc_value = sim.adc_values[0];
 			break;
 		case MEAS_MUX_ADC1:
-			adc_value = adc_values[1];
+			adc_value = sim.adc_values[1];
 			break;
 		case MEAS_MUX_ADC2:
-			adc_value = adc_values[2];
+			adc_value = sim.adc_values[2];
 			break;
 		case MEAS_MUX_ADC3:
-			adc_value = adc_values[3];
+			adc_value = sim.adc_values[3];
 			break;
 		case MEAS_MUX_ADC4:
-			adc_value = adc_values[4];
+			adc_value = sim.adc_values[4];
 			break;
 		case MEAS_MUX_ADC5:
-			adc_value = adc_values[5];
+			adc_value = sim.adc_values[5];
 			break;
 		case MEAS_MUX_ADC6:
-			adc_value = adc_values[6];
+			adc_value = sim.adc_values[6];
 			break;
 		case MEAS_MUX_ADC7:
-			adc_value = adc_values[7];
+			adc_value = sim.adc_values[7];
 			break;
 		case MEAS_MUX_ADC8:
-			adc_value = adc_values[8];
+			adc_value = sim.adc_values[8];
 			break;
 		case MEAS_MUX_BG:
-			adc_value = adc_values[9];
+			adc_value = sim.adc_values[9];
 			break;
 		case MEAS_MUX_GND:
-			adc_value = adc_values[10];
+			adc_value = sim.adc_values[10];
 			break;
 		default:
 			adc_value = 0;
@@ -332,23 +361,23 @@ static void simulate_adc(uint64_t systime_ms)
 		}
 	}
 
-	if (adc_conversion_running) {
+	if (sim.adc_conversion_running) {
 		if (ADCSRA & (1 << ADSC)) {
-			if (systime_ms - adc_conversion_start >= conv_runtime_ms) {
-				adc_conversion_running = 0;
+			if (systime_ms - sim.adc_conversion_start >= conv_runtime_ms) {
+				sim.adc_conversion_running = 0;
 
 				ADC = adc_value;
 				if (ADCSRA & (1 << ADIE))
-					ADC_vect_pending = 1;
+					sim.ADC_vect_pending = 1;
 				if (!(ADCSRA & (1 << ADATE)))
 					ADCSRA &= ~(1 << ADSC);
 			}
 		} else
-			adc_conversion_running = 0;
+			sim.adc_conversion_running = 0;
 	} else {
 		if (ADCSRA & (1 << ADSC)) {
-			adc_conversion_running = 1;
-			adc_conversion_start = systime_ms;
+			sim.adc_conversion_running = 1;
+			sim.adc_conversion_start = systime_ms;
 		}
 	}
 }
@@ -359,9 +388,9 @@ static void io_thread_func(void)
 	int suspended;
 
 	systime_ms = systime_ms_get();
-	timer0_prevsample = systime_ms;
+	sim.timer0_prevsample = systime_ms;
 
-	while (!io_thread_stop) {
+	while (!sim.io_thread_stop) {
 		systime_ms = systime_ms_get();
 
 		/* Run the simulated hardware */
@@ -371,8 +400,8 @@ static void io_thread_func(void)
 		/* Execute interrupt handlers.
 		 * Note that in the simulator the IRQ handlers do actually
 		 * run in parallel with the main thread outside of cli-sections. */
-		suspended = irq_suspend_request;
-		irq_suspended = suspended;
+		suspended = sim.irq_suspend_request;
+		sim.irq_suspended = suspended;
 		if (!suspended) {
 			run_IRQ_vect(ADC_vect);
 			run_IRQ_vect(TIMER0_COMPA_vect);
@@ -385,13 +414,13 @@ static void io_thread_func(void)
 size_t simulator_uart_get_tx(uint8_t *buf, size_t max_bytes)
 {
 	size_t count = 0;
-	std::lock_guard<std::recursive_mutex> locker(uart_mutex);
+	std::lock_guard<std::recursive_mutex> locker(sim.uart_mutex);
 
-	while (max_bytes > 0 && uart_tx_buf_read != uart_tx_buf_write) {
-		*buf = uart_tx_buf[uart_tx_buf_read];
+	while (max_bytes > 0 && sim.uart_tx_buf_read != sim.uart_tx_buf_write) {
+		*buf = sim.uart_tx_buf[sim.uart_tx_buf_read];
 		count++;
-		if (++uart_tx_buf_read >= ARRAY_SIZE(uart_tx_buf))
-			uart_tx_buf_read = 0;
+		if (++sim.uart_tx_buf_read >= ARRAY_SIZE(sim.uart_tx_buf))
+			sim.uart_tx_buf_read = 0;
 		max_bytes--;
 		buf++;
 	}
@@ -412,10 +441,10 @@ bool simulator_pwm_get(int pwm_index, uint16_t *value, uint16_t *max_value)
 
 bool simulator_adc_set(int adc_index, uint16_t value)
 {
-	std::lock_guard<std::recursive_mutex> locker(adc_mutex);
+	std::lock_guard<std::recursive_mutex> locker(sim.adc_mutex);
 
-	if (adc_index >= 0 && adc_index < (int)ARRAY_SIZE(adc_values)) {
-		adc_values[adc_index] = value;
+	if (adc_index >= 0 && adc_index < (int)ARRAY_SIZE(sim.adc_values)) {
+		sim.adc_values[adc_index] = value;
 		return true;
 	}
 	return false;
@@ -462,7 +491,7 @@ void main_loop_once(void);
 
 void simulator_mainloop_once(void)
 {
-	if (!sim_initialized)
+	if (!sim.initialized)
 		return;
 
 	main_loop_once();
@@ -470,21 +499,24 @@ void simulator_mainloop_once(void)
 
 void simulator_exit(void)
 {
-	if (!sim_initialized)
+	if (!sim.initialized)
 		return;
 
-	sim_initialized = 0;
+	sim.initialized = 0;
 	printf("Exiting simulator...\n");
-	io_thread_stop = 1;
-	io_thread.join();
+	sim.io_thread_stop = 1;
+	sim.io_thread.join();
 }
 
 int program_main(void) _mainfunc;
 
 bool simulator_init(void)
 {
-	if (sim_initialized)
+	if (sim.initialized)
 		return false;
+
+	sim.reset();
+	fakeio_reset_all();
 
 	/* Install I/O register hooks. */
 	EEDR.set_read_hook(EEDR_read_hook);
@@ -492,11 +524,12 @@ bool simulator_init(void)
 	UDR0.set_write_hook(UDR0_write_hook);
 
 	printf("Creating I/O-thread...\n");
-	io_thread = std::thread(io_thread_func);
+	sim.io_thread = std::thread(io_thread_func);
 
-	sim_initialized = 1;
-	printf("Executing program...\n");
+	sim.initialized = 1;
+	printf("Initializing firmware...\n");
 	program_main();
+	printf("Firmware initialized.\n");
 
 	return true;
 }
