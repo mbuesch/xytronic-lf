@@ -9,8 +9,10 @@
 template <typename T> class FakeIO
 {
 public:
-	FakeIO()
-		: m_read_hook(NULL)
+	FakeIO(const T &init_value = 0)
+		: m_init_value(init_value)
+		, m_reg(init_value)
+		, m_read_hook(NULL)
 		, m_read_hook_running(false)
 		, m_write_hook(NULL)
 		, m_write_hook_running(false)
@@ -18,6 +20,15 @@ public:
 	}
 	virtual ~FakeIO()
 	{
+	}
+
+	void reset()
+	{
+		m_reg = m_init_value;
+		m_read_hook = NULL;
+		m_read_hook_running = false;
+		m_write_hook = NULL;
+		m_write_hook_running = false;
 	}
 
 	FakeIO & operator=(const T &other)
@@ -108,12 +119,15 @@ protected:
 
 protected:
 	std::recursive_mutex m_mutex;
+	T m_init_value;
 	volatile T m_reg;
 	void (*m_read_hook)(FakeIO<T> &io);
 	bool m_read_hook_running;
 	void (*m_write_hook)(FakeIO<T> &io, T prev_value);
 	bool m_write_hook_running;
 };
+
+void fakeio_reset_all(void);
 
 
 #define _SFR_ADDR(x)		(static_cast<void *>(&(x)))

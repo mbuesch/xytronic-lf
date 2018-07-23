@@ -48,3 +48,55 @@ FakeIO<uint8_t> UCSR0B;
 FakeIO<uint8_t> UCSR0C;
 FakeIO<uint16_t> UBRR0;
 FakeIO<uint8_t> UDR0;
+
+void fakeio_reset_all(void)
+{
+	MCUCSR.reset();
+
+	PORTB.reset();
+	PORTC.reset();
+	PORTD.reset();
+	DDRB.reset();
+	DDRC.reset();
+	DDRD.reset();
+	PINB.reset();
+	PINC.reset();
+	PIND.reset();
+
+	TIMSK0.reset();
+	TIFR0.reset();
+	TIMSK1.reset();
+	TIFR1.reset();
+
+	SREG.reset();
+
+	OCR0A.reset();
+	OCR0B.reset();
+	TCNT0.reset();
+	TCCR0A.reset();
+	TCCR0B.reset();
+	OCR1A.reset();
+	OCR1B.reset();
+	ICR1.reset();
+	TCNT1.reset();
+	TCCR1A.reset();
+	TCCR1B.reset();
+	TCCR1C.reset();
+
+	ADC.reset();
+	ADCSRA.reset();
+	ADCSRB.reset();
+	ADMUX.reset();
+	DIDR0.reset();
+	DIDR1.reset();
+
+	EECR.reset();
+	EEDR.reset();
+	EEAR.reset();
+
+	UCSR0A.reset();
+	UCSR0B.reset();
+	UCSR0C.reset();
+	UBRR0.reset();
+	UDR0.reset();
+}
