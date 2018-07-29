@@ -229,7 +229,11 @@ void contrcurr_init(void)
 	struct pid_k_set k_set;
 
 	k_set = contrcurr_factors;
-	pid_init(&contrcurr.pid, &k_set,
+	pid_init(&contrcurr.pid,
+#if CONF_DEBUG
+		 PSTR("pid-c"),
+#endif
+		 &k_set,
 		 float_to_fixpt(CONTRCURR_NEGLIM_I),
 		 float_to_fixpt(CONTRCURR_POSLIM_I),
 		 float_to_fixpt(CONTRCURR_NEGLIM),

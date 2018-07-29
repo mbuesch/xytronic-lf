@@ -1,7 +1,7 @@
 /*
  * PID controller
  *
- * Copyright (c) 2015-2017 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2018 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #include "pid.h"
 #include "util.h"
+#include "debug_uart.h"
 
 #include <string.h>
 
@@ -46,10 +47,20 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	/* Calculate the deviation. */
 	e = fixpt_sub(pid->setpoint, r);
 
+#if CONF_DEBUG
+	debug_report_fixpt(DEBUG_PREFIX2(pid->name, PSTR("e")),
+			   &pid->debug_old_e, e);
+#endif
+
 	/* P term */
 	kp = pid->k.kp;
 	p = fixpt_mul(kp, e);
 	pid_result = p;
+
+#if CONF_DEBUG
+	debug_report_fixpt(DEBUG_PREFIX2(pid->name, PSTR("p")),
+			   &pid->debug_old_p, p);
+#endif
 
 	/* I term */
 	ki = pid->k.ki;
@@ -58,6 +69,11 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	pid->integr = i;
 	pid_result = fixpt_add(pid_result, i);
 
+#if CONF_DEBUG
+	debug_report_fixpt(DEBUG_PREFIX2(pid->name, PSTR("i")),
+			   &pid->debug_old_i, i);
+#endif
+
 	/* D term */
 	kd = pid->k.kd;
 	de = fixpt_sub(e, pid->prev_e);
@@ -65,16 +81,29 @@ fixpt_t pid_run(struct pid *pid, fixpt_t dt, fixpt_t r)
 	pid->prev_e = fixpt_div(e, pid->k.d_decay_div);
 	pid_result = fixpt_add(pid_result, d);
 
+#if CONF_DEBUG
+	debug_report_fixpt(DEBUG_PREFIX2(pid->name, PSTR("d")),
+			   &pid->debug_old_d, d);
+	debug_report_fixpt(DEBUG_PREFIX2(pid->name, PSTR("pe")),
+			   &pid->debug_old_pe, pid->prev_e);
+#endif
+
 	pid_result = clamp(pid_result, pid->y_neglim, pid->y_poslim);
 
 	return pid_result;
 }
 
 void pid_init(struct pid *pid,
+#if CONF_DEBUG
+	      const char __flash *name,
+#endif
 	      const struct pid_k_set *k,
 	      fixpt_t i_neglim, fixpt_t i_poslim,
 	      fixpt_t y_neglim, fixpt_t y_poslim)
 {
+#if CONF_DEBUG
+	pid->name = name;
+#endif
 	pid->i_neglim = i_neglim;
 	pid->i_poslim = i_poslim;
 	pid->y_neglim = y_neglim;

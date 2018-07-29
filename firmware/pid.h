@@ -24,6 +24,15 @@ struct pid {
 
 	fixpt_t prev_e;
 	fixpt_t integr;
+
+#if CONF_DEBUG
+	const char __flash *name;
+	fixpt_t debug_old_e;
+	fixpt_t debug_old_p;
+	fixpt_t debug_old_i;
+	fixpt_t debug_old_d;
+	fixpt_t debug_old_pe;
+#endif
 };
 
 void pid_reset(struct pid *pid);
@@ -31,6 +40,9 @@ void pid_reset(struct pid *pid);
 void pid_set_factors(struct pid *pid, const struct pid_k_set *k);
 
 void pid_init(struct pid *pid,
+#if CONF_DEBUG
+	      const char __flash *name,
+#endif
 	      const struct pid_k_set *k,
 	      fixpt_t i_neglim, fixpt_t i_poslim,
 	      fixpt_t y_neglim, fixpt_t y_poslim);

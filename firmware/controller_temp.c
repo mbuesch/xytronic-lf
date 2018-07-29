@@ -323,7 +323,11 @@ void contrtemp_init(void)
 	settings = get_settings();
 
 	k_set = &settings->temp_k[TEMPBOOST_NORMAL];
-	pid_init(&contrtemp.pid, k_set,
+	pid_init(&contrtemp.pid,
+#if CONF_DEBUG
+		 PSTR("pid-t"),
+#endif
+		 k_set,
 		 float_to_fixpt(CONTRTEMP_NEGLIM_I),
 		 float_to_fixpt(CONTRTEMP_POSLIM_I),
 		 float_to_fixpt(CONTRTEMP_NEGLIM),
