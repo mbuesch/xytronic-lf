@@ -77,7 +77,7 @@ static void contrtemp_set_boost_mode(enum contrtemp_boostmode new_boost_mode)
 	pid_set_factors(&contrtemp.pid, k_set);
 #if CONF_BOOST
 	contrtemp.boost_mode = new_boost_mode;
-	debug_print_int16(PSTR("tb"), (int16_t)new_boost_mode);
+	debug_print_int16(DEBUG_PFX1("tb"), (int16_t)new_boost_mode);
 #endif
 
 	menu_request_display_update();
@@ -135,7 +135,7 @@ static void contrtemp_run(fixpt_t r)
 	/* Run the PID controller */
 	y = pid_run(&contrtemp.pid, dt, r);
 
-	debug_report_fixpt(PSTR("ty1"), &contrtemp.old_temp_control1, y);
+	debug_report_fixpt(DEBUG_PFX1("ty1"), &contrtemp.old_temp_control1, y);
 
 	/* Map the requested temperature to a heater current. */
 	y_current = temp_to_amps(y);
@@ -154,7 +154,7 @@ static void contrtemp_run(fixpt_t r)
 	}
 	contrcurr_set_emerg(emergency_flags);
 
-	debug_report_fixpt(PSTR("ty2"), &contrtemp.old_temp_control2,
+	debug_report_fixpt(DEBUG_PFX1("ty2"), &contrtemp.old_temp_control2,
 			   y_current);
 
 	/* Set the current controller setpoint to the requested current. */
@@ -165,7 +165,7 @@ void contrtemp_set_feedback(fixpt_t r)
 {
 	if (r != contrtemp.feedback) {
 		contrtemp.feedback = r;
-		debug_report_fixpt(PSTR("tr"),
+		debug_report_fixpt(DEBUG_PFX1("tr"),
 				   &contrtemp.old_temp_feedback, r);
 		menu_request_display_update();
 	}

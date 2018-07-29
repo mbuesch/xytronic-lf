@@ -217,7 +217,8 @@ static void measure_handle_result(void)
 	/* Calculate the result of the averaging. */
 	raw_adc = (uint16_t)(meas.avg_sum / meas.avg_count);
 
-	debug_report_int16(config->name, &active_chan->old_report_value,
+	debug_report_int16(DEBUG_PREFIX1(config->name),
+			   &active_chan->old_report_value,
 			   (int16_t)raw_adc);
 
 	/* Filter the raw adc value, if we have a filter. */

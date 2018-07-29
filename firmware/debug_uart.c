@@ -1,7 +1,7 @@
 /*
  * Debugging UART interface
  *
- * Copyright (c) 2015 Michael Buesch <m@bues.ch>
+ * Copyright (c) 2015-2018 Michael Buesch <m@bues.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,7 +81,9 @@ static void debug_uart_print_timestamp(void)
 	debug_uart_tx((uint8_t)' ');
 }
 
-static void debug_print_str2(const char __flash *str0, const char *str1)
+static void debug_print_str3(const char __memx *str0,
+			     const char __memx *str1,
+			     const char __memx *str2)
 {
 	uint8_t sreg;
 
@@ -92,17 +94,23 @@ static void debug_print_str2(const char __flash *str0, const char *str1)
 
 	debug_uart_print_timestamp();
 	if (str0)
-		debug_uart_tx_string(to_memx(str0));
+		debug_uart_tx_string(str0);
 	if (str1) {
 		debug_uart_tx((uint8_t)' ');
-		debug_uart_tx_string(to_memx(str1));
+		debug_uart_tx_string(str1);
+	}
+	if (str2) {
+		debug_uart_tx((uint8_t)' ');
+		debug_uart_tx_string(str2);
 	}
 	debug_uart_tx_eol();
 
 	irq_restore(sreg);
 }
 
-void debug_print_int32(const char __flash *prefix, int32_t value)
+void debug_print_int32(const char __flash *prefix0,
+		       const char __flash *prefix1,
+		       int32_t value)
 {
 	char buf[10 + 1 + 1];
 
@@ -111,76 +119,91 @@ void debug_print_int32(const char __flash *prefix, int32_t value)
 #endif
 	ltoa(value, buf, 10);
 
-	debug_print_str2(prefix, buf);
+	debug_print_str3(to_memx(prefix0),
+			 to_memx(prefix1),
+			 to_memx(&buf[0]));
 }
 
-void debug_print_int24(const char __flash *prefix, int24_t value)
+void debug_print_int24(const char __flash *prefix0,
+		       const char __flash *prefix1,
+		       int24_t value)
 {
-	debug_print_int32(prefix, value);
+	debug_print_int32(prefix0, prefix1, value);
 }
 
-void debug_print_int16(const char __flash *prefix, int16_t value)
+void debug_print_int16(const char __flash *prefix0,
+		       const char __flash *prefix1,
+		       int16_t value)
 {
-	debug_print_int32(prefix, value);
+	debug_print_int32(prefix0, prefix1, value);
 }
 
-void debug_print_int8(const char __flash *prefix, int8_t value)
+void debug_print_int8(const char __flash *prefix0,
+		      const char __flash *prefix1,
+		      int8_t value)
 {
-	debug_print_int32(prefix, value);
+	debug_print_int32(prefix0, prefix1, value);
 }
 
-void debug_print_fixpt(const char __flash *prefix, fixpt_t value)
+void debug_print_fixpt(const char __flash *prefix0,
+		       const char __flash *prefix1,
+		       fixpt_t value)
 {
-	debug_print_int32(prefix, value);
+	debug_print_int32(prefix0, prefix1, value);
 }
 
-void debug_report_int32(const char __flash *prefix,
+void debug_report_int32(const char __flash *prefix0,
+			const char __flash *prefix1,
 			int32_t *old_value,
 			int32_t new_value)
 {
 	if (*old_value != new_value) {
 		*old_value = new_value;
-		debug_print_int32(prefix, new_value);
+		debug_print_int32(prefix0, prefix1, new_value);
 	}
 }
 
-void debug_report_int24(const char __flash *prefix,
+void debug_report_int24(const char __flash *prefix0,
+			const char __flash *prefix1,
 			int24_t *old_value,
 			int24_t new_value)
 {
 	if (*old_value != new_value) {
 		*old_value = new_value;
-		debug_print_int24(prefix, new_value);
+		debug_print_int24(prefix0, prefix1, new_value);
 	}
 }
 
-void debug_report_int16(const char __flash *prefix,
+void debug_report_int16(const char __flash *prefix0,
+			const char __flash *prefix1,
 			int16_t *old_value,
 			int16_t new_value)
 {
 	if (*old_value != new_value) {
 		*old_value = new_value;
-		debug_print_int16(prefix, new_value);
+		debug_print_int16(prefix0, prefix1, new_value);
 	}
 }
 
-void debug_report_int8(const char __flash *prefix,
+void debug_report_int8(const char __flash *prefix0,
+		       const char __flash *prefix1,
 		       int8_t *old_value,
 		       int8_t new_value)
 {
 	if (*old_value != new_value) {
 		*old_value = new_value;
-		debug_print_int8(prefix, new_value);
+		debug_print_int8(prefix0, prefix1, new_value);
 	}
 }
 
-void debug_report_fixpt(const char __flash *prefix,
+void debug_report_fixpt(const char __flash *prefix0,
+			const char __flash *prefix1,
 		        fixpt_t *old_value,
 		        fixpt_t new_value)
 {
 	if (*old_value != new_value) {
 		*old_value = new_value;
-		debug_print_fixpt(prefix, new_value);
+		debug_print_fixpt(prefix0, prefix1, new_value);
 	}
 }
 

@@ -66,7 +66,7 @@ uint16_t meascurr_filter_handler(uint16_t raw_adc)
 	}
 	filtered_adc = min(filtered_adc, MEASURE_MAX_RESULT);
 
-	debug_report_int16(PSTR("fc"), &meascurr.old_filter_report_value,
+	debug_report_int16(DEBUG_PFX1("fc"), &meascurr.old_filter_report_value,
 			   (int16_t)filtered_adc);
 
 	return filtered_adc;
