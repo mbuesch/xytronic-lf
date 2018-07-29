@@ -52,8 +52,7 @@ def writeOutFile(lines):
 		    b"measured current (ADC);"
 		    b"filtered current (ADC);"
 		    b"measured temp (ADC);"
-		    b"boost mode;"
-		    b"calib current percent\r\n")
+		    b"boost mode\r\n")
 	outFd.write("".join(lines).encode("utf-8"))
 	outFd.close()
 
@@ -71,7 +70,6 @@ def reset():
 	global val_filtCurr
 	global val_measTemp
 	global val_boostMode;
-	global val_calCurrPercent
 
 	print("RESET")
 	outLines = []
@@ -88,10 +86,9 @@ def reset():
 	val_filtCurr = 0
 	val_measTemp = 0
 	val_boostMode = 0
-	val_calCurrPercent = 0
 
 def putLine(timeStamp):
-	csvLine = "%d;%f;%f;%d;%f;%f;%f;%f;%d;%d;%d;%d;%d\r\n" % (
+	csvLine = "%d;%f;%f;%d;%f;%f;%f;%f;%d;%d;%d;%d\r\n" % (
 		timeStamp,
 		val_currentRealR,
 		val_currentUsedR,
@@ -104,7 +101,6 @@ def putLine(timeStamp):
 		val_filtCurr,
 		val_measTemp,
 		val_boostMode,
-		val_calCurrPercent,
 	)
 	outLines.append(csvLine)
 	writeOutFile(outLines)
@@ -171,8 +167,6 @@ try:
 			val_filtCurr = parseInt(elems[1], "fc")
 		elif elems[0] == "mt":
 			val_measTemp = parseInt(elems[1], "mt")
-		elif elems[0] == "cc":
-			val_calCurrPercent = parseInt(elems[1], "cc")
 		else:
 			print("Unknown elem: %s" % elems[0])
 			continue
