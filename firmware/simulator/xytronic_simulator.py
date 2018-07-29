@@ -172,7 +172,6 @@ class Simulator(object):
 		self.dbg_filtCurr = 0
 		self.dbg_measTemp = 0
 		self.dbg_boostMode = 0
-		self.dbg_calCurrPercent = 0
 
 	@classmethod
 	def __parseInt(cls, valStr, valIdent):
@@ -235,8 +234,6 @@ class Simulator(object):
 			self.dbg_filtCurr = self.__parseInt(elems[1], "fc")
 		elif elems[0] == "mt":
 			self.dbg_measTemp = self.__parseInt(elems[1], "mt")
-		elif elems[0] == "cc":
-			self.dbg_calCurrPercent = self.__parseInt(elems[1], "cc")
 		else:
 			self.error("Unknown elem: %s" % elems[0])
 			return
