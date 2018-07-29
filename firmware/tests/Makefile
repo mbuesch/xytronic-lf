@@ -1,5 +1,5 @@
 CPPFLAGS	:= -I.. -Ifake -DF_CPU=8000000UL \
-		   -DTESTSUITE=1 -D_DEFAULT_SOURCE
+		   -DTESTSUITE=1 -D_DEFAULT_SOURCE -DCONF_DEBUG=0
 
 CXXFLAGS	:= -std=c++17 -fconcepts -g -O2 -Wall -Wextra -Wno-unused-parameter -Wswitch-enum \
 		   -Wsuggest-attribute=noreturn -Wundef -Wpointer-arith \
