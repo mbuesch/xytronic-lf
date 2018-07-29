@@ -135,8 +135,7 @@ static void contrtemp_run(fixpt_t r)
 	/* Run the PID controller */
 	y = pid_run(&contrtemp.pid, dt, r);
 
-	debug_report_int24(PSTR("ty1"), &contrtemp.old_temp_control1,
-			   (int24_t)y);
+	debug_report_fixpt(PSTR("ty1"), &contrtemp.old_temp_control1, y);
 
 	/* Map the requested temperature to a heater current. */
 	y_current = temp_to_amps(y);
@@ -155,8 +154,8 @@ static void contrtemp_run(fixpt_t r)
 	}
 	contrcurr_set_emerg(emergency_flags);
 
-	debug_report_int24(PSTR("ty2"), &contrtemp.old_temp_control2,
-			   (int24_t)y_current);
+	debug_report_fixpt(PSTR("ty2"), &contrtemp.old_temp_control2,
+			   y_current);
 
 	/* Set the current controller setpoint to the requested current. */
 	contrcurr_set_setpoint(y_current);
@@ -166,9 +165,8 @@ void contrtemp_set_feedback(fixpt_t r)
 {
 	if (r != contrtemp.feedback) {
 		contrtemp.feedback = r;
-		debug_report_int24(PSTR("tr"),
-				   &contrtemp.old_temp_feedback,
-				   (int24_t)r);
+		debug_report_fixpt(PSTR("tr"),
+				   &contrtemp.old_temp_feedback, r);
 		menu_request_display_update();
 	}
 

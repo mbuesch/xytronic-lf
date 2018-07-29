@@ -129,6 +129,11 @@ void debug_print_int8(const char __flash *prefix, int8_t value)
 	debug_print_int32(prefix, value);
 }
 
+void debug_print_fixpt(const char __flash *prefix, fixpt_t value)
+{
+	debug_print_int32(prefix, value);
+}
+
 void debug_report_int32(const char __flash *prefix,
 			int32_t *old_value,
 			int32_t new_value)
@@ -166,6 +171,16 @@ void debug_report_int8(const char __flash *prefix,
 	if (*old_value != new_value) {
 		*old_value = new_value;
 		debug_print_int8(prefix, new_value);
+	}
+}
+
+void debug_report_fixpt(const char __flash *prefix,
+		        fixpt_t *old_value,
+		        fixpt_t new_value)
+{
+	if (*old_value != new_value) {
+		*old_value = new_value;
+		debug_print_fixpt(prefix, new_value);
 	}
 }
 

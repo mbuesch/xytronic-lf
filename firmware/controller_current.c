@@ -134,8 +134,7 @@ static void contrcurr_run(fixpt_t real_r)
 
 	debug_report_int8(PSTR("rs"), &contrcurr.old_r_state,
 			  (int8_t)contrcurr.r_state);
-	debug_report_int24(PSTR("cr2"), &contrcurr.old_current_used_feedback,
-			   (int24_t)r);
+	debug_report_fixpt(PSTR("cr2"), &contrcurr.old_current_used_feedback, r);
 
 	/* Run the PID controller */
 	y = pid_run(&contrcurr.pid, dt, r);
@@ -147,8 +146,7 @@ static void contrcurr_run(fixpt_t real_r)
 			y = float_to_fixpt(CONTRCURR_RESTRICT_MAXCURR);
 	}
 
-	debug_report_int24(PSTR("cy"), &contrcurr.old_current_control,
-			   (int24_t)y);
+	debug_report_fixpt(PSTR("cy"), &contrcurr.old_current_control, y);
 
 	/* Reconfigure the PWM unit to output the
 	 * requested heater current (y). */
@@ -160,9 +158,8 @@ void contrcurr_set_feedback(fixpt_t r)
 {
 	if (r != contrcurr.feedback) {
 		contrcurr.feedback = r;
-		debug_report_int24(PSTR("cr1"),
-				   &contrcurr.old_current_real_feedback,
-				   (int24_t)r);
+		debug_report_fixpt(PSTR("cr1"),
+				   &contrcurr.old_current_real_feedback, r);
 	}
 
 	/* Run the controller. */
