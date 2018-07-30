@@ -172,6 +172,16 @@ class Simulator(object):
 		self.dbg_filtCurr = 0
 		self.dbg_measTemp = 0
 		self.dbg_boostMode = 0
+		self.dbg_pidTempE = 0.0
+		self.dbg_pidTempP = 0.0
+		self.dbg_pidTempI = 0.0
+		self.dbg_pidTempD = 0.0
+		self.dbg_pidTempPrevE = 0.0
+		self.dbg_pidCurrE = 0.0
+		self.dbg_pidCurrP = 0.0
+		self.dbg_pidCurrI = 0.0
+		self.dbg_pidCurrD = 0.0
+		self.dbg_pidCurrPrevE = 0.0
 
 	@classmethod
 	def __parseInt(cls, valStr, valIdent):
@@ -209,34 +219,75 @@ class Simulator(object):
 		line = line[i+1:].strip()
 
 		elems = line.split()
-		if len(elems) != 2:
+		if len(elems) < 2 or len(elems) > 3:
 			self.error("Unknown format: %s" % line)
 			return
 		if elems[0] == "cr1":
 			self.dbg_currentRealR = self.__parseFixpt(elems[1], "cr1") / self.CURR_DIV
+			return
 		elif elems[0] == "cr2":
 			self.dbg_currentUsedR = self.__parseFixpt(elems[1], "cr2") / self.CURR_DIV
+			return
 		elif elems[0] == "rs":
 			self.dbg_currentRState = self.__parseInt(elems[1], "rs")
+			return
 		elif elems[0] == "cy":
 			self.dbg_currentY = self.__parseFixpt(elems[1], "cy") / self.CURR_DIV
+			return
 		elif elems[0] == "tr":
 			self.dbg_tempR = self.__parseFixpt(elems[1], "tr")
+			return
 		elif elems[0] == "ty1":
 			self.dbg_tempY1 = self.__parseFixpt(elems[1], "ty1")
+			return
 		elif elems[0] == "ty2":
 			self.dbg_tempY2 = self.__parseFixpt(elems[1], "ty2") / self.CURR_DIV
+			return
 		elif elems[0] == "tb":
 			self.dbg_boostMode = self.__parseInt(elems[1], "tb")
+			return
 		elif elems[0] == "mc":
 			self.dbg_measCurr = self.__parseInt(elems[1], "mc")
+			return
 		elif elems[0] == "fc":
 			self.dbg_filtCurr = self.__parseInt(elems[1], "fc")
+			return
 		elif elems[0] == "mt":
 			self.dbg_measTemp = self.__parseInt(elems[1], "mt")
-		else:
-			self.error("Unknown elem: %s" % elems[0])
 			return
+		elif elems[0] == "pid-t" and len(elems) == 3:
+			if elems[1] == "e":
+				self.dbg_pidTempE = self.__parseFixpt(elems[2], "pid-t e")
+				return
+			elif elems[1] == "p":
+				self.dbg_pidTempP = self.__parseFixpt(elems[2], "pid-t p")
+				return
+			elif elems[1] == "i":
+				self.dbg_pidTempI = self.__parseFixpt(elems[2], "pid-t i")
+				return
+			elif elems[1] == "d":
+				self.dbg_pidTempD = self.__parseFixpt(elems[2], "pid-t d")
+				return
+			elif elems[1] == "pe":
+				self.dbg_pidTempPrevE = self.__parseFixpt(elems[2], "pid-t pe")
+				return
+		elif elems[0] == "pid-c" and len(elems) == 3:
+			if elems[1] == "e":
+				self.dbg_pidCurrE = self.__parseFixpt(elems[2], "pid-c e")
+				return
+			elif elems[1] == "p":
+				self.dbg_pidCurrP = self.__parseFixpt(elems[2], "pid-c p")
+				return
+			elif elems[1] == "i":
+				self.dbg_pidCurrI = self.__parseFixpt(elems[2], "pid-c i")
+				return
+			elif elems[1] == "d":
+				self.dbg_pidCurrD = self.__parseFixpt(elems[2], "pid-c d")
+				return
+			elif elems[1] == "pe":
+				self.dbg_pidCurrPrevE = self.__parseFixpt(elems[2], "pid-c pe")
+				return
+		self.error("Unknown elem: %s" % elems[0])
 
 	@classmethod
 	def error(cls, msg):
