@@ -14,6 +14,7 @@ bool simulator_pwm_get(int pwm_index, uint16_t *value, uint16_t *max_value);
 bool simulator_adc_set(int adc_index, uint16_t value);
 bool simulator_setting_access(const char *name, int *value, bool write);
 
+void simulator_stats_ena(bool mainloop_stats_ena);
 void simulator_mainloop_once(void);
 void simulator_exit(void);
 bool simulator_init(void);

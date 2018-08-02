@@ -58,6 +58,10 @@ struct sim_context {
 	int initialized;
 	std::thread io_thread;
 	volatile int io_thread_stop;
+	bool mainloop_stats_ena;
+	int mainloop_count;
+	uint64_t mainloop_count_begin;
+	double mainloops_per_sec;
 
 	/* EEPROM */
 	std::recursive_mutex eeprom_mutex;
@@ -87,6 +91,10 @@ struct sim_context {
 	{
 		initialized = 0;
 		io_thread_stop = 0;
+		mainloop_stats_ena = true;
+		mainloop_count = 0;
+		mainloop_count_begin = 0;
+		mainloops_per_sec = -1.0;
 
 		memset(uart_tx_buf, 0, sizeof(uart_tx_buf));
 		uart_tx_buf_write = 0;
@@ -506,14 +514,48 @@ bool simulator_setting_access(const char *name, int *value, bool write)
 	return false;
 }
 
+void simulator_stats_ena(bool mainloop_stats_ena)
+{
+	sim.mainloop_stats_ena = mainloop_stats_ena;
+	sim.mainloop_count = 0;
+	sim.mainloop_count_begin = systime_ms_get();
+	sim.mainloops_per_sec = -1.0;
+}
+
 void main_loop_once(void);
 
 void simulator_mainloop_once(void)
 {
+	uint64_t begin = 0, end = 0, runtime = 0;
+
 	if (!sim.initialized)
 		return;
 
+	if (sim.mainloop_stats_ena)
+		begin = systime_ms_get();
+
 	main_loop_once();
+
+	if (sim.mainloop_stats_ena) {
+		end = systime_ms_get();
+		runtime = end - begin;
+
+		if (++sim.mainloop_count >= 100) {
+			double loops_per_sec;
+			uint64_t duration;
+
+			duration = end - sim.mainloop_count_begin;
+			loops_per_sec = (double)(sim.mainloop_count * 1000) / (double)duration;
+
+			sim.mainloops_per_sec = loops_per_sec;
+			sim.mainloop_count = 0;
+			sim.mainloop_count_begin = end;
+		}
+
+		printf("Mainloop core runtime %llu ms\n%.1lf loops per second wallclock\n",
+		       (unsigned long long)runtime,
+		       sim.mainloops_per_sec);
+	}
 }
 
 void simulator_exit(void)
@@ -535,6 +577,7 @@ bool simulator_init(void)
 		return false;
 
 	sim.reset();
+	simulator_stats_ena(true);
 	fakeio_reset_all();
 
 	/* Install I/O register hooks. */

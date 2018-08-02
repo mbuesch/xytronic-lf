@@ -116,6 +116,18 @@ static PyObject * xy_simulator_uart_get_tx(PyObject *self, PyObject *args)
 	return bytes;
 }
 
+static PyObject * xy_simulator_stats_ena(PyObject *self, PyObject *args)
+{
+	int mainloop_stats_ena;
+
+	if (!PyArg_ParseTuple(args, "p", &mainloop_stats_ena))
+		return NULL;
+
+	simulator_stats_ena(mainloop_stats_ena);
+
+	Py_RETURN_NONE;
+}
+
 static PyObject * xy_simulator_mainloop_once(PyObject *self, PyObject *args)
 {
 	simulator_mainloop_once();
@@ -145,6 +157,7 @@ static PyMethodDef xy_methods[] = {
 	{ "simulator_adc_set", xy_simulator_adc_set, METH_VARARGS, "", },
 	{ "simulator_pwm_get", xy_simulator_pwm_get, METH_VARARGS, "", },
 	{ "simulator_uart_get_tx", xy_simulator_uart_get_tx, METH_NOARGS, "", },
+	{ "simulator_stats_ena", xy_simulator_stats_ena, METH_VARARGS, "", },
 	{ "simulator_mainloop_once", xy_simulator_mainloop_once, METH_NOARGS, "", },
 	{ "simulator_exit", xy_simulator_exit, METH_NOARGS, "", },
 	{ "simulator_init", xy_simulator_init, METH_NOARGS, "", },

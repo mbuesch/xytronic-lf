@@ -59,6 +59,7 @@ class Simulator(object):
 		self.__uartbuf = bytearray()
 		self.__reset_debuginterface()
 		self.__runHook = []
+		self.stats_ena()
 
 	def addRunHook(self, hook):
 		self.__runHook.append(hook)
@@ -68,6 +69,9 @@ class Simulator(object):
 		self.__handle_debuginterface()
 		for hook in self.__runHook:
 			hook();
+
+	def stats_ena(self, mainloop_stats_ena=True):
+		self.xy.simulator_stats_ena(mainloop_stats_ena)
 
 	def setting_get(self, name):
 		value = self.xy.simulator_setting_read(name)
