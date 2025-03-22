@@ -32,6 +32,9 @@
 
 #include <string.h>
 
+#if (CONF_IDLE) && (CONF_BOOST)
+#include "timer.h"
+#endif
 
 struct temp_contr_context {
 	bool enabled;
@@ -43,6 +46,10 @@ struct temp_contr_context {
 
 #if CONF_BOOST
 	enum contrtemp_boostmode boost_mode;
+#endif
+
+#if (CONF_IDLE) && (CONF_BOOST)
+	struct timer idle_boost_timer;
 #endif
 
 	struct pid pid;
@@ -303,14 +310,19 @@ void contrtemp_button_handler(enum button_id button,
 	if (button != BUTTON_IRON)
 		return;
 
-#if CONF_BOOST
+#if (CONF_IDLE) && (CONF_BOOST) && !(CONF_IDLETOGGLE)
+# error "Please set CONF_IDLETOGGLE if CONF_BOOST and CONF_IDLE are both set"
+#elif (CONF_IDLE) && (CONF_BOOST)
+	if (timer_expired(&contrtemp.idle_boost_timer)) {
+		contrtemp_idle_button_handler(button, bstate);
+	} else {
+		contrtemp_boost_button_handler(button, bstate);
+	}
+	timer_arm(&contrtemp.idle_boost_timer, 3000);
+#elif CONF_BOOST
 	contrtemp_boost_button_handler(button, bstate);
 #elif CONF_IDLE
 	contrtemp_idle_button_handler(button, bstate);
-#endif
-
-#if (CONF_BOOST) && (CONF_IDLE)
-# error "Cannot simultaneously enable CONF_BOOST and CONF_IDLE"
 #endif
 }
 
@@ -338,4 +350,8 @@ void contrtemp_init(void)
 	/* Enable the controller. */
 	do_set_enabled(true);
 	do_set_emerg(false);
+
+#if (CONF_IDLE) && (CONF_BOOST)
+	timer_set_now(&contrtemp.idle_boost_timer);
+#endif
 }
