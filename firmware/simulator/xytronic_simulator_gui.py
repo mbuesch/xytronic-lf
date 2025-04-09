@@ -28,13 +28,12 @@ from copy import copy
 import multiprocessing
 import time
 import queue
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtChart import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtCharts import *
 
-
-class Measurements(object):
+class Measurements:
 	dbg_currentRealR = 0.0
 	dbg_currentUsedR = 0.0
 	dbg_currentRState = 0
@@ -175,32 +174,32 @@ class MainChart(Chart):
 
 		if self.timeAxis is None:
 			self.timeAxis = QValueAxis()
-			self.addAxis(self.timeAxis, Qt.AlignBottom)
+			self.addAxis(self.timeAxis, Qt.AlignmentFlag.AlignBottom)
 		self.timeAxis.setRange(0, 100)
 		self.timeAxis.setLabelFormat("%d s")
 		self.timeAxis.setTickCount(10)
 
 		if self.currentAxis is None:
 			self.currentAxis = QValueAxis()
-			self.addAxis(self.currentAxis, Qt.AlignLeft)
+			self.addAxis(self.currentAxis, Qt.AlignmentFlag.AlignLeft)
 		self.currentAxis.setLabelFormat("%.1f A")
 		self.currentAxis.setRange(0, 5)
 
 		if self.tempAxis is None:
 			self.tempAxis = QValueAxis()
-			self.addAxis(self.tempAxis, Qt.AlignLeft)
+			self.addAxis(self.tempAxis, Qt.AlignmentFlag.AlignLeft)
 		self.tempAxis.setLabelFormat("%d *C")
 		self.tempAxis.setRange(0, 600)
 
 		if self.adcAxis is None:
 			self.adcAxis = QValueAxis()
-			self.addAxis(self.adcAxis, Qt.AlignRight)
+			self.addAxis(self.adcAxis, Qt.AlignmentFlag.AlignRight)
 		self.adcAxis.setLabelFormat("0x%X")
 		self.adcAxis.setRange(0, 0x3FF)
 
 		if self.stateAxis is None:
 			self.stateAxis = QValueAxis()
-			self.addAxis(self.stateAxis, Qt.AlignRight)
+			self.addAxis(self.stateAxis, Qt.AlignmentFlag.AlignRight)
 		self.stateAxis.setTickCount(3)
 		self.stateAxis.setLabelFormat("%d")
 		self.stateAxis.setRange(0, 2)
@@ -271,14 +270,14 @@ class PidChart(Chart):
 
 		if self.timeAxis is None:
 			self.timeAxis = QValueAxis()
-			self.addAxis(self.timeAxis, Qt.AlignBottom)
+			self.addAxis(self.timeAxis, Qt.AlignmentFlag.AlignBottom)
 		self.timeAxis.setRange(0, 100)
 		self.timeAxis.setLabelFormat("%d s")
 		self.timeAxis.setTickCount(10)
 
 		if self.valueAxis is None:
 			self.valueAxis = QValueAxis()
-			self.addAxis(self.valueAxis, Qt.AlignLeft)
+			self.addAxis(self.valueAxis, Qt.AlignmentFlag.AlignLeft)
 		self.valueAxis.setLabelFormat("%.2f")
 		self.valueAxis.setRange(-100, 100)
 
@@ -326,7 +325,7 @@ class PidChart(Chart):
 class ChartView(QChartView):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.setRenderHint(QPainter.Antialiasing)
+		self.setRenderHint(QPainter.RenderHint.Antialiasing)
 
 class MainWidget(QWidget):
 	def __init__(self, parent=None):
@@ -378,30 +377,30 @@ class MainWidget(QWidget):
 		self.measGroup.layout().addWidget(self.enaLinePidCPE, 8, 0)
 
 		self.enaLineTempR = QCheckBox("Temp R", self)
-		self.enaLineTempR.setCheckState(Qt.Checked)
+		self.enaLineTempR.setCheckState(Qt.CheckState.Checked)
 		self.measGroup.layout().addWidget(self.enaLineTempR, 0, 1)
 
 		self.enaLineTempY1 = QCheckBox("Temp Y1", self)
-		self.enaLineTempY1.setCheckState(Qt.Checked)
+		self.enaLineTempY1.setCheckState(Qt.CheckState.Checked)
 		self.measGroup.layout().addWidget(self.enaLineTempY1, 1, 1)
 
 		self.enaLineTempY2 = QCheckBox("Temp Y2", self)
 		self.measGroup.layout().addWidget(self.enaLineTempY2, 2, 1)
 
 		self.enaLinePidTE = QCheckBox("Temp PID e", self)
-		self.enaLinePidTE.setCheckState(Qt.Checked)
+		self.enaLinePidTE.setCheckState(Qt.CheckState.Checked)
 		self.measGroup.layout().addWidget(self.enaLinePidTE, 3, 1)
 
 		self.enaLinePidTP = QCheckBox("Temp PID p", self)
-		self.enaLinePidTP.setCheckState(Qt.Checked)
+		self.enaLinePidTP.setCheckState(Qt.CheckState.Checked)
 		self.measGroup.layout().addWidget(self.enaLinePidTP, 4, 1)
 
 		self.enaLinePidTI = QCheckBox("Temp PID i", self)
-		self.enaLinePidTI.setCheckState(Qt.Checked)
+		self.enaLinePidTI.setCheckState(Qt.CheckState.Checked)
 		self.measGroup.layout().addWidget(self.enaLinePidTI, 5, 1)
 
 		self.enaLinePidTD = QCheckBox("Temp PID d", self)
-		self.enaLinePidTD.setCheckState(Qt.Checked)
+		self.enaLinePidTD.setCheckState(Qt.CheckState.Checked)
 		self.measGroup.layout().addWidget(self.enaLinePidTD, 6, 1)
 
 		self.enaLinePidTPE = QCheckBox("Temp PID prev-e", self)
@@ -429,7 +428,7 @@ class MainWidget(QWidget):
 
 		label = QLabel("Temp sp:", self)
 		self.controlsGroup.layout().addWidget(label, 1, 0)
-		self.tempSp = QSlider(Qt.Horizontal, self)
+		self.tempSp = QSlider(Qt.Orientation.Horizontal, self)
 		self.tempSp.setRange(-50, 550)
 		self.tempSp.setValue(350)
 		self.controlsGroup.layout().addWidget(self.tempSp, 1, 1)
@@ -440,7 +439,7 @@ class MainWidget(QWidget):
 		self.chartTimer = QTimer(self)
 		self.chartTimer.timeout.connect(self.__chartUpdate)
 		self.chartTimer.setSingleShot(False)
-		self.chartTimer.setTimerType(Qt.PreciseTimer)
+		self.chartTimer.setTimerType(Qt.TimerType.PreciseTimer)
 		self.chartTimer.start(100)
 
 		self.resetButton.released.connect(self.__handleReset)
@@ -481,29 +480,29 @@ class MainWidget(QWidget):
 
 	def __handleChartChange(self):
 		self.mainChart.rebuildChart(
-			enaLineCurrentRealR=(self.enaLineCurrentRealR.checkState() == Qt.Checked),
-			enaLineCurrentUsedR=(self.enaLineCurrentUsedR.checkState() == Qt.Checked),
-			enaLineCurrentRState=(self.enaLineCurrentRState.checkState() == Qt.Checked),
-			enaLineCurrentY=(self.enaLineCurrentY.checkState() == Qt.Checked),
-			enaLineTempR=(self.enaLineTempR.checkState() == Qt.Checked),
-			enaLineTempY1=(self.enaLineTempY1.checkState() == Qt.Checked),
-			enaLineTempY2=(self.enaLineTempY2.checkState() == Qt.Checked),
-			enaLineMeasCurr=(self.enaLineMeasCurr.checkState() == Qt.Checked),
-			enaLineFiltCurr=(self.enaLineFiltCurr.checkState() == Qt.Checked),
-			enaLineMeasTemp=(self.enaLineMeasTemp.checkState() == Qt.Checked),
-			enaLineBoostMode=(self.enaLineBoostMode.checkState() == Qt.Checked),
+			enaLineCurrentRealR=(self.enaLineCurrentRealR.checkState() == Qt.CheckState.Checked),
+			enaLineCurrentUsedR=(self.enaLineCurrentUsedR.checkState() == Qt.CheckState.Checked),
+			enaLineCurrentRState=(self.enaLineCurrentRState.checkState() == Qt.CheckState.Checked),
+			enaLineCurrentY=(self.enaLineCurrentY.checkState() == Qt.CheckState.Checked),
+			enaLineTempR=(self.enaLineTempR.checkState() == Qt.CheckState.Checked),
+			enaLineTempY1=(self.enaLineTempY1.checkState() == Qt.CheckState.Checked),
+			enaLineTempY2=(self.enaLineTempY2.checkState() == Qt.CheckState.Checked),
+			enaLineMeasCurr=(self.enaLineMeasCurr.checkState() == Qt.CheckState.Checked),
+			enaLineFiltCurr=(self.enaLineFiltCurr.checkState() == Qt.CheckState.Checked),
+			enaLineMeasTemp=(self.enaLineMeasTemp.checkState() == Qt.CheckState.Checked),
+			enaLineBoostMode=(self.enaLineBoostMode.checkState() == Qt.CheckState.Checked),
 		)
 		self.pidChart.rebuildChart(
-			enaLinePidCE=(self.enaLinePidCE.checkState() == Qt.Checked),
-			enaLinePidCP=(self.enaLinePidCP.checkState() == Qt.Checked),
-			enaLinePidCI=(self.enaLinePidCI.checkState() == Qt.Checked),
-			enaLinePidCD=(self.enaLinePidCD.checkState() == Qt.Checked),
-			enaLinePidCPE=(self.enaLinePidCPE.checkState() == Qt.Checked),
-			enaLinePidTE=(self.enaLinePidTE.checkState() == Qt.Checked),
-			enaLinePidTP=(self.enaLinePidTP.checkState() == Qt.Checked),
-			enaLinePidTI=(self.enaLinePidTI.checkState() == Qt.Checked),
-			enaLinePidTD=(self.enaLinePidTD.checkState() == Qt.Checked),
-			enaLinePidTPE=(self.enaLinePidTPE.checkState() == Qt.Checked),
+			enaLinePidCE=(self.enaLinePidCE.checkState() == Qt.CheckState.Checked),
+			enaLinePidCP=(self.enaLinePidCP.checkState() == Qt.CheckState.Checked),
+			enaLinePidCI=(self.enaLinePidCI.checkState() == Qt.CheckState.Checked),
+			enaLinePidCD=(self.enaLinePidCD.checkState() == Qt.CheckState.Checked),
+			enaLinePidCPE=(self.enaLinePidCPE.checkState() == Qt.CheckState.Checked),
+			enaLinePidTE=(self.enaLinePidTE.checkState() == Qt.CheckState.Checked),
+			enaLinePidTP=(self.enaLinePidTP.checkState() == Qt.CheckState.Checked),
+			enaLinePidTI=(self.enaLinePidTI.checkState() == Qt.CheckState.Checked),
+			enaLinePidTD=(self.enaLinePidTD.checkState() == Qt.CheckState.Checked),
+			enaLinePidTPE=(self.enaLinePidTPE.checkState() == Qt.CheckState.Checked),
 		)
 		self.chartXCount = 0
 
