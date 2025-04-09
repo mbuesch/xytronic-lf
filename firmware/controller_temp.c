@@ -32,10 +32,6 @@
 
 #include <string.h>
 
-#if (CONF_BOOST) && (CONF_IDLE)
-#include "timer.h"
-#endif
-
 struct temp_contr_context {
 	bool enabled;
 	bool emergency;
