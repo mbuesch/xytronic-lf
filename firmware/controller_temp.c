@@ -32,6 +32,8 @@
 
 #include <string.h>
 
+#define CONTRTEMP_BUTTON_BOOST_DELAY	1000
+
 struct temp_contr_context {
 	bool enabled;
 	bool emergency;
@@ -290,7 +292,7 @@ void contrtemp_button_handler(enum button_id button, enum button_state bstate)
 		return;
 
 	if (bstate == BSTATE_POSEDGE) {
-		timer_arm(&contrtemp.boost_idle_timer, 2000);
+		timer_arm(&contrtemp.boost_idle_timer, CONTRTEMP_BUTTON_BOOST_DELAY);
 		contrtemp.boost_idle_let = true;
 	}
 
