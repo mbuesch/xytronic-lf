@@ -61,12 +61,6 @@ hook_pre_archives()
 				local fwdir="$2/firmware"
 				local targetdir="$2/hex/board_$hw/atmega$dev/$rel"
 
-				if [ $hw = legacy ]; then
-					local CONF_IDLETOGGLE=1
-				else
-					local CONF_IDLETOGGLE=0
-				fi
-
 				if [ $dev = 88 -o $dev = 88p ]; then
 					local CONF_KCONF=0
 				else
@@ -82,9 +76,9 @@ hook_pre_archives()
 				do_build "$fwdir" "$targetdir" \
 					HW=$hw DEV=m$dev \
 					CONF_PRESETS=1 \
-					CONF_BOOST=0 \
+					CONF_BOOST=1 \
 					CONF_IDLE=1 \
-					CONF_IDLETOGGLE=$CONF_IDLETOGGLE \
+					CONF_IDLETOGGLE=1 \
 					CONF_DEBUG=$CONF_DEBUG \
 					CONF_EERING=1 \
 					CONF_ADJ=1 \
