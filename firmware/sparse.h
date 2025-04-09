@@ -37,6 +37,7 @@ extern void _delay_us(double x);
 extern void _delay_ms(double x);
 extern void _delay_loop_1(uint8_t x);
 extern void _delay_loop_2(uint16_t x);
+extern double __builtin_ceil(double x);
 
 #else /* __CHECKER__ */
 

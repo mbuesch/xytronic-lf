@@ -257,7 +257,8 @@ bool contrtemp_is_heating_up(void)
 }
 
 #if CONF_BOOST
-static void contrtemp_do_next_boost_mode(void) {
+static void contrtemp_do_next_boost_mode(void)
+{
 	enum contrtemp_boostmode new_boost_mode;
 
 	new_boost_mode = contrtemp.boost_mode;
@@ -270,15 +271,19 @@ static void contrtemp_do_next_boost_mode(void) {
 #endif
 
 #if CONF_IDLE
-static void contrtemp_do_idle(bool idle) {
+static void contrtemp_do_idle(bool idle)
+{
 	contrtemp.idle = idle;
 	contrtemp_update_setpoint();
 	menu_request_display_update();
 }
 #endif
 
+void contrtemp_button_handler(enum button_id button, enum button_state bstate);
+
 #if (CONF_BOOST) && (CONF_IDLE)
-void contrtemp_button_handler(enum button_id button, enum button_state bstate) {
+void contrtemp_button_handler(enum button_id button, enum button_state bstate)
+{
 	bool idle = contrtemp.idle;
 
 	if (button != BUTTON_IRON)
