@@ -32,6 +32,9 @@
 
 #include <string.h>
 
+#if (CONF_BOOST) && (CONF_IDLE)
+#include "timer.h"
+#endif
 
 struct temp_contr_context {
 	bool enabled;
@@ -43,6 +46,11 @@ struct temp_contr_context {
 
 #if CONF_BOOST
 	enum contrtemp_boostmode boost_mode;
+#endif
+
+#if (CONF_BOOST) && (CONF_IDLE)
+	struct timer boost_idle_timer;
+	bool boost_idle_let;
 #endif
 
 	struct pid pid;
@@ -253,27 +261,65 @@ bool contrtemp_is_heating_up(void)
 }
 
 #if CONF_BOOST
-static void contrtemp_boost_button_handler(enum button_id button,
-					   enum button_state bstate)
-{
+static void contrtemp_do_next_boost_mode(void) {
 	enum contrtemp_boostmode new_boost_mode;
 
-	if (bstate == BSTATE_POSEDGE) {
-		new_boost_mode = contrtemp.boost_mode;
-		new_boost_mode++;
-		if (new_boost_mode >= NR_BOOST_MODES)
-			new_boost_mode = 0;
+	new_boost_mode = contrtemp.boost_mode;
+	new_boost_mode++;
+	if (new_boost_mode >= NR_BOOST_MODES)
+		new_boost_mode = 0;
 
-		contrtemp_set_boost_mode(new_boost_mode);
-	}
+	contrtemp_set_boost_mode(new_boost_mode);
 }
 #endif
 
 #if CONF_IDLE
-static void contrtemp_idle_button_handler(enum button_id button,
-					  enum button_state bstate)
+static void contrtemp_do_idle(bool idle) {
+	contrtemp.idle = idle;
+	contrtemp_update_setpoint();
+	menu_request_display_update();
+}
+#endif
+
+#if (CONF_BOOST) && (CONF_IDLE)
+void contrtemp_button_handler(enum button_id button, enum button_state bstate) {
+	bool idle = contrtemp.idle;
+
+	if (button != BUTTON_IRON)
+		return;
+
+	if (bstate == BSTATE_POSEDGE) {
+		timer_arm(&contrtemp.boost_idle_timer, 2000);
+		contrtemp.boost_idle_let = true;
+	}
+
+	if (contrtemp.boost_idle_let) {
+		if (idle || (bstate == BSTATE_PRESSED &&
+				timer_expired(&contrtemp.boost_idle_timer))) {
+			contrtemp_do_idle(!idle);
+			contrtemp.boost_idle_let = false;
+		} else if (bstate == BSTATE_NEGEDGE) {
+			contrtemp_do_next_boost_mode();
+			contrtemp.boost_idle_let = false;
+		}
+	}
+}
+#elif CONF_BOOST
+void contrtemp_button_handler(enum button_id button, enum button_state bstate)
+{
+	if (button != BUTTON_IRON)
+		return;
+
+	if (bstate == BSTATE_POSEDGE)
+		contrtemp_do_next_boost_mode();
+}
+#elif CONF_IDLE
+void contrtemp_button_handler(enum button_id button, enum button_state bstate)
 {
 	bool idle;
+
+	if (button != BUTTON_IRON)
+		return;
 
 	idle = contrtemp.idle;
 #if CONF_IDLETOGGLE
@@ -286,33 +332,16 @@ static void contrtemp_idle_button_handler(enum button_id button,
 		idle = false;
 #endif
 
-	if (idle != contrtemp.idle) {
-		contrtemp.idle = idle;
-		contrtemp_update_setpoint();
-		menu_request_display_update();
-	}
+	if (idle != contrtemp.idle)
+		contrtemp_do_idle(idle);
 }
-#endif
-
-void contrtemp_button_handler(enum button_id button,
-			      enum button_state bstate);
-
-void contrtemp_button_handler(enum button_id button,
-			      enum button_state bstate)
+#else
+void contrtemp_button_handler(enum button_id button, enum button_state bstate)
 {
-	if (button != BUTTON_IRON)
-		return;
-
-#if CONF_BOOST
-	contrtemp_boost_button_handler(button, bstate);
-#elif CONF_IDLE
-	contrtemp_idle_button_handler(button, bstate);
-#endif
-
-#if (CONF_BOOST) && (CONF_IDLE)
-# error "Cannot simultaneously enable CONF_BOOST and CONF_IDLE"
-#endif
+	(void) button;
+	(void) bstate;
 }
+#endif
 
 void contrtemp_init(void)
 {
