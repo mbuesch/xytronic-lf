@@ -21,9 +21,9 @@ endif
 
 # Build configuration
 CONF_DEBUG		:= $(if $(call deveq,m328p),1,0)
-CONF_BOOST		:= 0
+CONF_BOOST		:= 1
 CONF_IDLE		:= 1
-CONF_IDLETOGGLE		:= $(if $(call hweq,legacy),1,0)
+CONF_IDLETOGGLE		:= 1
 CONF_PRESETS		:= 1
 CONF_EERING		:= 1
 CONF_ADJ		:= 1
