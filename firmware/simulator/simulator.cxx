@@ -33,15 +33,14 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include <thread>
+#include <mutex>
+
 #include "../timer.h"
 #include "../measure.h"
 #include "../settings.h"
 #include "../menu.h"
 #include "../measure_temp.h"
-
-#include <thread>
-#include <mutex>
-
 
 //#define IRQ_ENDIS_DEBUG
 //#define IRQ_HANDLER_DEBUG
