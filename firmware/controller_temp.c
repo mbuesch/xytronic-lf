@@ -265,7 +265,7 @@ static void contrtemp_do_next_boost_mode(void)
 	contrtemp_set_boost_mode(
 		(enum contrtemp_boostmode)ring_next(
 			(uint8_t)contrtemp.boost_mode,
-			NR_BOOST_MODES - 1
+			(uint8_t)NR_BOOST_MODES - 1u
 		)
 	);
 }
