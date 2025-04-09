@@ -29,6 +29,7 @@
 #include "buttons.h"
 #include "debug_uart.h"
 #include "presets.h"
+#include "ring.h"
 
 #include <string.h>
 
@@ -261,14 +262,12 @@ bool contrtemp_is_heating_up(void)
 #if CONF_BOOST
 static void contrtemp_do_next_boost_mode(void)
 {
-	int8_t new_boost_mode;
-
-	new_boost_mode = (int8_t)contrtemp.boost_mode;
-	new_boost_mode++;
-	if (new_boost_mode >= NR_BOOST_MODES)
-		new_boost_mode = 0;
-
-	contrtemp_set_boost_mode((enum contrtemp_boostmode)new_boost_mode);
+	contrtemp_set_boost_mode(
+		(enum contrtemp_boostmode)ring_next(
+			(uint8_t)contrtemp.boost_mode,
+			NR_BOOST_MODES - 1
+		)
+	);
 }
 #endif
 
