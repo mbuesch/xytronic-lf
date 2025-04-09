@@ -16,6 +16,8 @@
 #define __OS_main__			dllexport
 #define __builtin_avr_delay_cycles(x)
 
+#define _SYS_CDEFS_H			/* Suppress system cdefs.h */
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>

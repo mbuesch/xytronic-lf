@@ -1,7 +1,10 @@
 ######################################################
 # AVR make library                                   #
-# Copyright (c) 2015-2018 Michael Buesch <m@bues.ch> #
-# Version 1.9                                        #
+# Copyright (c) 2015-2025 Michael Buesch <m@bues.ch> #
+#                                                    #
+# Licensed under the Apache License version 2.0      #
+# or the MIT license, at your option.                #
+# SPDX-License-Identifier: Apache-2.0 OR MIT         #
 ######################################################
 
 ifeq ($(NAME),)
@@ -33,21 +36,21 @@ MKDIR			:= mkdir
 MV			:= mv
 RM			:= rm
 CP			:= cp
+SED			:= sed
 ECHO			:= echo
 GREP			:= grep
 TRUE			:= true
 TEST			:= test
 AVRDUDE			:= avrdude
-MYSMARTUSB		:= mysmartusb.py
+MYSMARTUSB		:= avrmakelib/mysmartusb.py
 DOXYGEN			:= doxygen
-PYTHON2			:= python2
 PYTHON3			:= python3
 SPARSE			:= sparse
 
 # Verbose build:        	make V=1
 V			:= @
 # Sparsechecker build:  	make C=1
-C			:= 0
+C			:= $(shell $(SPARSE) --help >/dev/null 2>&1 && $(ECHO) 1 || $(ECHO) 0)
 # Debug build:          	make DEBUG=1
 DEBUG			:= 0
 # Optimize flag:		make O=0/1/2/3/s
@@ -61,9 +64,9 @@ QUIET_DEPEND		= $(Q:@=@$(ECHO) '     DEPEND   '$@;)$(CC)
 QUIET_OBJCOPY		= $(Q:@=@$(ECHO) '     OBJCOPY  '$@;)$(OBJCOPY)
 QUIET_OBJDUMP		= $(Q:@=@$(ECHO) '     OBJDUMP  '$@;)$(OBJDUMP)
 QUIET_SIZE		= $(Q:@=@$(ECHO) '     SIZE     '$@;)$(SIZE)
-QUIET_PYTHON2		= $(Q:@=@$(ECHO) '     PYTHON2  '$@;)$(PYTHON2)
 QUIET_PYTHON3		= $(Q:@=@$(ECHO) '     PYTHON3  '$@;)$(PYTHON3)
 QUIET_RM		= $(Q:@=@$(ECHO) '     RM       '$@;)$(RM)
+QUIET_SED		= $(Q:@=@$(ECHO) '     SED      '$@;)$(SED)
 ifeq ($(C),1)
 QUIET_SPARSE		= $(Q:@=@$(ECHO) '     SPARSE   '$@;)$(SPARSE)
 else
@@ -131,12 +134,12 @@ INSTRUMENT_CFLAGS	:= -DINSTRUMENT_FUNCTIONS=1 \
 			   -finstrument-functions \
 			   -finstrument-functions-exclude-file-list=.h
 
-MAIN_SPARSEFLAGS	:= -gcc-base-dir=/usr/lib/avr \
-			   -I/usr/lib/avr/include \
+MAIN_SPARSEFLAGS	:= -gcc-base-dir=$(shell which avr-gcc | xargs -0 dirname)/../avr \
+			   -I$(shell which avr-gcc | xargs -0 dirname)/../avr/include \
 			   -D__STDC_HOSTED__=1 \
 			   -D__AVR_ARCH__=5 \
 			   -D__AVR_$(subst TINY,tiny,$(subst MEGA,mega,$(call _uppercase,$(GCC_ARCH))))__=1 \
-			   -Wsparse-all -Wsparse-error
+			   -Wsparse-all
 
 CFLAGS			:= $(MAIN_CFLAGS) \
 			   $(if $(INSTRUMENT_FUNC),$(INSTRUMENT_CFLAGS)) \
@@ -169,18 +172,25 @@ BOOT_SPARSEFLAGS	:= $(subst gnu11,gnu99,$(BOOT_CFLAGS)) \
 AVRDUDE_SPEED		?= 1
 AVRDUDE_SLOW_SPEED	?= 200
 
-AVRDUDE_PROGRAMMER	:=
 ifeq ($(PROGRAMMER),mysmartusb)
 AVRDUDE_PROGRAMMER	:= avr910
-PROGPORT		:= /dev/ttyUSB0
-endif
-ifeq ($(PROGRAMMER),avrisp2)
-AVRDUDE_PROGRAMMER	:= avrisp2
-PROGPORT		:= usb
+else
+AVRDUDE_PROGRAMMER	:= $(PROGRAMMER)
 endif
 
-ifeq ($(AVRDUDE_PROGRAMMER),)
-$(error Invalid PROGRAMMER specified)
+ifeq ($(PROGPORT),)
+ifeq ($(AVRDUDE_PROGRAMMER),avr910)
+PROGPORT		:= /dev/ttyUSB0
+endif
+ifeq ($(AVRDUDE_PROGRAMMER),avrisp2)
+PROGPORT		:= usb
+endif
+ifeq ($(AVRDUDE_PROGRAMMER),usbasp)
+PROGPORT		:= usb
+endif
+ifeq ($(AVRDUDE_PROGRAMMER),usbasp-clone)
+PROGPORT		:= usb
+endif
 endif
 
 define _programmer_cmd_pwrcycle
